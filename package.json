@@ -1,0 +1,34 @@
+{
+	"publisher": "fujidana",
+  "name": "igorpro",
+  "displayName": "Igor Pro",
+  "description": "Igor Pro support for VS Code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.69.0"
+  },
+  "categories": [
+    "Snippets"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "igorpro",
+        "aliases": [
+          "Igor Pro",
+          "Igor Procedure"
+        ],
+        "extensions": [
+          ".ipf"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "igorpro",
+        "path": "./snippets/snippets.code-snippets"
+      }
+    ]
+  }
+}
