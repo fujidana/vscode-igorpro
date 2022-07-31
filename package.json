@@ -1,5 +1,5 @@
 {
-	"publisher": "fujidana",
+  "publisher": "fujidana",
   "name": "igorpro",
   "displayName": "Igor Pro",
   "description": "Igor Pro support for VS Code",
@@ -16,7 +16,7 @@
         "id": "igorpro",
         "aliases": [
           "Igor Pro",
-          "Igor Procedure"
+          "Igor Procedure File"
         ],
         "extensions": [
           ".ipf"
@@ -27,8 +27,14 @@
     "snippets": [
       {
         "language": "igorpro",
-        "path": "./snippets/snippets.code-snippets"
+        "path": "./syntaxes/igorpro.snippets.json"
       }
     ]
+  },
+  "scripts": {
+    "js-yaml:snippets": "js-yaml ./src/igorpro.snippets.yaml > ./syntaxes/igorpro.snippets.json"
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.0"
   }
 }

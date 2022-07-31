@@ -1,0 +1,202 @@
+if-endif:
+  prefix:
+    - if
+  body:
+    - "if (${1:condition})"
+    - "\t$TM_SELECTED_TEXT$0"
+    - "endif"
+  description:
+    if statement
+if-else-endif:
+  prefix:
+    - if-else
+  body:
+    - "if (${1:condition})"
+    - "\t${2:body1}"
+    - "else"
+    - "\t${3:body2}"
+    - "endif"
+  description:
+    if statement with else clause
+if-elseif-endif:
+  prefix:
+    - if-elseif
+  body:
+    - "if (${1:condition})"
+    - "\t${2:body1}"
+    - "elseif (${3:condition2})"
+    - "\t${4:body2}"
+    - "endif"
+  description:
+    if statement with elseif clause
+if-elseif-else-endif:
+  prefix:
+    - if-elseif-else
+  body:
+    - "if (${1:condition})"
+    - "\t${2:body1}"
+    - "elseif (${3:condition2})"
+    - "\t${4:body2}"
+    - "else"
+    - "\t${5:body3}"
+    - "endif"
+  description:
+    if statement with elseif and else clause
+do-while:
+  prefix:
+    - do-while
+  body:
+    - "do"
+    - "\t$TM_SELECTED_TEXT$0"
+    - "while (${1:condition})"
+  description:
+    do-while loop
+for:
+  prefix:
+    - for
+  body:
+    - "Variable ${1:i}"
+    - "for (${1:i} = 0; ${1:i} < ${2:n}; ${1:i}++)"
+    - "\t$TM_SELECTED_TEXT$0"
+    - "endfor"
+  description:
+    for loop
+for-var-in-wave:
+  prefix:
+    - for-var-in-wave
+  body:
+    - "for (${1|Variable,int,double,String,Wave|} ${2:element}: ${3:wave})"
+    - "\t$TM_SELECTED_TEXT$0"
+    - "endfor"
+  description:
+    range-based for loop (added in Igor Pro 9.00)
+switch-case-endwidth:
+  prefix:
+    - switch
+  body:
+    - "switch(${1:expression})"
+    - "\tcase ${2:label1}:"
+    - "\t\t${3:body1}"
+    - "\t\tbreak"
+    - "\tcase ${3:label2}:"
+    - "\t\t${4:body2}"
+    - "\t\tbreak"
+    - "\tdefault:"
+    - "\t\t${5:body2}"
+    - "endswitch"
+  description:
+    switch statement
+strswitch-case-endwidth:
+  prefix:
+    - strswitch
+  body:
+    - "strswitch(${1:expression})"
+    - "\tcase ${2:label1}:"
+    - "\t\t${3:body1}"
+    - "\t\tbreak"
+    - "\tcase ${4:label2}:"
+    - "\t\t${5:body2}"
+    - "\t\tbreak"
+    - "\tdefault:"
+    - "\t\t${6:body2}"
+    - "endswitch"
+  description:
+    strswitch statement
+try-catch-endtry:
+  prefix:
+    - try
+  body:
+    - "try"
+    - "\t$TM_SELECTED_TEXT$0"
+    - "catch"
+    - "\t${1:codeToHnadleAbort}"
+    - "endtry"
+  description:
+    try-catch flow control statement
+Function:
+  prefix:
+    - Function
+  body:
+    - "${1|Function,Static Function,ThreadSafe Function,ThreadSafe Static Function|} ${2:funcName}(${3:param...})"
+    - "\t$TM_SELECTED_TEXT$0"
+    - "End"
+  description:
+    user-defined function
+Macro:
+  prefix:
+    - Macro
+  body:
+    - "Macro ${1:macroName}(${2:param...})"
+    - "\t$TM_SELECTED_TEXT$0"
+    - "End"
+  description:
+    old-fasioned macro
+Menu:
+  prefix:
+    - Menu
+  body:
+    - "Menu \"${1|Macros,Add Controls,Analysis,Append to Graph,Control,Data,Edit,File,Gizmo,Graph,Help,Layout,Load Waves,Misc,Statistics,New,Notebook,Open File,Panel,Procedure,Save Waves,Table,AllTracesPopup,GraphMarquee,DataBrowserObjectsPopup,GraphPopup,LayoutMarquee,TablePopup,TracePopup,WindowBrowserWindowsPopup|}\""
+    - "\t\"${2:menuItemLabel1}\", ${3:execution1}"
+    - "End"
+  description:
+    user-defined menu item that extends built-in menus
+Submenu:
+  prefix:
+    - Submenu
+  body:
+    - "Menu \"${1:menuLabel}\""
+    - "\t\"${2:menuItemLabel1}\", ${3:execution1}"
+    - "End"
+  description:
+    user-defined submenu item
+Structure:
+  prefix:
+    - Structure
+  body:
+    - "${1|Structure,Static Structure|} ${2:structureName}"
+    - "\t$TM_SELECTED_TEXT$0"
+    - "EndStructure"
+  description:
+    structure definition
+cd-pragma:
+  prefix:
+    - "#pragma"
+  body:
+    - "#pragma ${1|rtGolobal,version,IgorVersion,hide,ModuleName,IndependentModule,rtFunctionErrors,TextEncoding,DefaultTab|} = ${2:value}"
+  description:
+    pragma statement that introduces compiler directive
+cd-if-elif-else-endif:
+  prefix:
+    - "#if-#elif-#else"
+  body:
+    - "#if ${1:condition}"
+    - "\t${2:body1}"
+    - "#elif ${3:condition2}"
+    - "\t${4:body2}"
+    - "#else"
+    - "\t${5:body3}"
+    - "endif"
+  description:
+    conditional compiler directive (with elif and else)
+cd-ifdef-endif:
+  prefix:
+    - "#ifdef-#else-#endif"
+  body:
+    - "#ifdef ${1:symbl}"
+    - "\t${2:body1}"
+    - "#else"
+    - "\t${3:body2}"
+    - "endif"
+  description:
+    conditional compiler directive
+cd-ifndef-endif:
+  prefix:
+    - "#ifndef-#else-#endif"
+  body:
+    - "#ifndef ${1:symbl}"
+    - "\t${2:body1}"
+    - "#else"
+    - "\t${3:body2}"
+    - "endif"
+  description:
+    conditional compiler directive
