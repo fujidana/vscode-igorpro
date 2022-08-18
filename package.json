@@ -25,6 +25,13 @@
         "configuration": "./language-configuration.json"
       }
     ],
+    "grammars": [
+      {
+        "language": "igorpro",
+        "scopeName": "source.igorpro",
+        "path": "./syntaxes/igorpro.tmLanguage.json"
+      }
+    ],
     "snippets": [
       {
         "language": "igorpro",
@@ -33,7 +40,8 @@
     ]
   },
   "scripts": {
-    "js-yaml:snippets": "js-yaml ./src/igorpro.snippets.yaml > ./syntaxes/igorpro.snippets.json"
+    "js-yaml:snippets": "js-yaml ./src/igorpro.snippets.yaml > ./syntaxes/igorpro.snippets.json",
+		"js-yaml:tmLanguage": "js-yaml ./src/igorpro.tmLanguage.yaml > ./syntaxes/igorpro.tmLanguage.json"
   },
   "devDependencies": {
     "js-yaml": "^4.1.0"
