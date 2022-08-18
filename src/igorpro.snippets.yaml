@@ -7,28 +7,14 @@ if-endif:
     - "endif"
   description:
     if statement
-if-else-endif:
+elseif:
   prefix:
-    - if-else
+    - elseif
   body:
-    - "if (${1:condition})"
-    - "\t${2:body1}"
-    - "else"
-    - "\t${3:body2}"
-    - "endif"
+    - "elseif (${1:condition})"
+    - "\t$TM_SELECTED_TEXT$0"
   description:
-    if statement with else clause
-if-elseif-endif:
-  prefix:
-    - if-elseif
-  body:
-    - "if (${1:condition})"
-    - "\t${2:body1}"
-    - "elseif (${3:condition2})"
-    - "\t${4:body2}"
-    - "endif"
-  description:
-    if statement with elseif clause
+    elseif statement
 if-elseif-else-endif:
   prefix:
     - if-elseif-else
@@ -63,9 +49,9 @@ for:
     for loop
 for-var-in-wave:
   prefix:
-    - for-var-in-wave
+    - for-in
   body:
-    - "for (${1|Variable,int,double,String,Wave|} ${2:element}: ${3:wave})"
+    - "for (${1|Variable,String,WAVE,DFREF,int,int64,uint64,double,complex|} ${2:element}: ${3:wave})"
     - "\t$TM_SELECTED_TEXT$0"
     - "endfor"
   description:
@@ -76,13 +62,13 @@ switch-case-endwidth:
   body:
     - "switch(${1:expression})"
     - "\tcase ${2:label1}:"
-    - "\t\t${3:body1}"
+    - "\t\t${3:statement1}"
     - "\t\tbreak"
-    - "\tcase ${3:label2}:"
-    - "\t\t${4:body2}"
+    - "\tcase ${4:label2}:"
+    - "\t\t${5:statement}"
     - "\t\tbreak"
     - "\tdefault:"
-    - "\t\t${5:body2}"
+    - "\t\t${6:statement3}"
     - "endswitch"
   description:
     switch statement
@@ -92,13 +78,13 @@ strswitch-case-endwidth:
   body:
     - "strswitch(${1:expression})"
     - "\tcase ${2:label1}:"
-    - "\t\t${3:body1}"
+    - "\t\t${3:statement1}"
     - "\t\tbreak"
     - "\tcase ${4:label2}:"
-    - "\t\t${5:body2}"
+    - "\t\t${5:statement2}"
     - "\t\tbreak"
     - "\tdefault:"
-    - "\t\t${6:body2}"
+    - "\t\t${6:statement3}"
     - "endswitch"
   description:
     strswitch statement
@@ -109,20 +95,20 @@ try-catch-endtry:
     - "try"
     - "\t$TM_SELECTED_TEXT$0"
     - "catch"
-    - "\t${1:codeToHnadleAbort}"
+    - "\t${1:statement}"
     - "endtry"
   description:
     try-catch flow control statement
-Function:
+function:
   prefix:
     - Function
   body:
-    - "${1|Function,Static Function,ThreadSafe Function,ThreadSafe Static Function|} ${2:funcName}(${3:param...})"
+    - "${1|Function,Static Function,ThreadSafe Function,ThreadSafe Static Function|}${2| ,/C ,/S ,/WAVE ,/DF |}${3:funcName}(${4:param...})"
     - "\t$TM_SELECTED_TEXT$0"
     - "End"
   description:
     user-defined function
-Macro:
+macro:
   prefix:
     - Macro
   body:
@@ -131,7 +117,7 @@ Macro:
     - "End"
   description:
     old-fasioned macro
-Menu:
+menu:
   prefix:
     - Menu
   body:
@@ -140,16 +126,16 @@ Menu:
     - "End"
   description:
     user-defined menu item that extends built-in menus
-Submenu:
+submenu:
   prefix:
     - Submenu
   body:
-    - "Menu \"${1:menuLabel}\""
+    - "Submenu \"${1:menuLabel}\""
     - "\t\"${2:menuItemLabel1}\", ${3:execution1}"
     - "End"
   description:
     user-defined submenu item
-Structure:
+structure:
   prefix:
     - Structure
   body:
@@ -158,14 +144,14 @@ Structure:
     - "EndStructure"
   description:
     structure definition
-cd-pragma:
+directive-pragma:
   prefix:
     - "#pragma"
   body:
-    - "#pragma ${1|rtGolobal,version,IgorVersion,hide,ModuleName,IndependentModule,rtFunctionErrors,TextEncoding,DefaultTab|} = ${2:value}"
+    - "#pragma ${1|rtGlobals,version,IgorVersion,hide,ModuleName,IndependentModule,rtFunctionErrors,TextEncoding,DefaultTab|} = ${2:value}"
   description:
     pragma statement that introduces compiler directive
-cd-if-elif-else-endif:
+directive-if-elif-else-endif:
   prefix:
     - "#if-#elif-#else"
   body:
@@ -175,10 +161,10 @@ cd-if-elif-else-endif:
     - "\t${4:body2}"
     - "#else"
     - "\t${5:body3}"
-    - "endif"
+    - "#endif"
   description:
     conditional compiler directive (with elif and else)
-cd-ifdef-endif:
+directive-ifdef-endif:
   prefix:
     - "#ifdef-#else-#endif"
   body:
@@ -186,10 +172,10 @@ cd-ifdef-endif:
     - "\t${2:body1}"
     - "#else"
     - "\t${3:body2}"
-    - "endif"
+    - "#endif"
   description:
     conditional compiler directive
-cd-ifndef-endif:
+directive-ifndef-endif:
   prefix:
     - "#ifndef-#else-#endif"
   body:
@@ -197,6 +183,6 @@ cd-ifndef-endif:
     - "\t${2:body1}"
     - "#else"
     - "\t${3:body2}"
-    - "endif"
+    - "#endif"
   description:
     conditional compiler directive
