@@ -57,7 +57,19 @@
           "command": "igorpro.openReferenceManual"
         }
       ]
-    }
+    },
+    "configuration":[
+      {
+        "title": "Igor Pro",
+        "properties": {
+          "igorpro.showReferenceManualInPreview": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Shows a preview (Webview created by built-in Markdown extension) in addition to a markdown source after [Open Reference Manual](command:igorpro.openReferenceManual) command is invoked."
+          }
+        }
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",

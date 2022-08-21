@@ -61,7 +61,16 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
                         if (quickPickItem.key !== 'all') {
                             uri = uri.with({ query: quickPickItem.key });
                         }
-                        vscode.window.showTextDocument(uri, { preview: false });
+                        vscode.window.showTextDocument(uri, { preview: false }).then(editor => {
+                            const flag = vscode.workspace.getConfiguration('igorpro').get<boolean>('showReferenceManualInPreview');
+                            if (flag) {
+                                vscode.commands.executeCommand('markdown.showPreview').then(() => {
+                                    // vscode.window.showTextDocument(editor.document).then(() => {
+                                    //     vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                                    // });
+                                });
+                            }
+                       });
                     }
                 });
             };
@@ -97,11 +106,19 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
     public provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
         if (token.isCancellationRequested) { return; }
 
+        const getFormattedStringForItem = (item: { signature?: string, description?: string, deprecatedMessage?: string, minimumVersion?: number }) => {
+            let mdText = `\`${item.signature}\``;
+            mdText += item.description ? ` \u2014 ${item.description}\n\n` : '\n\n';
+            mdText += item.deprecatedMessage ? `__deprecated:__ ${item.deprecatedMessage}\n\n` : '';
+            mdText += item.minimumVersion ? `It was added in Igor Pro ${item.minimumVersion.toFixed(2)}.\n\n` : '';
+            return mdText;
+        };
+
         if (uri.scheme === 'igorpro' && uri.authority === 'system') {
             const storage = this.storageCollection.get(uri.with({ query: '' }).toString());
             if (storage) {
                 let mdText = '# Igor Pro Reference Manual\n\n';
-                mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) and also command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';
+                mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) and command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';
 
                 for (const [itemKind, map] of storage.entries()) {
                     const itemKindLabel = igorpro.getReferenceItemKindMetadata(itemKind).label;
@@ -117,14 +134,10 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
                     // add each item
                     for (const [key, item] of map.entries()) {
                         mdText += `### ${key}\n\n`;
-                        mdText += `\`${item.signature}\``;
-                        mdText += (item.description) ? ` \u2014 ${item.description}\n\n` : '\n\n';
-                        mdText += (item.deprecatedMessage) ? `__deprecated:__ ${item.deprecatedMessage}\n\n` : '';
-                        mdText += (item.minimumVersion) ? `It was added in Igor Pro ${item.minimumVersion.toFixed(2)}.\n\n` : '';
+                        mdText += getFormattedStringForItem(item);
                         if (item.overloads) {
                             for (const overload of item.overloads) {
-                                mdText += `\`${overload.signature}\``;
-                                mdText += (overload.description) ? ` \u2014 ${overload.description}\n\n` : '\n\n';
+                                mdText += getFormattedStringForItem(overload);
                             }
                         }
                     }
