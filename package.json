@@ -12,7 +12,8 @@
     "Snippets"
   ],
   "activationEvents": [
-    "onLanguage:igorpro"
+    "onLanguage:igorpro",
+		"onCommand:igorpro.openReferenceManual"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -41,7 +42,22 @@
         "language": "igorpro",
         "path": "./syntaxes/igorpro.snippets.json"
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "igorpro.openReferenceManual",
+				"title": "Open Reference Manual",
+				"category": "Igor Pro",
+				"icon": "$(references)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "igorpro.openReferenceManual"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",
