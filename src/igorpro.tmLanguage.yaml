@@ -3,9 +3,6 @@ name: igorpro
 scopeName: source.igorpro
 fileTypes: [ ipf ]
 patterns:
-  - include: "#line-comment"
-  - match: ;
-    name: punctuation.terminator.statement.igorpro
   - match: ^\s*(#\w+\b(?:(?!;|//|$).)*)
     name: meta.preprocessor.igorpro
     captures:
@@ -96,7 +93,7 @@ patterns:
     contentName: meta.function-body.igorpro
     patterns:
       - include: "#statement"
-  # - include: "#optional-flag"
+  - include: "#statement"
 repository:
   preprocessor:
     patterns:
@@ -220,6 +217,7 @@ repository:
     patterns:
       - include: "#line-comment"
       - match: ;
+        name: punctuation.terminator.statement.igorpro
       - match: (?i)^\s*(#\w+\b(?:(?!;|//|$).)*)
         name: meta.preprocessor.igorpro
         captures:
@@ -456,11 +454,11 @@ repository:
     patterns:
       - match: "(?i)\\b(\
         abs|acos(?:)h?|AddListItem|Airy(?:AD?|BD?)|alog|Annotation(?:Info|List)|area(?:XY)?|asinh?|atan(?:2|h)?|Axis(?:Info|Label|List|ValFromPixel)|\
-        Base64(?:Decode|Encode)|Bessel(?:i|j|k|y)|betai?|BinarySearch(?:Interp)?|binomial(?:ln|Noise)?|\
+        Base64(?:Decode|Encode)|Bessel(?:i|j|k|y)|Bess(?:i|j|k|y)|betai?|BinarySearch(?:Interp)?|binomial(?:ln|Noise)?|\
         cabs|CaptureHistory(?:Start)?|ceil|centerOfMass(?:XY)?|cequal|char2num|chebyshevU?|CheckName|ChildWindowList|CleanupName|cmplx|cmpstr|conj|Contour(?:Info|Name(?:List|ToWaveRef)|Z)|ControlNameList|ConvertTextEncoding|cos(?:h|Integral)?|coth?|CountObjects(?:DFR)?|cpowi|CreateDataObjectName|CreationDate|csch?|Csr(?:Info|Wave(?:Ref)?|XWave(?:Ref)?)|CTabList|\
         DataFolder(?:Dir|Exists|List|Ref(?:Changes|sEqual|Status))|date(?:2secs|ToJulian)?|Dawson|defined|deltax|digamma|dilogarithm|Dim(?:Delta|Offset|Size)|\
         ei|elliptic(?:E|K)|enoise|equalWaves|erf(?:c(?:w|x)?)?|exists|exp(?:Int(?:egralE1)?|Noise)?|\
-        factorial|Faddeeva|fakedata|faverage(?:XY)?|FetchURL|Find(?:DimLabel|ListItem)|floor|Font(?:List|Size(?:Height|StringWidth))|Fresnel(?:Cos|Sin)|FuncRefInfo|Function(?:Info|List|Path)|\
+        factorial|Faddeeva|fakedata|faverage(?:XY)?|FetchURL|Find(?:DimLabel|ListItem)|floor|Font(?:List|Size(?:Height|StringWidth))|Fresnel(?:Cos|CS|Sin)|FuncRefInfo|Function(?:Info|List|Path)|\
         gamma(?:Inc|Noise)?|gamm(?:ln|p|q)|Gauss(?:1D|2D)?|gcd|GeometricMean|Get(?:Browser(?:Line|Selection)|DataFolder(?:DFR)?|DefaultFont(?:Size|Style)?|DimLabel|EnvironmentVariable|ErrMessage|Formula|IndependentModuleName|IndexedObjName(?:DFR)?|KeyState|RT(?:Err(?:Message|or)|Loc(?:ation|Info)|StackInfo)|ScrapText|UserData|WavesDataFolder(?:DFR)?|WindowBrowserSelection)|Gizmo(?:Info|Scale)|gnoise|Grep(?:List|String)|Guide(?:Info|NameList)|\
         Hash|hcsr|HDF5(?:Attribute|Dataset|Library|Link|Type)Info|hermite(?:Gauss)?|HyperG(?:0F1|1F1|2F1|Noise|PFQ)|\
         Igor(?:Info|Version)|imag|Image(?:Info|Name(?:List|ToWaveRef))|IndependentModuleList|Index(?:ed(?:Dir|File)|ToScale)|Integrate1D|interp(?:2D|3D)?|inverseERFC?|ItemsInList|\
@@ -510,11 +508,11 @@ repository:
   #       DateTime|ScreenResolution|StartMSTimer|ThreadProcessorCount|ticks|\
   #       e|gammaEuler|Pi|\
   #       abs|acos(?:)h?|AddListItem|Airy(?:AD?|BD?)|alog|Annotation(?:Info|List)|area(?:XY)?|asinh?|atan(?:2|h)?|Axis(?:Info|Label|List|ValFromPixel)|\
-  #       Base64(?:Decode|Encode)|Bessel(?:i|j|k|y)|betai?|BinarySearch(?:Interp)?|binomial(?:ln|Noise)?|\
+  #       Base64(?:Decode|Encode)|Bessel(?:i|j|k|y)|Bess(?:i|j|k|y)|betai?|BinarySearch(?:Interp)?|binomial(?:ln|Noise)?|\
   #       cabs|CaptureHistory(?:Start)?|ceil|centerOfMass(?:XY)?|cequal|char2num|chebyshevU?|CheckName|ChildWindowList|CleanupName|cmplx|cmpstr|conj|Contour(?:Info|Name(?:List|ToWaveRef)|Z)|ControlNameList|ConvertTextEncoding|cos(?:h|Integral)?|coth?|CountObjects(?:DFR)?|cpowi|CreateDataObjectName|CreationDate|csch?|Csr(?:Info|Wave(?:Ref)?|XWave(?:Ref)?)|CTabList|\
   #       DataFolder(?:Dir|Exists|List|Ref(?:Changes|sEqual|Status))|date(?:2secs|ToJulian)?|Dawson|defined|deltax|digamma|dilogarithm|Dim(?:Delta|Offset|Size)|\
   #       ei|elliptic(?:E|K)|enoise|equalWaves|erf(?:c(?:w|x)?)?|exists|exp(?:Int(?:egralE1)?|Noise)?|\
-  #       factorial|Faddeeva|fakedata|faverage(?:XY)?|FetchURL|Find(?:DimLabel|ListItem)|floor|Font(?:List|Size(?:Height|StringWidth))|Fresnel(?:Cos|Sin)|FuncRefInfo|Function(?:Info|List|Path)|\
+  #       factorial|Faddeeva|fakedata|faverage(?:XY)?|FetchURL|Find(?:DimLabel|ListItem)|floor|Font(?:List|Size(?:Height|StringWidth))|Fresnel(?:Cos|CS|Sin)|FuncRefInfo|Function(?:Info|List|Path)|\
   #       gamma(?:Inc|Noise)?|gamm(?:ln|p|q)|Gauss(?:1D|2D)?|gcd|GeometricMean|Get(?:Browser(?:Line|Selection)|DataFolder(?:DFR)?|DefaultFont(?:Size|Style)?|DimLabel|EnvironmentVariable|ErrMessage|Formula|IndependentModuleName|IndexedObjName(?:DFR)?|KeyState|RT(?:Err(?:Message|or)|Loc(?:ation|Info)|StackInfo)|ScrapText|UserData|WavesDataFolder(?:DFR)?|WindowBrowserSelection)|Gizmo(?:Info|Scale)|gnoise|Grep(?:List|String)|Guide(?:Info|NameList)|\
   #       Hash|hcsr|HDF5(?:Attribute|Dataset|Library|Link|Type)Info|hermite(?:Gauss)?|HyperG(?:0F1|1F1|2F1|Noise|PFQ)|\
   #       Igor(?:Info|Version)|imag|Image(?:Info|Name(?:List|ToWaveRef))|IndependentModuleList|Index(?:ed(?:Dir|File)|ToScale)|Integrate1D|interp(?:2D|3D)?|inverseERFC?|ItemsInList|\

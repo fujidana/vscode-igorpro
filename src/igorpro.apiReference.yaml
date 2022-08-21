@@ -1,0 +1,2676 @@
+# Igor Pro API References used in `vscode-igorpro`, a VS Code extension for Igor Pro.
+
+# The textual contents of this file are cited from the PDF manual (manual revision: June 24, 2022 (9.01); see links below) and also command helps (application version: 9.01 (Build 39200)) in the help browser of Igor Pro.
+# https://www.wavemetrics.com/products/igorpro/manual
+# http://www.wavemetrics.net/doc/igorman/IgorMan.pdf
+# The copyright of the manual is as below:
+# (c) Copyright 2022 WaveMetrics, Inc. All rights reserved.
+
+# This file is intended to be converted to JSON by
+# `npx js-yaml ./src/igorpro.apiReference.yaml > ./syntaxes/igorpro.apiReference.json`
+
+constants:
+  inf:
+    signature: Inf
+    description: |-
+      returns the "infinity" value.
+  nan:
+    signature: NaN
+    description: |-
+      returns the "Not a Number" value, according to the IEEE standards.
+
+      Comparison operators do not work with NaN parameters because, by definition, `NaN` compared to anything, even another `NaN`, is false. Use `numtype` to test if a value is `NaN`.
+  pi:
+    signature: Pi
+    description: |-
+      returns π (3.141592...).
+  e:
+    signature: e
+    description: |-
+      returns the base of the natural logarithm system (2.7182818...).
+  gammaeuler:
+    signature: gammaEuler
+    description: |-
+      returns the the Euler-Mascheroni constant 0.5772156649015328606065.
+    minimumVersion: 7.00
+
+variables:
+  datetime:
+    signature: DateTime
+    description: |-
+      returns number of seconds from 1/1/1904 to the current local date and time.
+
+      To get the UTC date and time, subtract `Date2Secs(-1,-1,-1)` from the value returned by `DateTime`.
+  screenresolution:
+    signature: ScreenResolution
+    description: |-
+      returns the logical resolution of your video display screen in dots per inch (dpi).
+      On Macintosh this is always 72. On Windows it is usually 96 (small fonts) or 120 (large fonts).
+  startmstimer:
+    signature: StartMSTimer
+    description: |-
+      creates a new microsecond timer and returns a timer reference number.
+  threadprocessorcount:
+    signature: ThreadProcessorCount
+    description: |-
+      returns the number of processors in your computer.
+      For example, on a Macintosh Core Duo, it would return 2.
+  ticks:
+    signature: ticks
+    description: |-
+      returns the number of ticks (approximately 1/60 second) elapsed since the operating system was initialized.
+
+functions:
+  abs:
+    signature: abs(num)
+  acos:
+    signature: acos(num)
+  acosh:
+    signature: acosh(num)
+  addlistitem:
+    signature: AddListItem(itemStr, listStr[, listSepStr[, itemNum]])
+  airya:
+    signature: airyA(x[, accuracy])
+  airyad:
+    signature: airyAD(x[, accuracy])
+  airyb:
+    signature: airyB(x[, accuracy])
+  airybd:
+    signature: airyBD(x[, accuracy])
+  alog:
+    signature: alog(num)
+  annotationinfo:
+    signature: AnnotationInfo(winNameStr, annotationNameStr[, options])
+  annotationlist:
+    signature: AnnotationList(winNameStr)
+  area:
+    signature: area(waveName[, x1, x2])
+  areaxy:
+    signature: areaXY(XWaveName, YWaveName[, x1, x2])
+  asin:
+    signature: asin(num)
+  asinh:
+    signature: asinh(num)
+  atan:
+    signature: atan(num)
+  atan2:
+    signature: atan2(y1, x1)
+  atanh:
+    signature: atanh(num)
+  axisinfo:
+    signature: AxisInfo(graphNameStr, axisNameStr)
+  axislabel:
+    signature: AxisLabel(graphNameStr, axisNameStr[, escapeBackslashes])
+    minimumVersion: 9.00
+  axislist:
+    signature: AxisList(graphNameStr)
+  axisvalfrompixel:
+    signature: AxisValFromPixel(graphNameStr, axNameStr, pixel)
+  base64decode:
+    signature: Base64Decode(inputStr)
+    minimumVersion: 8.00
+  base64encode:
+    signature: Base64Encode(inputStr)
+    minimumVersion: 8.00
+  besseli:
+    signature: Besseli(n, z)
+  besselj:
+    signature: Besselj(n, z)
+  besselk:
+    signature: Besselk(n, z)
+  bessely:
+    signature: Bessely(n, z)
+  bessi:
+    signature: BessI(n, x[, algorithm[, accuracy]])
+    deprecatedMessage: Obsolete. Use `Besseli`.
+  bessj:
+    signature: BessJ(n, x[, algorithm[, accuracy]])
+    deprecatedMessage: Obsolete. Use `Besselj`.
+  bessk:
+    signature: bessK(n, x[, algorithm[, accuracy]])
+    deprecatedMessage: Obsolete. Use `Besselk`.
+  bessy:
+    signature: bessY(n, x[, algorithm[, accuracy]])
+    deprecatedMessage: Obsolete. Use `Bessely`.
+  beta:
+    signature: beta(a, b)
+  betai:
+    signature: betai(a, b, x[, accuracy])
+  binarysearch:
+    signature: BinarySearch(waveName, val)
+  binarysearchinterp:
+    signature: BinarySearchInterp(waveName, val)
+  binomial:
+    signature: binomial(n, k)
+  binomialln:
+    signature: binomialln(a, b)
+  binomialnoise:
+    signature: binomialNoise(n, p)
+  cabs:
+    signature: cabs(z)
+  capturehistory:
+    signature: CaptureHistory(refnum, stopCapturing)
+  capturehistorystart:
+    signature: CaptureHistoryStart()
+  ceil:
+    signature: ceil(num)
+  centerofmass:
+    signature: centerOfMass(srcWave[, x1, x2])
+    minimumVersion: 9.00
+  centerofmassxy:
+    signature: centerOfMassXY(waveX, waveY)
+    minimumVersion: 9.00
+  cequal:
+    signature: cequal(z1, z2)
+  char2num:
+    signature: char2num(str)
+  chebyshev:
+    signature: chebyshev(n, x)
+  chebyshevu:
+    signature: chebyshevU(n, x)
+  checkname:
+    signature: CheckName(nameStr, objectType[, windowNameStr])
+  childwindowlist:
+    signature: ChildWindowList(hostNameStr)
+  cleanupname:
+    signature: CleanupName(nameStr, beLiberal[, maxBytes])
+  cmplx:
+    signature: cmplx(realPart, imagPart)
+  cmpstr:
+    signature: CmpStr(str1, str2[, flags])
+  conj:
+    signature: conj(z)
+  contourinfo:
+    signature: ContourInfo(graphNameStr, contourWaveNameStr, instanceNumber)
+  contournamelist:
+    signature: ContourNameList(graphNameStr, separatorStr)
+  contournametowaveref:
+    signature: ContourNameToWaveRef(graphNameStr, contourNameStr)
+  contourz:
+    signature: ContourZ(graphNameStr, contourNameStr, instance, x, y[, pointFindingTolerance])
+  controlnamelist:
+    signature: ControlNameList(winNameStr[, listSepStr[, matchStr]])
+  converttextencoding:
+    signature: ConvertTextEncoding(sourceTextStr, sourceTextEncoding, destTextEncoding, mapErrorMode, options)
+    minimumVersion: 7.00
+  cos:
+    signature: cos(angle)
+  cosh:
+    signature: cosh(num)
+  cosintegral:
+    signature: CosIntegral(z)
+    minimumVersion: 7.00
+  cot:
+    signature: cot(angle)
+  coth:
+    signature: coth(num)
+  countobjects:
+    signature: CountObjects(sourceFolderStr, objectType)
+  countobjectsdfr:
+    signature: CountObjectsDFR(dfr, objectType)
+  cpowi:
+    signature: cpowi(num, ipow)
+    deprecatedMessage: It is obsolete as the exponentiation operator `^` handles complex expressions with any combination of real, integer and complex arguments.
+  createdataobjectname:
+    signature: CreateDataObjectName(dfr, nameInStr, objectType, suffixNum, options)
+    minimumVersion: 9.00
+  creationdate:
+    signature: CreationDate(waveName)
+  csc:
+    signature: csc(angle)
+  csch:
+    signature: csch(x)
+  csrinfo:
+    signature: CsrInfo(cursorName[, graphNameStr])
+  csrwave:
+    signature: CsrWave(cursorName[, graphNameStr[, wantTraceName]])
+  csrwaveref:
+    signature: CsrWaveRef(cursorName[, graphNameStr])
+  csrxwave:
+    signature: CsrXWave(cursorName[, graphNameStr])
+  csrxwaveref:
+    signature: CsrXWaveRef(cursorName[, graphNameStr])
+  ctablist:
+    signature: CTabList()
+  datafolderdir:
+    signature: DataFolderDir(mode[, dfr])
+  datafolderexists:
+    signature: DataFolderExists(dataFolderNameStr)
+  datafolderlist:
+    signature: DataFolderList(matchStr, separatorStr[, dfr])
+    minimumVersion: 9.00
+  datafolderrefchanges:
+    signature: DataFolderRefChanges(dfr, changeType)
+    minimumVersion: 9.00
+  datafolderrefsequal:
+    signature: DataFolderRefsEqual(dfr1 , dfr2)
+  datafolderrefstatus:
+    signature: DataFolderRefStatus(dfr)
+  date:
+    signature: date()
+  date2secs:
+    signature: date2secs(year, month, day)
+  # datetime
+  datetojulian:
+    signature: dateToJulian(year, month, day )
+  dawson:
+    signature: dawson(x)
+  defined:
+    signature: defined(symbol)
+  deltax:
+    signature: deltax(waveName)
+  digamma:
+    signature: digamma(x)
+  dilogarithm:
+    signature: Dilogarithm(z)
+    minimumVersion: 7.00
+  dimdelta:
+    signature: DimDelta(waveName, dimNumber)
+  dimoffset:
+    signature: DimOffset(waveName, dimNumber)
+  dimsize:
+    signature: DimSize(waveName, dimNumber)
+  # e
+  ei:
+    signature: ei(x)
+  elliptice:
+    signature: EllipticE(x)
+  elliptick:
+    signature: EllipticK(x)
+  enoise:
+    signature: enoise(num[, RNG])
+  equalwaves:
+    signature: EqualWaves(waveA, waveB, selector[, tolerance])
+  erf:
+    signature: erf(num[, accuracy])
+  erfc:
+    signature: erfc(num[, accuracy])
+  erfcw:
+    signature: erfcw(z)
+  erfcx:
+    signature: erfcx(num)
+  exists:
+    signature: exists(objNameStr)
+  exp:
+    signature: exp(num)
+  expint:
+    signature: expInt(n, x)
+  expintegrale1:
+    signature: ExpIntegralE1(z)
+    minimumVersion: 7.00
+  expnoise:
+    signature: expNoise(b)
+  factorial:
+    signature: factorial(n)
+  faddeeva:
+    signature: Faddeeva(z)
+    minimumVersion: 8.00
+  fakedata:
+    signature: FakeData(waveName)
+  faverage:
+    signature: faverage(waveName[, x1, x2])
+  faveragexy:
+    signature: faverageXY(XWaveName, YWaveName[, x1, x2])
+  fetchurl:
+    signature: FetchURL(urlStr)
+  finddimlabel:
+    signature: FindDimLabel(waveName, dimNumber, labelString)
+  findlistitem:
+    signature: FindListItem(itemStr, listStr[, listSepStr[, start[, matchCase]]])
+  floor:
+    signature: floor(num)
+  fontlist:
+    signature: FontList(separatorStr[, options])
+  fontsizeheight:
+    signature: FontSizeHeight(fontNameStr, fontSize, fontstyle[, appearanceStr])
+  fontsizestringwidth:
+    signature: FontSizeStringWidth(fontNameStr, fontSize, fontstyle, theStr[, appearanceStr])
+  fresnelcos:
+    signature: fresnelCos(x)
+  fresnelcs:
+    signature: fresnelCS(x)
+  fresnelsin:
+    signature: fresnelSin(x)
+  funcrefinfo:
+    signature: FuncRefInfo(funcRef)
+  functioninfo:
+    signature: FunctionInfo(functionNameStr[, procedureWinTitleStr])
+  functionlist:
+    signature: FunctionList(matchStr, separatorStr, optionsStr)
+  functionpath:
+    signature: FunctionPath(functionNameStr)
+  gamma:
+    signature: gamma(num)
+  # gammaEuler
+  gammainc:
+    signature: gammaInc(a, x[, upperTail])
+  gammanoise:
+    signature: gammaNoise(a[, b])
+  gammln:
+    signature: gammln(num[, accuracy])
+  gammp:
+    signature: gammp(a, x[, accuracy])
+  gammq:
+    signature: gammq(a, x[, accuracy])
+  gauss:
+    signature: Gauss(x, xc, wx[, y, yc, wy[, z, zc, wz[, t, tc, wt]]])
+  gauss1d:
+    signature: Gauss1D(w, x)
+  gauss2d:
+    signature: Gauss2D(w, x, y)
+  gcd:
+    signature: gcd(A, B)
+  geometricmean:
+    signature: GeometricMean(a, b)
+  getbrowserline:
+    signature: GetBrowserLine(fullPathStr[, mode])
+  getbrowserselection:
+    signature: GetBrowserSelection(index[, mode])
+  getdatafolder:
+    signature: GetDataFolder(mode[, dfr])
+  getdatafolderdfr:
+    signature: GetDataFolderDFR()
+  getdefaultfont:
+    signature: GetDefaultFont(winName)
+  getdefaultfontsize:
+    signature: GetDefaultFontSize(graphNameStr, axisNameStr)
+  getdefaultfontstyle:
+    signature: GetDefaultFontStyle(graphNameStr, axisNameStr)
+  getdimlabel:
+    signature: GetDimLabel(waveName, dimNumber, dimIndex)
+  getenvironmentvariable:
+    signature: GetEnvironmentVariable(varName)
+    minimumVersion: 7.00
+  geterrmessage:
+    signature: GetErrMessage(errorCode[, substitutionOption])
+  getformula:
+    signature: GetFormula(objName)
+  getindependentmodulename:
+    signature: GetIndependentModuleName()
+  getindexedobjname:
+    signature: GetIndexedObjName(sourceFolderStr, objectType, index)
+  getindexedobjnamedfr:
+    signature: GetIndexedObjNameDFR(dfr, objectType, index)
+  getkeystate:
+    signature: GetKeyState(flags)
+  getrterrmessage:
+    signature: GetRTErrMessage()
+  getrterror:
+    signature: GetRTError(flag)
+  getrtlocation:
+    signature: GetRTLocation(sleepMS)
+  getrtlocinfo:
+    signature: GetRTLocInfo(code)
+  getrtstackinfo:
+    signature: GetRTStackInfo(selector)
+  getscraptext:
+    signature: GetScrapText()
+  getuserdata:
+    signature: GetUserData(winName, objID, userdataName)
+  getwavesdatafolder:
+    signature: GetWavesDataFolder(waveName, kind)
+  getwavesdatafolderdfr:
+    signature: GetWavesDataFolderDFR(waveName)
+  getwindowbrowserselection:
+    signature: GetWindowBrowserSelection(mode)
+    minimumVersion: 9.00
+  gizmoinfo:
+    signature: GizmoInfo(nameStr, key)
+  gizmoscale:
+    signature: GizmoScale(dataValue, dimNumber[, gizmoNameStr])
+    minimumVersion: 7.00
+  gnoise:
+    signature: gnoise(num[, RNG])
+  greplist:
+    signature: GrepList(listStr, regExprStr[, reverse[, listSepStr]])
+  grepstring:
+    signature: GrepString(string, regExprStr)
+  guideinfo:
+    signature: GuideInfo(winNameStr, guideNameStr)
+  guidenamelist:
+    signature: GuideNameList(winNameStr, optionsStr)
+  hash:
+    signature: Hash(inputStr, method)
+  hcsr:
+    signature: hcsr(cursorName[, graphNameStr])
+  hdf5attributeinfo:
+    signature: HDF5AttributeInfo(locationID, objectNameStr, objectType, attributeNameStr, options, di)
+  hdf5datasetinfo:
+    signature: HDF5DatasetInfo(locationID, datasetNameStr, options, di)
+  hdf5libraryinfo:
+    signature: HDF5LibraryInfo(options)
+  hdf5linkinfo:
+    signature: HDF5LinkInfo(locationID, pathStr, options, li)
+    minimumVersion: 9.00
+  hdf5typeinfo:
+    signature: HDF5TypeInfo(locationID, datasetOrGroupNameStr, attributeNameStr, memberName, options, dti)
+  hermite:
+    signature: hermite(n, x)
+  hermitegauss:
+    signature: hermiteGauss(n, x)
+  hyperg0f1:
+    signature: hyperG0F1(b, z)
+  hyperg1f1:
+    signature: hyperG1F1(a, b, z)
+  hyperg2f1:
+    signature: hyperG2F1(a, b, c, z)
+  hypergnoise:
+    signature: hyperGNoise(m, n, k)
+  hypergpfq:
+    signature: hyperGPFQ(waveA, waveB, z)
+  # i
+  igorinfo:
+    signature: IgorInfo(selector)
+  igorversion:
+    signature: IgorVersion()
+  # ilim
+  imag:
+    signature: imag(z)
+  imageinfo:
+    signature: ImageInfo(graphNameStr, imageWaveNameStr, instanceNumber)
+  imagenamelist:
+    signature: ImageNameList(graphNameStr, separatorStr)
+  imagenametowaveref:
+    signature: ImageNameToWaveRef(graphNameStr, imageNameStr)
+  independentmodulelist:
+    signature: IndependentModuleList( listSepStr)
+  indexeddir:
+    signature: IndexedDir(pathName, index, flags[, separatorStr])
+  indexedfile:
+    signature: IndexedFile(pathName, index, fileTypeOrExtStr[, creatorStr, separatorStr])
+  indextoscale:
+    signature: IndexToScale(wave, index, dim)
+    minimumVersion: 7.00
+  # Inf
+  integrate1d:
+    signature: Integrate1D(UserFunctionName, min_x, max_x[, options [, count[, pWave]]])
+  interp:
+    signature: interp(x1, xwaveName, ywaveName)
+  interp2d:
+    signature: Interp2D(srcWaveName, x, y)
+  interp3d:
+    signature: Interp3D(srcWave, x, y, z[, triangulationWave])
+  inverseerf:
+    signature: inverseErf(x)
+  inverseerfc:
+    signature: inverseErfc(x)
+  itemsinlist:
+    signature: ItemsInList(listStr[, listSepStr])
+  # j
+  jacobicn:
+    signature: JacobiCn(x, k)
+    minimumVersion: 7.00
+  jacobisn:
+    signature: JacobiSn(x, k )
+    minimumVersion: 7.00
+  # jlim
+  juliantodate:
+    signature: JulianToDate(julianDay, format)
+  laguerre:
+    signature: laguerre(n, x)
+  laguerrea:
+    signature: laguerreA(n, k, x)
+  laguerregauss:
+    signature: laguerreGauss(p, m, r)
+  lambertw:
+    signature: LambertW(z, branch)
+    minimumVersion: 7.00
+  layoutinfo:
+    signature: LayoutInfo(winNameStr, itemNameStr)
+  leftx:
+    signature: leftx(waveName)
+  legendrea:
+    signature: legendreA(n, m, x)
+  limit:
+    signature: limit(num, low, high)
+  listmatch:
+    signature: ListMatch(listStr, matchStr[, listSepStr])
+  listtotextwave:
+    signature: ListToTextWave(listStr, separatorStr)
+    minimumVersion: 7.00
+  listtowaverefwave:
+    signature: ListToWaveRefWave(stringList[, options])
+    minimumVersion: 7.00
+  ln:
+    signature: ln(num)
+  log:
+    signature: log(num)
+  lognormalnoise:
+    signature: logNormalNoise(m, s)
+  lorentziannoise:
+    signature: lorentzianNoise(a, b)
+  lowerstr:
+    signature: LowerStr(str)
+  macroinfo:
+    signature: MacroInfo(macroNameStr)
+    minimumVersion: 9.01
+  macrolist:
+    signature: MacroList(matchStr, separatorStr, optionsStr)
+  macropath:
+    signature: MacroPath(macroNameStr)
+    minimumVersion: 9.01
+  magsqr:
+    signature: magsqr(z)
+  mandelbrotpoint:
+    signature: MandelbrotPoint(x, y, maxIterations, algorithm)
+  marcumq:
+    signature: MarcumQ(m, a, b)
+  matrixcondition:
+    signature: MatrixCondition(wave2D, mode)
+    minimumVersion: 7.00
+  matrixdet:
+    signature: MatrixDet(dataMatrix)
+  matrixdot:
+    signature: MatrixDot(waveA, waveB)
+  matrixrank:
+    signature: MatrixRank(matrixWaveA[, conditionNumberA])
+  matrixtrace:
+    signature: MatrixTrace(dataMatrix)
+  max:
+    signature: max(num1, num2[, num3...num200])
+  mean:
+    signature: mean(waveName[, x1, x2])
+  median:
+    signature: median(waveName[, x1, x2])
+    minimumVersion: 7.00
+  min:
+    signature: min(num1, num2[, num3...num200])
+  mod:
+    signature: mod(num, div)
+  moddate:
+    signature: ModDate(waveName)
+  mpfxemgpeak:
+    signature: MPFXEMGPeak(cw, yw, xw)
+  mpfxexpconvexppeak:
+    signature: MPFXExpConvExpPeak(cw, yw, xw)
+  mpfxgausspeak:
+    signature: MPFXGaussPeak(cw, yw, xw)
+  mpfxlorentzianpeak:
+    signature: MPFXLorentzianPeak(cw, yw, xw)
+  mpfxvoigtpeak:
+    signature: MPFXVoigtPeak(cw, yw, xw)
+  nameofwave:
+    signature: NameOfWave(wave)
+  # NaN
+  newfreedatafolder:
+    signature: NewFreeDataFolder()
+  newfreewave:
+    signature: NewFreeWave(type, npoints[, nameStr])
+  norm:
+    signature: norm(srcWave)
+  normalizeunicode:
+    signature: NormalizeUnicode(sourceTextStr, normalizationForm[, options])
+    minimumVersion: 7.00
+  note:
+    signature: note(waveName)
+  num2char:
+    signature: num2char(num[, options])
+  num2istr:
+    signature: num2istr(num)
+  num2str:
+    signature: num2str(num[, formatStr])
+  numberbykey:
+    signature: NumberByKey(keyStr, kwListStr[, keySepStr[, listSepStr[, matchCase]]])
+  numpnts:
+    signature: numpnts(waveName)
+  numtype:
+    signature: numtype(num)
+  numvarordefault:
+    signature: NumVarOrDefault(pathStr, defVal)
+  nvar_exists:
+    signature: NVAR_Exists(name)
+  operationlist:
+    signature: OperationList(matchStr, separatorStr, optionsStr)
+  # p
+  p2rect:
+    signature: p2rect(z)
+  padstring:
+    signature: PadString(str, finalLength, padValue)
+  panelresolution:
+    signature: PanelResolution(wName)
+    minimumVersion: 7.00
+  paramisdefault:
+    signature: ParamIsDefault(pName)
+  parsefilepath:
+    signature: ParseFilePath(mode, pathInStr, separatorStr, whichEnd, whichElement)
+  pathlist:
+    signature: PathList(matchStr, separatorStr, optionsStr)
+  pcsr:
+    signature: pcsr(cursorName[, graphNameStr])
+  # Pi
+  pictinfo:
+    signature: PICTInfo(pictNameStr)
+  pictlist:
+    signature: PICTList(matchStr, separatorStr, optionsStr)
+  pixelfromaxisval:
+    signature: PixelFromAxisVal(graphNameStr, axNameStr, val)
+  pnt2x:
+    signature: pnt2x(waveName, pointNum)
+  poissonnoise:
+    signature: poissonNoise(num)
+  poly:
+    signature: poly(coefsWaveName, x1)
+  poly2d:
+    signature: poly2D(coefsWaveName, x1, y1)
+  polygonarea:
+    signature: PolygonArea(xWave, yWave)
+  possiblyquotename:
+    signature: PossiblyQuoteName(nameStr)
+  proceduretext:
+    signature: ProcedureText(macroOrFunctionNameStr[, linesOfContext[, procedureWinTitleStr]])
+  procedureversion:
+    signature: ProcedureVersion(macroOrFunctionNameStr[, procedureWinTitleStr])
+    minimumVersion: 9.01
+  # q
+  qcsr:
+    signature: qcsr(cursorName[, graphNameStr])
+  # r
+  r2polar:
+    signature: r2polar(z)
+  real:
+    signature: real(z)
+  removebykey:
+    signature: RemoveByKey(keyStr, kwListStr[, keySepStr[, listSepStr[, matchCase]]])
+  removeending:
+    signature: RemoveEnding(str[, endingStr])
+  removefromlist:
+    signature: RemoveFromList(itemOrListStr, listStr[, listSepStr[, matchCase]])
+  removelistitem:
+    signature: RemoveListItem(index, listStr[, listSepStr[, offset]])
+  replacenumberbykey:
+    signature: ReplaceNumberByKey(keyStr, kwListStr, newNum[, keySepStr[, listSepStr[, case]]])
+  replacestring:
+    signature: ReplaceString(replaceThisStr, inStr, withThisStr[, caseSense[, maxReplace]])
+  replacestringbykey:
+    signature: ReplaceStringByKey(keyStr, kwListStr, newTextStr[, keySepStr[, listSepStr[, matchCase]]])
+  replicatestring:
+    signature: ReplicateString(str, totalNumCopies)
+    minimumVersion: 9.00
+  rightx:
+    signature: rightx(waveName)
+  round:
+    signature: round(num)
+  # s
+  sawtooth:
+    signature: sawtooth(num)
+  scaletoindex:
+    signature: ScaleToIndex(waveName, coordValue, dim)
+    minimumVersion: 7.00
+  # ScreenResolution
+  sec:
+    signature: sec(angle)
+  sech:
+    signature: sech(x)
+  secs2date:
+    signature: Secs2Date(seconds, format[, sep])
+  secs2time:
+    signature: Secs2Time(seconds, format[, fracDigits])
+  selectnumber:
+    signature: SelectNumber(whichOne, val1, val2[, val3])
+  selectstring:
+    signature: SelectString(whichOne, str1, str2[, str3])
+  setenvironmentvariable:
+    signature: SetEnvironmentVariable(varName, varValue)
+    minimumVersion: 7.00
+  sign:
+    signature: sign(num)
+  sin:
+    signature: sin(angle)
+  sinc:
+    signature: sinc(num)
+  sinh:
+    signature: sinh(num)
+  sinintegral:
+    signature: SinIntegral(z)
+    minimumVersion: 7.00
+  sortlist:
+    signature: SortList(listStr[, listSepStr[, options])
+  specialcharacterinfo:
+    signature: SpecialCharacterInfo(notebookNameStr, specialCharacterNameStr, whichStr)
+  specialcharacterlist:
+    signature: SpecialCharacterList(notebookNameStr, separatorStr, mask, flags)
+  specialdirpath:
+    signature: SpecialDirPath(dirIDStr, domain, flags, createDir)
+  sphericalbessj:
+    signature: sphericalBessJ(n, x[, accuracy])
+  sphericalbessjd:
+    signature: sphericalBessJD(n, x[, accuracy])
+  sphericalbessy:
+    signature: sphericalBessY(n, x[, accuracy])
+  sphericalbessyd:
+    signature: sphericalBessYD(n, x[, accuracy])
+  sphericalharmonics:
+    signature: sphericalHarmonics(L, M, theta, phi)
+  sqrt:
+    signature: sqrt(num)
+  # StartMSTimer
+  statsbetacdf:
+    signature: StatsBetaCDF(x, p, q[, a, b])
+  statsbetapdf:
+    signature: StatsBetaPDF(x, p, q[, a, b])
+  statsbinomialcdf:
+    signature: StatsBinomialCDF(x, p, N)
+  statsbinomialpdf:
+    signature: StatsBinomialPDF(x, p, N)
+  statscauchycdf:
+    signature: StatsCauchyCDF(x, mu, sigma)
+  statscauchypdf:
+    signature: StatsCauchyPDF(x, mu, sigma)
+  statschicdf:
+    signature: StatsChiCDF(x, n)
+  statschipdf:
+    signature: StatsChiPDF(x, n)
+  statscmssdcdf:
+    signature: StatsCMSSDCDF(C, n)
+  statscorrelation:
+    signature: StatsCorrelation(waveA[, waveB])
+  statsdexpcdf:
+    signature: StatsDExpCDF(x, mu, sigma)
+  statsdexppdf:
+    signature: StatsDExpPDF(x, mu, sigma)
+  statserlangcdf:
+    signature: StatsErlangCDF(x, b, c)
+  statserlangpdf:
+    signature: StatsErlangPDF(x, b, c)
+  statserrorpdf:
+    signature: StatsErrorPDF(x, a, b, c)
+  statsevaluecdf:
+    signature: StatsEValueCDF(x, mu, sigma)
+  statsevaluepdf:
+    signature: StatsEValuePDF(x, mu, sigma)
+  statsexpcdf:
+    signature: StatsExpCDF(x, mu, sigma)
+  statsexppdf:
+    signature: StatsExpPDF(x, mu, sigma)
+  statsfcdf:
+    signature: StatsFCDF(x, n1, n2)
+  statsfpdf:
+    signature: StatsFPDF(x, n1, n2)
+  statsfriedmancdf:
+    signature: StatsFriedmanCDF(x, n, m, method, useTable)
+  statsgammacdf:
+    signature: StatsGammaCDF(x, mu, sigma, gamma)
+  statsgammapdf:
+    signature: StatsGammaPDF(x, mu, sigma, gamma)
+  statsgeometriccdf:
+    signature: StatsGeometricCDF(x, p)
+  statsgeometricpdf:
+    signature: StatsGeometricPDF(x, p)
+  statsgevcdf:
+    signature: StatsGEVCDF(x, mu, sigma, xi)
+  statsgevpdf:
+    signature: StatsGEVPDF(x, mu, sigma, xi)
+  statshypergcdf:
+    signature: StatsHyperGCDF(x, m, n, k)
+  statshypergpdf:
+    signature: StatsHyperGPDF(x, m, n, k)
+  statsinvbetacdf:
+    signature: StatsInvBetaCDF(cdf, p, q[, a, b])
+  statsinvbinomialcdf:
+    signature: StatsInvBinomialCDF(cdf, p, N)
+  statsinvcauchycdf:
+    signature: StatsInvCauchyCDF(cdf, mu, sigma)
+  statsinvchicdf:
+    signature: StatsInvChiCDF(x, n)
+  statsinvcmssdcdf:
+    signature: StatsInvCMSSDCDF(cdf, n)
+  statsinvdexpcdf:
+    signature: StatsInvDExpCDF(cdf, mu, sigma)
+  statsinvevaluecdf:
+    signature: StatsInvEValueCDF(cdf, mu, sigma)
+  statsinvexpcdf:
+    signature: StatsInvExpCDF(cdf, mu, simga)
+  statsinvfcdf:
+    signature: StatsInvFCDF(x, n1, n2)
+  statsinvfriedmancdf:
+    signature: StatsInvFriedmanCDF(cdf, n, m, method, useTable)
+  statsinvgammacdf:
+    signature: StatsInvGammaCDF(cdf, mu, sigma, gamma)
+  statsinvgeometriccdf:
+    signature: StatsInvGeometricCDF(cdf, p)
+  statsinvkuipercdf:
+    signature: StatsInvKuiperCDF(cdf)
+  statsinvlogisticcdf:
+    signature: StatsInvLogisticCDF(cdf, a, b)
+  statsinvlognormalcdf:
+    signature: StatsInvLogNormalCDF(cdf, sigma, theta, mu)
+  statsinvmaxwellcdf:
+    signature: StatsInvMaxwellCDF(cdf, k)
+  statsinvmoorecdf:
+    signature: StatsInvMooreCDF(cdf, N)
+  statsinvnbinomialcdf:
+    signature: StatsInvNBinomialCDF(cdf, k, p)
+  statsinvncchicdf:
+    signature: StatsInvNCChiCDF(cdf, n, d)
+  statsinvncfcdf:
+    signature: StatsInvNCFCDF(cdf, n1, n2, d)
+  statsinvnormalcdf:
+    signature: StatsInvNormalCDF(cdf, mu, sigma)
+  statsinvparetocdf:
+    signature: StatsInvParetoCDF(cdf, a, c)
+  statsinvpoissoncdf:
+    signature: StatsInvPoissonCDF(cdf, lambda)
+  statsinvpowercdf:
+    signature: StatsInvPowerCDF(cdf, b, c)
+  statsinvqcdf:
+    signature: StatsInvQCDF(cdf, r, c, df)
+  statsinvqpcdf:
+    signature: StatsInvQpCDF(ng, nt, df, alpha, side, sSizeWave)
+  statsinvrayleighcdf:
+    signature: StatsInvRayleighCDF(cdf[, sigma[, mu]])
+  statsinvrectangularcdf:
+    signature: StatsInvRectangularCDF(cdf, a, b)
+  statsinvspearmancdf:
+    signature: StatsInvSpearmanCDF(cdf, N)
+  statsinvstudentcdf:
+    signature: StatsInvStudentCDF(cdf, n)
+  statsinvtopdowncdf:
+    signature: StatsInvTopDownCDF(cdf, N)
+  statsinvtriangularcdf:
+    signature: StatsInvTriangularCDF(cdf, a, b, c)
+  statsinvusquaredcdf:
+    signature: StatsInvUSquaredCDF(cdf, n, m, method, useTable)
+  statsinvvonmisescdf:
+    signature: StatsInvVonMisesCDF(cdf, a, b)
+  statsinvweibullcdf:
+    signature: StatsInvWeibullCDF(cdf, mu, sigma, gamma)
+  statskuipercdf:
+    signature: StatsKuiperCDF(V)
+  statslogisticcdf:
+    signature: StatsLogisticCDF(x, a, b)
+  statslogisticpdf:
+    signature: StatsLogisticPDF(x, a, b)
+  statslognormalcdf:
+    signature: StatsLogNormalCDF(x, sigma[, theta, mu])
+  statslognormalpdf:
+    signature: StatsLogNormalPDF(x, sigma[, theta, mu])
+  statsmaxwellcdf:
+    signature: StatsMaxwellCDF(x, k)
+  statsmaxwellpdf:
+    signature: StatsMaxwellPDF(x, k)
+  statsmedian:
+    signature: StatsMedian(waveName)
+  statsmoorecdf:
+    signature: StatsMooreCDF(x, N)
+  statsnbinomialcdf:
+    signature: StatsNBinomialCDF(x, k, p)
+  statsnbinomialpdf:
+    signature: StatsNBinomialPDF(x, k, p)
+  statsncchicdf:
+    signature: StatsNCChiCDF(x, n, d)
+  statsncchipdf:
+    signature: StatsNCChiPDF(x, n, d)
+  statsncfcdf:
+    signature: StatsNCFCDF(x, n1, n2, d)
+  statsncfpdf:
+    signature: StatsNCFPDF(x, n1, n2, d)
+  statsnctcdf:
+    signature: StatsNCTCDF(x, df, d)
+  statsnctpdf:
+    signature: StatsNCTPDF(x, df, d)
+  statsnormalcdf:
+    signature: StatsNormalCDF(x, mu, sigma)
+  statsnormalpdf:
+    signature: StatsNormalPDF(x, mu, sigma)
+  statsparetocdf:
+    signature: StatsParetoCDF(x, a, c)
+  statsparetopdf:
+    signature: StatsParetoPDF(x, a, c)
+  statspermute:
+    signature: StatsPermute(waveA, waveB, dir)
+  statspoissoncdf:
+    signature: StatsPoissonCDF(x, lambda)
+  statspoissonpdf:
+    signature: StatsPoissonPDF(x, lambda)
+  statspowercdf:
+    signature: StatsPowerCDF(x, b, c)
+  statspowernoise:
+    signature: StatsPowerNoise(b, c)
+  statspowerpdf:
+    signature: StatsPowerPDF(x, b, c)
+  statsqcdf:
+    signature: StatsQCDF(q, r, c, df)
+  statsqpcdf:
+    signature: StatsQpCDF(q, nr, nt, df, side, sSizeWave)
+  statsrayleighcdf:
+    signature: StatsRayleighCDF(x[, sigma[, mu]])
+  statsrayleighpdf:
+    signature: StatsRayleighPDF(x[, sigma[, mu]])
+  statsrectangularcdf:
+    signature:  StatsRectangularCDF(x, a, b)
+  statsrectangularpdf:
+    signature: StatsRectangularPDF(x, a, b)
+  statsrunscdf:
+    signature: StatsRunsCDF(n, r)
+  statsspearmanrhocdf:
+    signature: StatsSpearmanRhoCDF(r, N)
+  statsstudentcdf:
+    signature: StatsStudentCDF(t, n)
+  statsstudentpdf:
+    signature: StatsStudentPDF(t, n)
+  statstopdowncdf:
+    signature: StatsTopDownCDF(r, N)
+  statstriangularcdf:
+    signature: StatsTriangularCDF(x, a, b, c)
+  statstriangularpdf:
+    signature: StatsTriangularPDF(x, a, b, c)
+  statstrimmedmean:
+    signature: StatsTrimmedMean(waveName, trimValue)
+  statsusquaredcdf:
+    signature: StatsUSquaredCDF(u2, n, m, method, useTable)
+  statsvonmisescdf:
+    signature: StatsVonMisesCDF(x, a, b)
+  statsvonmisesnoise:
+    signature: StatsVonMisesNoise(a, b)
+  statsvonmisespdf:
+    signature: StatsVonMisesPDF(theta, a, b)
+  statswaldcdf:
+    signature: StatsWaldCDF(x, mu, lambda)
+  statswaldpdf:
+    signature: StatsWaldPDF(x, mu, lambda)
+  statsweibullcdf:
+    signature: StatsWeibullCDF(x, mu, sigma, gamma)
+  statsweibullpdf:
+    signature: StatsWeibullPDF(x, mu, sigma, gamma)
+  stopmstimer:
+    signature: StopMSTimer(timerRefNum)
+  str2num:
+    signature: str2num(str)
+  stringbykey:
+    signature: StringByKey(keyStr, kwListStr[, keySepStr[, listSepStr[, matchCase]]])
+  stringcrc:
+    signature: StringCRC(inCRC, str)
+  stringfromlist:
+    signature: StringFromList(index, listStr[, listSepStr[, offset]])
+  stringlist:
+    signature: StringList(matchStr, separatorStr[, dfr])
+  stringmatch:
+    signature: StringMatch(string, matchStr)
+  stringtounsignedbytewave:
+    signature: StringToUnsignedByteWave(str)
+    minimumVersion: 9.00
+  strlen:
+    signature: strlen(str)
+  strsearch:
+    signature: strsearch(str, findThisStr, start[, options])
+  strvarordefault:
+    signature: StrVarOrDefault(pathStr, defStrVal)
+  studenta:
+    signature: StudentA(t, DegFree)
+    deprecatedMessage: It is deprecated. New code should use the more accurate `StatsStudentCDF`.
+  studentt:
+    signature: StudentT(Prob, DegFree)
+    deprecatedMessage: It is deprecated. New code should use the more accurate `StatsInvStudentCDF`.
+  sum:
+    signature: sum(waveName[, x1, x2])
+  svar_exists:
+    signature: SVAR_Exists(name)
+  # t
+  tableinfo:
+    signature: TableInfo(winNameStr, itemIndex)
+  tagval:
+    signature: TagVal(code)
+  tagwaveref:
+    signature: TagWaveRef()
+  tan:
+    signature: tan(angle)
+  tanh:
+    signature: tanh(num)
+  textencodingcode:
+    signature: TextEncodingCode(textEncodingNameStr)
+    minimumVersion: 7.00
+  textencodingname:
+    signature: TextEncodingName(textEncoding , index)
+    minimumVersion: 7.00
+  textfile:
+    signature: TextFile(pathName, index[, creatorStr])
+  threadgroupcreate:
+    signature: ThreadGroupCreate(nt)
+  threadgroupgetdf:
+    signature: ThreadGroupGetDF(tgID, waitms)
+    deprecatedMessage: "`ThreadGroupGetDFR` should be used instead of `ThreadGroupGetDF` which causes memory leaks."
+  threadgroupgetdfr:
+    signature: ThreadGroupGetDFR(tgID, waitms)
+  threadgrouprelease:
+    signature: ThreadGroupRelease(tgID[, beGraceful])
+  threadgroupwait:
+    signature: ThreadGroupWait(tgID, waitms)
+  # ThreadProcessorCount
+  threadreturnvalue:
+    signature: ThreadReturnValue(tgID, index)
+  # tick
+  time:
+    signature: time()
+  tracefrompixel:
+    signature: TraceFromPixel(xpixel, ypixel, optionsString)
+  traceinfo:
+    signature: TraceInfo(graphNameStr, yWaveNameStr, instance)
+  tracenamelist:
+    signature: TraceNameList(graphNameStr, separatorStr, optionsFlag)
+  tracenametowaveref:
+    signature: TraceNameToWaveRef(graphNameStr, traceNameStr)
+  trimstring:
+    signature: TrimString(str[, simplifyInternalSpaces])
+    minimumVersion: 7.00
+  trunc:
+    signature: trunc(num)
+  uniquename:
+    signature: UniqueName(baseName, objectType, startSuffix[, windowNameStr])
+  unpadstring:
+    signature: UnPadString(str, padValue)
+  unsetenvironmentvariable:
+    signature: UnsetEnvironmentVariable(varName)
+    minimumVersion: 7.00
+  upperstr:
+    signature: UpperStr(str)
+  urldecode:
+    signature: URLDecode(inputStr)
+  urlencode:
+    signature: URLEncode(inputStr)
+  variablelist:
+    signature: VariableList(matchStr, separatorStr, variableTypeCode[, dfr])
+  variance:
+    signature: Variance(inWave[, x1, x2])
+  vcsr:
+    signature: vcsr(cursorName[, graphNameStr])
+  voigtfunc:
+    signature: VoigtFunc(X, Y)
+    minimumVersion: 7.00
+  voigtpeak:
+    signature: VoigtPeak(w, x)
+    minimumVersion: 8.00
+  wavecrc:
+    signature: WaveCRC(inCRC, waveName[, checkHeader])
+  wavedatatostring:
+    signature: WaveDataToString(wave)
+    minimumVersion: 9.00
+  wavedims:
+    signature: WaveDims(wave)
+  waveexists:
+    signature: WaveExists(wave)
+  wavehash:
+    signature: WaveHash(wave, method)
+  waveinfo:
+    signature: WaveInfo(wave, 0)
+  wavelist:
+    signature: WaveList(matchStr, separatorStr, optionsStr[, dfr])
+  wavemax:
+    signature: WaveMax(waveName[, x1, x2])
+  wavemin:
+    signature: WaveMin(waveName[, x1, x2])
+  waveminandmax:
+    signature: WaveMinAndMax(wave[, x1, x2])
+    minimumVersion: 9.00
+  wavemodcount:
+    signature: WaveModCount(wave)
+    minimumVersion: 8.00
+  wavename:
+    signature: WaveName(windowNameStr, index, type)
+  waverefindexed:
+    signature: WaveRefIndexed(windowNameStr, index, type)
+  waverefindexeddfr:
+    signature: WaveRefIndexedDFR(dfr, index)
+  waverefsequal:
+    signature: WaveRefsEqual(w1 , w2)
+  waverefwavetolist:
+    signature: WaveRefWaveToList(waveRefWave, option)
+    minimumVersion: 7.00
+  wavetextencoding:
+    signature: WaveTextEncoding(wave, element, getEffectiveTextEncoding)
+    minimumVersion: 6.30
+  wavetype:
+    signature: WaveType(waveName[, selector])
+  waveunits:
+    signature: WaveUnits(waveName, dimNumber)
+  whichlistitem:
+    signature: WhichListItem(itemStr, listStr[, listSepStr[, startIndex[, matchCase]]])
+  winlist:
+    signature: WinList(matchStr, separatorStr, optionsStr)
+  winname:
+    signature: WinName(index, windowTypes[, visibleWindowsOnly[, floatKind]])
+  winrecreation:
+    signature: WinRecreation(winStr, options)
+  wintype:
+    signature: WinType(winNameStr)
+  wnoise:
+    signature: wnoise(shape, scale)
+  # x
+  x2pnt:
+    signature: x2pnt(waveName, x1)
+  xcsr:
+    signature: xcsr(cursorName[, graphNameStr])
+  xwavename:
+    signature: XWaveName(graphNameStr, traceNameStr)
+  xwavereffromtrace:
+    signature: XWaveRefFromTrace(graphNameStr, traceNameStr)
+  # y
+  # z
+  zcsr:
+    signature: zcsr(cursorName[, graphNameStr])
+  zerniker:
+    signature: ZernikeR(n, m, r)
+  zeta:
+    signature: zeta(a, b[, terms])
+    minimumVersion: 7.00
+  # function-like features categorized in "Programming"
+  hdf5savedatahook:
+    signature: HDF5SaveDataHook(s)
+    minimumVersion: 9.00
+
+operations:
+  abort:
+    signature: Abort [errorMessageStr]
+  addfifodata:
+    signature: AddFIFOData FIFOName, FIFO_channelExpr1[, FIFO_channelExpr2...]
+  addfifovectdata:
+    signature: AddFIFOVectData FIFOName, FIFO_channelKeyExpr1[, FIFO_channelKeyExpr2...]
+  addmovieaudio:
+    signature: AddMovieAudio soundWave
+  addmovieframe:
+    signature: AddMovieFrame [/PICT=pictName]
+  addwavestoboxplot:
+    signature: AddWavesToBoxPlot [/W=winName/T=traceName/INST=traceInstance] wave1[, wave2...]
+    minimumVersion: 8.00
+  addwavestoviolinplot:
+    signature: AddWavesToViolinPlot [/W=winName/T=traceName/INST=traceInstance] wave1[, wave2...]
+    minimumVersion: 8.00
+  adoptfiles:
+    signature: AdoptFiles [flags]
+  apmath:
+    signature: APMath [flags] destStr = Expression
+  append:
+    signature: Append ...
+  appendboxplot:
+    signature: AppendBoxPlot [flags] wave1[, wave2...] [vs xWave]
+    minimumVersion: 8.00
+  appendimage:
+    signature: AppendImage [/G=g/W=winName][axisFlags] matrix [vs {xWaveName, yWaveName}]
+  appendlayoutobject:
+    signature: AppendLayoutObject [flags] objectType objectName
+  appendmatrixcontour:
+    signature: AppendMatrixContour [axisFlags][/F=formatStr /W=winName] zWave [vs {xWave, yWave}]
+  appendtext:
+    signature: AppendText [/W=winName/N/NOCR [=n]] textStr
+  appendtogizmo:
+    signature: AppendToGizmo [flags] keyword[=value]
+  appendtograph:
+    signature: AppendToGraph [flags] wave1[, wave2...] [vs xwaveName]
+  appendtolayout:
+    signature: AppendToLayout [flags] objectSpec1[, objectSpec2...]
+  appendtotable:
+    signature: AppendToTable [/W=winName] columnSpec1[, columnSpec2...]
+  appendviolinplot:
+    signature: AppendViolinPlot [flags] wave1[, wave2...] [vs xWave]
+    minimumVersion: 8.00
+  appendxyzcontour:
+    signature: AppendXYZContour [/W=winName/F=formatStr][axisFlags] zWave [vs {xWave, yWave}]
+  autopositionwindow:
+    signature: AutoPositionWindow [/E/M=m/R=relWindow] [windowName]
+  backgroundinfo:
+    signature: BackgroundInfo
+  beep:
+    signature: Beep
+  beziertopolygon:
+    signature: BezierToPolygon [flags] bezXWave, bezYWave
+    minimumVersion: 9.00
+  boundingball:
+    signature: BoundingBall [/F/Z] scatterWave
+  boxsmooth:
+    signature: BoxSmooth box, srcWave, smoothedWave
+  browseurl:
+    signature: BrowseURL [/Z] urlStr
+  buildmenu:
+    signature: BuildMenu menuNameStr
+  button:
+    signature: Button [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  cd:
+    signature: cd dataFolderSpec
+  chart:
+    signature: Chart [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  checkbox:
+    signature: CheckBox [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  checkdisplayed:
+    signature: CheckDisplayed [/A/W] waveName1[, waveName2...]
+  choosecolor:
+    signature: ChooseColor [/A[=a]/C=(r,g,b[,a])]
+  close:
+    signature: Close [/A] [fileRefNum]
+  closehelp:
+    signature: CloseHelp [/ALL/FILE=fileNameStr/NAME=helpNameStr/P=pathName]
+    minimumVersion: 7.00
+  closemovie:
+    signature: CloseMovie [/Z]
+  closeproc:
+    signature: CloseProc ...
+    overloads:
+      - signature: CloseProc /NAME=procNameStr [flags]
+      - signature: CloseProc /FILE=fileNameStr [flags]
+  colorscale:
+    signature: ColorScale [flags][keyword1=value1[, keyword2=value2...]] [axisLabelStr]
+  colortab2wave:
+    signature: ColorTab2Wave colorTableName
+  concatenate:
+    signature: Concatenate ...
+    overloads:
+      - signature: Concatenate [type_flags][flags] waveListStr, destWave
+      - signature: Concatenate [type_flags][flags] {wave1, wave2...}, destWave
+      - signature: Concatenate [type_flags][flags] {waveWave}, destWave
+  controlbar:
+    signature: ControlBar [flags] barHeight
+  controlinfo:
+    signature: ControlInfo [/W=winName] controlName
+  controlupdate:
+    signature: ControlUpdate [/A/W=winName][controlName]
+  convertglobalstringtextencoding:
+    signature: ConvertGlobalStringTextEncoding [flags] originalTextEncoding, newTextEncoding[, string1, string2...]
+    minimumVersion: 7.00
+  convexhull:
+    signature: convexHull ...
+    overloads:
+      - signature: convexHull [flags] xwave, ywave
+      - signature: convexHull [flags] tripletWave
+  convolve:
+    signature: Convolve [/A/C] srcWaveName, destWaveName1[, destWaveName2...]
+  copydimlabels:
+    signature: CopyDimLabels [flags] srcWave, destWave1[, destWave2...]
+    minimumVersion: 8.00
+  copyfile:
+    signature: CopyFile [flags][srcFileStr] [as destFileOrFolderStr]
+  copyfolder:
+    signature: CopyFolder [flags][srcFolderStr] [as destFolderStr]
+  copyscales:
+    signature: CopyScales [/I/P] srcWaveName, waveName1[, waveName2...]
+  correlate:
+    signature: Correlate [/AUTO/C/NODC] srcWaveName, destWaveName1[, destWaveName2...]
+  createaliasshortcut:
+    signature: CreateAliasShortcut [flags] [targetFileDirStr] [as aliasFileStr]
+  createbrowser:
+    signature: CreateBrowser [/M] [keyword1=value1[, keyword2=value2...]]
+  cross:
+    signature: Cross [/DEST=destWave/FREE/T/Z] vectorA, vectorB[, vectorC]
+  ctrlbackground:
+    signature: CtrlBackground [key1[=value1], ...]
+  ctrlfifo:
+    signature: CtrlFIFO FIFOName[, key1=value1, ...]
+  ctrlnamedbackground:
+    signature: CtrlNamedBackground taskName, keyword1=value1[, keyword2=value2...]
+  cursor:
+    signature: Cursor ...
+    overloads:
+      - signature: Cursor [flags] cursorName traceName x_value
+      - signature: Cursor /F[flags] cursorName traceName x_value, y_value
+      - signature: Cursor /K[/W=graphName] cursorName
+      - signature: Cursor /I[/F][flags] cursorName imageName x_value, y_value
+      - signature: Cursor /M[flags] cursorName
+  curvefit:
+    signature: CurveFit [flags] fitType[, kwCWave=coefWaveName], waveName [flagParameters]
+  customcontrol:
+    signature: CustomControl [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  cwt:
+    signature: CWT [flags] srcWave
+  debugger:
+    signature: Debugger
+  debuggeroptions:
+    signature: DebuggerOptions [enable=en, debugOnAbort=doa, debugOnError=doe, NVAR_SVAR_WAVE_Checking=nvwc]
+  defaultfont:
+    signature: DefaultFont [/U] fontName
+  defaultguicontrols:
+    signature: DefaultGUIControls [/W=winName/Mac/Win] [appearance]
+  defaultguifont:
+    signature: DefaultGUIFont [/W=winName/Mac/Win] group1={fNameStr1,fSize1,fStyle1}[, group2={fNameStr2,fSize2,fStyle2}...]
+  defaulttextencoding:
+    signature: DefaultTextEncoding [encoding=textEncoding, overrideDefault=override]
+    minimumVersion: 7.00
+  defineguide:
+    signature: DefineGuide [/W=winName] newGuideName={[guideName1, val[, guideName2]]} [,...]
+  delayupdate:
+    signature: DelayUpdate
+  deleteannotations:
+    signature: DeleteAnnotations [flags] [tagOffscreen, tagTraceHidden, invisible, offsetOffscreen, tooSmall[=size]]
+    minimumVersion: 7.00
+  deletefile:
+    signature: DeleteFile [flags] [fileNameStr]
+  deletefolder:
+    signature: DeleteFolder [flags] [folderNameStr]
+  deletepoints:
+    signature: DeletePoints [/M=dim] startElement, numElements, waveName1[, waveName2...]
+  differentiate:
+    signature: Differentiate [type_flags][flags] yWave1[/X=xWave1][/D=destWave1][, yWave2[/X=xWave2][/D=destWave2]...]
+  dir:
+    signature: Dir [dataFolderSpec]
+  display:
+    signature: Display [flags] [waveName1[, waveName2...] [vs xwaveName]] [as titleStr]
+  displayhelptopic:
+    signature: DisplayHelpTopic [/K=k/Z] TopicString
+  displayprocedure:
+    signature: DisplayProcedure [flags] [functionOrMacroNameStr]
+  doalert:
+    signature: DoAlert [/T=titleStr] alertType, promptStr
+  doigormenu:
+    signature: DoIgorMenu [/C/OVRD] MenuNameStr, MenuItemStr
+  doupdate:
+    signature: DoUpdate [/E=e/W=targWin/SPIN=ticks]
+  dowindow:
+    signature: DoWindow ...
+    overloads:
+      - signature: DoWindow [flags] [windowName]
+      - signature: DoWindow /T windowName, windowTitleStr
+      - signature: DoWindow /N/S=styleMacroName windowName
+      - signature: DoWindow /R/S=styleMacroName windowName
+  doxopidle:
+    signature: DoXOPIdle
+  dpss:
+    signature: DPSS [flags] numPoints, numWindows
+    minimumVersion: 7.00
+  drawaction:
+    signature: DrawAction [/L=layerName/W=winName] keyword1=value1[, keyword2=value2...]
+  drawarc:
+    signature: DrawArc [/W=winName/X/Y] xOrg, yOrg, arcRadius, startAngle, stopAngle
+  drawbezier:
+    signature: DrawBezier ...
+    overloads:
+      - signature: DrawBezier [/W=winName/ABS] xOrg, yOrg, hScaling, vScaling, {x0, y0, x1, y1, ...}
+      - signature: DrawBezier [/W=winName/ABS] xOrg, yOrg, hScaling, vScaling, xWaveName, yWaveName
+      - signature: DrawBezier/A [/W=winName] {xn, yn, xn+1, yn+1, ...}
+  drawline:
+    signature: DrawLine [/W=winName] x0, y0, x1, y1
+  drawoval:
+    signature: DrawOval [/W=winName] left, top, right, bottom
+  drawpict:
+    signature: DrawPICT [/W=winName][/RABS] left, top, hScaling, vScaling, pictName
+  drawpoly:
+    signature: DrawPoly ...
+    overloads:
+      - signature: DrawPoly [/W=winName/ABS] xorg, yorg, hScaling, vScaling, xWaveName, yWaveName
+      - signature: DrawPoly [/W=winName/ABS] xorg, yorg, hScaling, vScaling, {x0, y0, x1, y1, ...}
+      - signature: DrawPoly/A [/W=winName] {xn, yn, xn+1, yn+1 ...}
+  drawrect:
+    signature: DrawRect [/W=winName] left, top, right, bottom
+  drawrrect:
+    signature: DrawRRect [/W=winName] left, top, right, bottom
+  drawtext:
+    signature: DrawText [/W=winName] x0, y0, textStr
+  drawusershape:
+    signature: DrawUserShape [/W=winName /MO=options] x0, y0, x1, y1, userFuncName, textString, privateString
+    minimumVersion: 7.00
+  dspdetrend:
+    signature: DSPDetrend [flags] srcWave
+  dspperiodogram:
+    signature: DSPPeriodogram [flags] srcWave[, srcWave2]
+  duplicate:
+    signature: Duplicate [flags][type_flags] srcWaveName, destWaveName1[, destWaveName2...]
+  duplicatedatafolder:
+    signature: DuplicateDataFolder [/O=options/Z] sourceDataFolderSpec, destDataFolderSpec
+  dwt:
+    signature: DWT [flags] srcWaveName, destWaveName
+  edgestats:
+    signature: EdgeStats [flags] waveName
+  edit:
+    signature: Edit [flags] [columnSpec1[, columnSpec2...]][as titleStr]
+  errorbars:
+    signature: ErrorBars [flags] traceName, mode [errorSpecification]
+  estimatepeaksizes:
+    signature: EstimatePeakSizes [/B=baseWave] [/X=xWave] [/E=bothEdgesWave] edgePct, maxWidth, box, npks, peakCentersWave, peakWave, peakAmplitudesWave, peakWidthsWave
+  execute:
+    signature: Execute ...
+    overloads:
+    - signature: Execute [/Z] cmdStr
+    - signature: Execute/P [/Q/Z] cmdStr
+  executescripttext:
+    signature: ExecuteScriptText [flags] textStr
+  experimentinfo:
+    signature: ExperimentInfo [/Q[=quiet]] [keyword1=value1[, keyword2=value2...]]
+    minimumVersion: 8.00
+  experimentmodified:
+    signature: ExperimentModified [newModifiedState]
+  exportgizmo:
+    signature: ExportGizmo [flags] keyword[=value]
+    deprecated: It is obsolete but is still partially supported for partial backward compatibility.
+  extract:
+    signature: Extract [type_flags][/INDX/O] srcWave, destWave, LogicalExpression
+  fastgausstransform:
+    signature: FastGaussTransform [flags] srcLocationsWave, srcWeightsWave
+  fastop:
+    signature: FastOp ...
+    overloads:
+      - signature: FastOp destWave = prod1 [± prod2 [± prod3]]
+      - signature: FastOp destWave += prod1 [± prod2]
+  fbinread:
+    signature: FBinRead [flags] refNum, objectName
+  fbinwrite:
+    signature: FBinWrite [flags] refNum, objectName
+  fft:
+    signature: FFT [flags] srcWave
+  fgetpos:
+    signature: FGetPos refNum
+    minimumVersion: 7.00
+  fifo2wave:
+    signature: FIFO2Wave [/R/S] FIFOName, channelName, waveName
+  fifostatus:
+    signature: FIFOStatus [/Q] FIFOName
+  filterfir:
+    signature: FilterFIR [flags] waveName1[, waveName2...]
+  filteriir:
+    signature: FilterIIR [flags] [waveName1, ...]
+    minimumVersion: 7.00
+  findapeak:
+    signature: FindAPeak [/B=baseWaveName] minamp, pol, box, peakWave, [(startX, endX)]
+  findcontour:
+    signature: FindContour [flags] matrixWave, level
+    minimumVersion: 7.00
+  findduplicates:
+    signature: FindDuplicates [flags] srcWave
+    minimumVersion: 7.00
+  findlevel:
+    signature: FindLevel [flags] waveName, level
+  findlevels:
+    signature: FindLevels [flags] waveName, level
+  findpeak:
+    signature: FindPeak [flags] waveName
+  findpointsinpoly:
+    signature: FindPointsInPoly xWaveName, yWaveName, xPolyWaveName, yPolyWaveName
+  findroots:
+    signature: FindRoots ...
+    overloads:
+      - signature: FindRoots [flags] funcspec1, pWave1[, funcspec2, pwave2...]
+      - signature: FindRoots /P=PolyCoefsWave
+  findsequence:
+    signature: FindSequence [flags] srcWave
+  findvalue:
+    signature: FindValue [flags] srcWave
+  fmaxflat:
+    signature: FMaxFlat [/SYM[=sym] /Z[=z]] beta, gamma, coefsWave
+  fpclustering:
+    signature: FPClustering [flags] srcWave
+  fprintf:
+    signature: fprintf refNum, formatStr[, parameter, ...]
+  freadline:
+    signature: FReadLine [/N/ENCG=textEncoding/T] refNum, stringVarName
+  fsetpos:
+    signature: FSetPos refNum, filePos
+  fstatus:
+    signature: FStatus refNum
+  ftpcreatedirectory:
+    signature: FTPCreateDirectory [flags] urlStr
+  ftpdelete:
+    signature: FTPDelete [flags] urlStr
+  ftpdownload:
+    signature: FTPDownload [flags] urlStr, localPathStr
+  ftpupload:
+    signature: FTPUpload [flags] urlStr, localPathStr
+  funcfit:
+    signature: FuncFit ...
+    overloads:
+      - signature: FuncFit [flags] fitFuncName, cwaveName, waveName [flag_parameters]
+      - signature: FuncFit [flags] {fitFuncSpec}, waveName [flag_parameters]
+  funcfitmd:
+    signature: FuncFitMD [flags] fitFuncName, cwaveName, waveName [flag_parameters]
+  gbloadwave:
+    signature: GBLoadWave [flags] [fileNameStr]
+  getaxis:
+    signature: GetAxis [/W=winName/Q] axisName
+  getcamera:
+    signature: GetCamera [flags] [keywords]
+  getfilefolderinfo:
+    signature: GetFileFolderInfo [flags] [fileOrFolderNameStr]
+  getgizmo:
+    signature: GetGizmo [flags] keyword[=value]
+  getlastusermenuinfo:
+    signature: GetLastUserMenuInfo
+  getmarquee:
+    signature: GetMarquee [/K/W=winName/Z] [axisName1[, axisName2]]
+  getmouse:
+    signature: GetMouse [/W=winName]
+  getselection:
+    signature: GetSelection winType, winName, bitflags
+  getwindow:
+    signature: GetWindow [/Z] winName, keyword
+  graphnormal:
+    signature: GraphNormal [/W=winName]
+  graphwavedraw:
+    signature: GraphWaveDraw [flags] [yWave, xWave]
+  graphwaveedit:
+    signature: GraphWaveEdit [flags] traceName
+  grep:
+    signature: Grep [flags][srcFileStr][srcTextWaveName] [as [destFileOrFolderStr] [destTextWaveName]]
+  groupbox:
+    signature: GroupBox [/Z] ctrlName [keyword1=value1[, keyword2=2value...]]
+  hanning:
+    signature: Hanning waveName1[, waveName2...]
+  hcluster:
+    signature: HCluster [flags] sourceWave
+    minimumVersion: 9.00
+  hdf5closefile:
+    signature: HDF5CloseFile [/A/Z] fileID
+  hdf5closegroup:
+    signature: HDF5CloseGroup [/Z] groupID
+  hdf5control:
+    signature: HDF5Control [keyword1=value1[, keyword2=value2]]
+    minimumVersion: 9.00
+  hdf5createfile:
+    signature: HDF5CreateFile [/I /O /P=pathName /Z] fileID as fileNameStr
+  hdf5creategroup:
+    signature: HDF5CreateGroup [/Z] locationID, nameStr, groupID
+  hdf5createlink:
+    signature: HDF5CreateLink [/EXT={pathName,filePath} /HARD=makeHardLink /Q /Z] targetLocationID, targetName, linkLocationID, linkName
+  hdf5dimensionscale:
+    signature: HDF5DimensionScale [flags] [keyword1=value1[, keyword2=value2]]
+    minimumVersion: 9.00
+  hdf5dump:
+    signature: HDF5Dump [flags] fileNameStr
+  hdf5dumperrors:
+    signature: HDF5DumpErrors [/CLR=clear/Q]
+  hdf5flushfile:
+    signature: HDF5FlushFile [/A/Z] fileID
+  hdf5listattributes:
+    signature: HDF5ListAttributes [/TYPE=type/Z] locationID, nameStr
+  hdf5listgroup:
+    signature: HDF5ListGroup [flags] locationID, nameStr
+  hdf5loaddata:
+    signature: HDF5LoadData [flags] locationID, nameStr
+  hdf5loadgroup:
+    signature: HDF5LoadGroup [flags] dataFolderSpec, locationID, nameStr
+  hdf5loadimage:
+    signature: HDF5LoadImage [flags] locationID, nameStr
+  hdf5openfile:
+    signature: HDF5OpenFile [/I/P=pathName/R/Z] fileID as fileNameStr
+  hdf5opengroup:
+    signature: HDF5OpenGroup [/Z] locationID, nameStr, groupID
+  hdf5savedata:
+    signature: HDF5SaveData [flags] wave, locationID[, nameStr]
+  hdf5savegroup:
+    signature: HDF5SaveGroup [flags] dataFolderSpec, locationID, nameStr
+  hdf5saveimage:
+    signature: HDF5SaveImage [flags] keyword[=value]
+  hdf5unlinkobject:
+    signature: HDF5UnlinkObject [/Z] locationID, nameStr
+  hideigormenus:
+    signature: HideIgorMenus [MenuNameStr1[, MenuNameStr2...]]
+  hideinfo:
+    signature: HideInfo [/W=winName]
+  hideprocedures:
+    signature: HideProcedures
+  hidetools:
+    signature: HideTools [/A/W=winName]
+  hilberttransform:
+    signature: HilbertTransform [/Z][/O][/DEST=destWave] srcWave
+  histogram:
+    signature: Histogram [flags] srcWaveName, destWaveName
+  ica:
+    signature: ICA [flags] srcWave
+    minimumVersion: 7.00
+  ifft:
+    signature: IFFT [flags] srcWave
+  imageanalyzeparticles:
+    signature: ImageAnalyzeParticles [flags] keyword imageMatrix
+  imageblend:
+    signature: ImageBlend [/A=alpha/W=alphaWave] srcWaveA, srcWaveB[, destWave]
+  imageboundarytomask:
+    signature: ImageBoundaryToMask width=w, height=h, xwave=xwavename, ywave=ywavename[, scalingWave=scalingWaveName[, seedX=xVal, seedY=yVal]]
+  imagecomposite:
+    signature: ImageComposite [/Z/FREE/DEST=destWave] srcImageA, srcImageB
+    minimumVersion: 8.00
+  imageedgedetection:
+    signature: ImageEdgeDetection [flags] Method imageMatrix
+  imagefileinfo:
+    signature: ImageFileInfo [/P=pathName] fileNameStr
+    deprecatedMessage: It is obsolete because it used QuickTime to obtain graphics file information and Apple is phasing out QuickTime.
+  imagefilter:
+    signature: ImageFilter [flags] Method dataMatrix
+  imagefocus:
+    signature: ImageFocus [flags] stackWave
+  imagefromxyz:
+    signature: ImageFromXYZ
+    overloads:
+      - signature: ImageFromXYZ [flags] xyzWave, dataMatrix, countMatrix
+      - signature: ImageFromXYZ [flags] {xWave, yWave, zWave}, dataMatrix, countMatrix
+  imagegenerateroimask:
+    signature: ImageGenerateROIMask [/W=winName/E=e/I=i] imageInstance
+  imageglcm:
+    signature: ImageGLCM [flags] srcWave
+    minimumVersion: 7.00
+  imagehistmodification:
+    signature: ImageHistModification [flags] imageMatrix
+  imagehistogram:
+    signature: ImageHistogram [flags] imageMatrix
+  imageinterpolate:
+    signature: ImageInterpolate [flags] Method srcWave
+  imagelineprofile:
+    signature: ImageLineProfile [flags] xWave=xwave, yWave=ywave, srcWave=srcWave[, width=value, widthWave=wWave]
+  imageload:
+    signature: ImageLoad [flags] [fileNameStr]
+  imagemorphology:
+    signature: ImageMorphology [flags] Method imageMatrix
+  imageregistration:
+    signature: ImageRegistration [flags][testMask=testMaskWave] [refMask=refMaskWave] testWave=imageWave1, refWave=imageWave2
+  imageremovebackground:
+    signature: ImageRemoveBackground /R=roiWave [flags] srcWave
+  imagerestore:
+    signature: ImageRestore [flags] srcWave=wSrc, psfWave=wPSF[, relaxationGamma=h, startingImage=wRecon]
+  imagerotate:
+    signature: ImageRotate [flags] imageMatrix
+  imagesave:
+    signature: ImageSave [flags] waveName [[as] fileNameStr]
+  imageseedfill:
+    signature: ImageSeedFill [flags] [keyword,] seedX=xLoc, seedY=yLoc, target=setValue, srcWave=srcImage
+  imageskeleton3d:
+    signature: ImageSkeleton3D [/DEST=destWave /METH=method /Z] srcWave
+    minimumVersion: 7.00
+  imagesnake:
+    signature: ImageSnake [flags] srcWave
+  imagestats:
+    signature: ImageStats [flags] imageWave
+  imagethreshold:
+    signature: ImageThreshold [flags] imageMatrix
+  imagetransform:
+    signature: ImageTransform [flags] Method imageMatrix
+  imageunwrapphase:
+    signature: ImageUnwrapPhase [flags] [qualityWave=qWave, ]srcwave=waveName
+  imagewindow:
+    signature: ImageWindow [/I/O/P=param] method srcWave
+  indexsort:
+    signature: IndexSort [/DIML] indexWaveName, sortedWaveName1[, sortedWaveName2...]
+  insertpoints:
+    signature: InsertPoints [/M=dim /V=value] beforePoint, numPoints, waveName1[, waveName2...]
+  instantfrequency:
+    signature: InstantFrequency [flags] srcWave [(startX,endX)]
+    minimumVersion: 9.00
+  integrate:
+    signature: Integrate [type_flags][flags] yWaveA [/X=xWaveA][/D=destWaveA][, yWaveB[/X=xWaveB][/D=destWaveB]...]
+  integrate2d:
+    signature: Integrate2D [flags] [keyword1=value1[, keyword2=value2...]]
+    minimumVersion: 7.00
+  integrateode:
+    signature: IntegrateODE [flags] derivFunc, cwaveName, ywaveSpec
+  interp3dpath:
+    signature: Interp3DPath 3dWave tripletPathWave
+  interpolate2:
+    signature: Interpolate2 [flags] [xWave, ]yWave
+  interpolate3d:
+    signature: Interpolate3D [/Z]/RNGX={x0,dx,nx}/RNGY={y0,dy,ny}/RNGZ={z0,dz,nz} /DEST=dataFolderAndName, triangulationWave=tWave, srcWave=sWave
+  jcamploadwave:
+    signature: JCAMPLoadWave [flags] [fileNameStr]
+  jointhistogram:
+    signature: JointHistogram [flags] wave1, wave2[, wave3, wave4]
+    minimumVersion: 7.00
+  killbackground:
+    signature: KillBackground
+  killcontrol:
+    signature: KillControl [/W=winName] controlName
+  killdatafolder:
+    signature: KillDataFolder [/Z] dataFolderSpec
+  killfifo:
+    signature: KillFIFO FIFOName
+  killfreeaxis:
+    signature: KillFreeAxis [/W=winName] axisName
+  killpath:
+    signature: KillPath [/A/Z] pathName
+  killpicts:
+    signature: KillPICTs [/A/Z] [PICTName1[, PICTName2...]]
+  killstrings:
+    signature: KillStrings [/A/Z] [stringName1[, stringName2...]]
+  killvariables:
+    signature: KillVariables [/A/Z] [variableName1[, variableName2...]]
+  killwaves:
+    signature: KillWaves [flags] [waveName1[, waveName2...]]
+  killwindow:
+    signature: KillWindow [flags] winName
+  kmeans:
+    signature: KMeans [flags] populationWave
+  label:
+    signature: Label [/W=winName/Z] axisName, labelStr
+  layout:
+    signature: Layout [flags] [objectSpec1[, objectSpec2...] [as titleStr]
+  layoutpageaction:
+    signature: LayoutPageAction [/W=winName] [keyword1=value1[, keyword2=value2...]]
+    minimumVersion: 7.00
+  layoutslideshow:
+    signature: LayoutSlideShow [/W=winName] [keyword1=value1[, keyword2=value2...]]
+    minimumVersion: 7.00
+  legend:
+    signature: Legend [flags] [legendStr]
+  linearfeedbackshiftregister:
+    signature: LinearFeedbackShiftRegister [flags]
+  listbox:
+    signature: ListBox [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  loaddata:
+    signature: LoadData [flags] fileOrFolderNameStr
+  loadpackagepreferences:
+    signature: LoadPackagePreferences [/MIS=mismatch/P=pathName] packageName, prefsFileName, recordID, prefsStruct
+  loadpict:
+    signature: LoadPICT [flags] [fileNameStr][, pictName]
+  loadwave:
+    signature: LoadWave [flags] [fileNameStr]
+  loess:
+    signature: Loess [flags] srcWave=srcWaveName[, factors=factorWaveName1[, factorWaveName2...]]
+  lombperiodogram:
+    signature: LombPeriodogram [flags] srcTimeWave, srcAmpWave[, srcFreqWave]
+  make:
+    signature: Make [flags] waveName1[={n0, n1, ...}][, waveName2[={n0, n1, ...}]...]
+  makeindex:
+    signature: MakeIndex [/A/C/R] sortKeyWaves, indexWave
+  markperftesttime:
+    signature: MarkPerfTestTime idval
+  matrixbalance:
+    signature: MatrixBalance [flags] srcWave
+    minimumVersion: 9.00
+  matrixconvolve:
+    signature: MatrixConvolve [/R=roiWave] coefMatrix, dataMatrix
+  matrixcorr:
+    signature: MatrixCorr [/COV][/DEGC] waveA[, waveB]
+  matrixeigenv:
+    signature: MatrixEigenV [flags] matrixA[, matrixB]
+  matrixfactor:
+    signature: MatrixFactor [flags] srcWave
+    minimumVersion: 9.00
+  matrixfilter:
+    signature: MatrixFilter [flags] Method dataMatrix
+  matrixgaussj:
+    signature: MatrixGaussJ matrixA, vectorsB
+  matrixglm:
+    signature: MatrixGLM [/Z] matrixA, matrixB, waveD
+  matrixinverse:
+    signature: MatrixInverse [flags] srcWave
+  matrixlinearsolve:
+    signature: MatrixLinearSolve [flags] matrixA matrixB
+  matrixlinearsolvetd:
+    signature: MatrixLinearSolveTD [/Z] upperW, mainW, lowerW, matrixB
+  matrixlls:
+    signature: MatrixLLS [/O/Z/M=method] matrixA matrixB
+  matrixlubksub:
+    signature: MatrixLUBkSub matrtixL, matrixU, index, vectorB
+  matrixlud:
+    signature: MatrixLUD [flags] matrixA
+  matrixludtd:
+    signature: MatrixLUDTD [flags] srcMain, srcUpper, srcLower
+  matrixmultiply:
+    signature: MatrixMultiply matrixA [/T], matrixB [/T][, additional_matrices]
+  matrixmultiplyadd:
+    signature: MatrixMultiplyAdd [/ZC or /DC] [/A=alpha] [/B=beta] matA[/T], matB[/T] matC
+    minimumVersion: 9.00
+  matrixop:
+    signature: MatrixOp [/C/FREE/NTHR=n/O/S] destwave = expression
+  matrixreversebalance:
+    signature: MatrixReverseBalance [flags] scaleWave, eigenvectorsWave
+    minimumVersion: 9.00
+  matrixschur:
+    signature: MatrixSchur [/Z] srcMatrix
+  matrixsolve:
+    signature: MatrixSolve method, matrixA, vectorB
+  matrixsparse:
+    signature: MatrixSparse [flags] keyword=value
+    minimumVersion: 9.00
+  matrixsvbksub:
+    signature: MatrixSVBkSub matrixU, vectorW, matrixV, vectorB
+  matrixsvd:
+    signature: MatrixSVD [flags] matrixWave
+  matrixtranspose:
+    signature: MatrixTranspose [/H] matrix
+  measurestyledtext:
+    signature: MeasureStyledText [/W=winName/A=axisName/B=baselineMode/F=fontName/SIZE=fontSize/STYL=fontStyle] [styledTextStr]
+  mlloadwave:
+    signature: MLLoadWave [flags] fileNameStr
+  modify:
+    signature: Modify ...
+  modifyboxplot:
+    signature: ModifyBoxPlot [/W=winName] [keyword1=value1, keyword2=value2...]
+    minimumVersion: 8.00
+  modifybrowser:
+    signature: ModifyBrowser [/M] [keyword1=value1[, keyword2=value2...]]
+  modifycamera:
+    signature: ModifyCamera [flags] [keywords]
+  modifycontour:
+    signature: ModifyContour [/W=winName] contourInstanceName, keyword1=value1[, keyword2=value2...]
+  modifycontrol:
+    signature: ModifyControl [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  modifycontrollist:
+    signature: ModifyControlList [/Z] listStr[, keyword1=value1[, keyword2=value2...]
+  modifyfreeaxis:
+    signature: ModifyFreeAxis [/W=winName] axisName, master=mastName[, hook=funcName]
+  modifygizmo:
+    signature: ModifyGizmo [flags] keyword[=value]
+  modifygraph:
+      signature: ModifyGraph ...
+      overloads:
+        - signature: ModifyGraph [/W=winName/Z] key1=value1[, key2=value2, ...]
+        - signature: ModifyGraph [/W=winName/Z] key1[(traceName1)]=value1[, key2[(traceName2)]=value2, ...]
+        - signature: ModifyGraph [/W=winName/Z] key1[(axisName1)]=value1[, key2[(axisName2)]=value2, ...]
+        - signature: ModifyGraph [/W=winName/Z] key1[(axisName1)]=(r,g,b,[a])[, key2[(axisName2)]=(r,g,b[,a]), ...]
+  modifyimage:
+    signature: ModifyImage [/W=winName] imageInstance, keyword1=value1[, keyword2=value2...]
+  modifylayout:
+    signature: ModifyLayout [flags] key1[(objectName1)]=value1[, key2[(objectName2)]=value2...]
+  modifypanel:
+    signature: ModifyPanel [/W=winName] keyword1=value1[, keyword2=value2...]
+  modifyprocedure:
+    signature: ModifyProcedure [/A[=all]/W=procWinTitleListStr]/Z[=z] [procedure=functionOrMacroNameStr, hide=h, lock=ro, writeProtect=wp, userCanOverride=ovr]
+    minimumVersion: 8.03
+  modifytable:
+    signature: ModifyTable [/W=winName/Z] key1[(columnSpec1)]=value1[, key2[(columnSpec2)]=value2...]
+  modifyviolinplot:
+    signature: ModifyViolinPlot [/W=winName] [keyword1=value1, keyword2=value2...]
+    minimumVersion: 8.00
+  modifywaterfall:
+    signature: ModifyWaterfall [/W=winName] keyword1=value1[, keyword2=value2...]
+  movedatafolder:
+    signature: MoveDataFolder [/O=options /Z] sourceDataFolderSpec, destDataFolderPath
+  movefile:
+    signature: MoveFile [flags][srcFileStr] [as destFileOrFolderStr]
+  movefolder:
+    signature: MoveFolder [flags][srcFolderStr] [as destFolderStr]
+  movestring:
+    signature: MoveString sourceString, destDataFolderPath[newname]
+  movesubwindow:
+    signature: MoveSubwindow [/W=winName] key1=(values1)[, key2=(values2)...]
+  movevariable:
+    signature: MoveVariable sourceVar, destDataFolderPath[:newname]
+  movewave:
+    signature: MoveWave sourceWave, [destDataFolderPath:][newName]
+  movewindow:
+    signature: MoveWindow [flags] left, top, right, bottom
+  multitaperpsd:
+    signature: MultiTaperPSD [flags] srcWave
+    minimumVersion: 7.00
+  multithreadingcontrol:
+    signature: MultiThreadingControl keyword[=value]
+    minimumVersion: 7.00
+  neuralnetworkrun:
+    signature: NeuralNetworkRun [/Q/Z] Input=testWave, WeightsWave1=w1, WeightsWave2=w2
+  neuralnetworktrain:
+    signature: NeuralNetworkTrain [/Q/Z] [keyword1=value1, ...]
+  newcamera:
+    signature: NewCamera [flags] [keywords]
+    minimumVersion: 7.00
+  newdatafolder:
+    signature: NewDataFolder [/O/S] dataFolderSpec
+  newfifo:
+    signature: NewFIFO FIFOName
+  newfifochan:
+    signature: NewFIFOChan [flags] FIFOName, channelName, offset, gain, minusFS, plusFS, unitsStr[, vectPnts]
+  newfreeaxis:
+    signature: NewFreeAxis [flags] axisName
+  newgizmo:
+    signature: NewGizmo [flags]
+  newimage:
+    signature: NewImage [flags] matrix
+  newlayout:
+    signature: NewLayout [flags] [as titleStr]
+  newmovie:
+    signature: NewMovie [flags] [as fileNameStr]
+  newnotebook:
+    signature: NewNotebook [flags] [as titleStr]
+  newpanel:
+    signature: NewPanel [flags] [as titleStr]
+  newpath:
+    signature: NewPath [flags] pathName[, pathToFolderStr]
+  newwaterfall:
+    signature: NewWaterfall [flags] matrixWave [vs {xWave, yWave}]
+  note:
+    signature: Note [/K/NOCR] waveName[, str]
+  notebook:
+    signature: Notebook winName, keyword1=value1[, keyword2=value2...]
+  notebookaction:
+    signature: NotebookAction [/W=winName] keyword1=value1[, keyword2=value2...]
+  open:
+    signature: Open [flags] refNum [as fileNameStr]
+  openhelp:
+    signature: OpenHelp [flags] fileNameStr
+    minimumVersion: 7.00
+  opennotebook:
+    signature: OpenNotebook [flags] [fileNameStr]
+  openproc:
+    signature: OpenProc [flags] [fileNameStr]
+  optimize:
+    signature: Optimize [flags] funcSpec, pWave
+  parseoperationtemplate:
+    signature: ParseOperationTemplate [flags] cmdTemplate
+  pathinfo:
+    signature: PathInfo [/S /SHOW] pathName
+  pauseforuser:
+    signature: PauseForUser [/C] mainWindowName[, targetWindowName]
+  pauseupdate:
+    signature: PauseUpdate
+  pca:
+    signature: PCA [flags] [wave0, wave1...wave99]
+  playmovie:
+    signature: PlayMovie [flags] [as fileNameStr]
+  playmovieaction:
+    signature: PlayMovieAction [/A/Z] keyword1[=value1][, keyword2[=value2]...]
+  playsnd:
+    signature: PlaySnd [flags] fileNameStr
+    deprecatedMessage: It is obsolete. Use `PlaySound` instead.
+  playsound:
+    signature: PlaySound ...
+    overloads:
+      - signature: PlaySound [/A[=a]/BITS=bits/C] soundWave
+      - signature: PlaySound /A[=a]/BITS=bits {soundWave1, soundWave2[, soundWaveN, ...]}
+  polygonop:
+    signature: PolygonOp [flags] [keyword=value]
+    minimumVersion: 9.00
+  popupcontextualmenu:
+    signature: PopupContextualMenu [/C=(xpix, ypix)/N/ASYN[=func]] popupStr
+  popupmenu:
+    signature: PopupMenu [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  preferences:
+    signature: Preferences [/Q] [newPrefsState]
+  primefactors:
+    signature: PrimeFactors [/Q] inNumber
+  print:
+    signature: Print [flags] expression1[, expression2...]
+  printf:
+    signature: printf formatStr[, parameter1[, parameter2...]]
+  printgraphs:
+    signature: PrintGraphs [flags] graphSpec1[, graphSpec2...]
+  printlayout:
+    signature: PrintLayout [/C=num/D] winName
+  printnotebook:
+    signature: PrintNotebook [flags] notebookName
+  printsettings:
+    signature: PrintSettings [/I/M/W=winName] [copySource=source, orientation=o, margins={left,top,right,bottom}, scale=s, colorMode=m, getPrinterList, getPrinter, setPrinter=printerNameStr, getPageSettings, getPageDimensions]
+  printtable:
+    signature: PrintTable [/P=(startPage,endPage)/S=selection] winName
+  project:
+    signature: Project [/C={long,lat}/M=method/P={p1,p2,...}] longitudeWave, latitudeWave
+  pulsestats:
+    signature: PulseStats [flags] waveName
+  putscraptext:
+    signature: PutScrapText textStr
+  pwd:
+    signature: pwd
+  quit:
+    signature: Quit [/N/Y]
+  ratiofromnumber:
+    signature: RatioFromNumber [flags] num
+  readvariables:
+    signature: ReadVariables
+    deprecatedMessage: It is used automatically when you open an experiment. You need not invoke it.
+  redimension:
+    signature: Redimension [flags] waveName1[, waveName2...]
+  remez:
+    signature: Remez [/N=num/Q[=iter]] frWave, wtWave, gridWave, coefsWave
+  remove:
+    signature: Remove ...
+  removecontour:
+    signature: RemoveContour [/W=winName] contourInstanceName1[, contourInstanceName2...]
+  removefromgizmo:
+    signature: RemoveFromGizmo [flags]
+  removefromgraph:
+    signature: RemoveFromGraph [/W=winName/Z] traceName1[, traceName2...]
+  removefromlayout:
+    signature: RemoveFromLayout objectSpec1[, objectSpec2...]
+    deprecatedMessage: use `RemoveLayoutObjects`.
+  removefromtable:
+    signature: RemoveFromTable [/W=winName] columnSpec1[, columnSpec2...]
+  removeimage:
+    signature: RemoveImage [/W=winName/Z] imageInstance1[, imageInstance2...]
+  removelayoutobjects:
+    signature: RemoveLayoutObjects [/PAGE=page/W=winName/Z] objectSpec1[, objectSpec2]
+  removepath:
+    signature: RemovePath [/A/Z] pathName
+  rename:
+    signature: Rename oldName, newName
+  renamedatafolder:
+    signature: RenameDataFolder sourceDataFolderSpec, newName
+  renamepath:
+    signature: RenamePath oldName, newName
+  renamepict:
+    signature: RenamePICT oldName, newName
+  renamewindow:
+    signature: RenameWindow oldName, newName
+  reorderimages:
+    signature: ReorderImages [/W=winName] anchorImage, {imageA, imageB, ...}
+  reordertraces:
+    signature: ReorderTraces [/W=winName/L[=axisName]/R[=axisName]] anchorTrace, {traceA, traceB, ...}
+  replacetext:
+    signature: ReplaceText [/W=winName/N=name] textStr
+  replacewave:
+    signature: ReplaceWave ...
+    overloads:
+    - signature: ReplaceWave [/W=winName] allinCDF
+    - signature: ReplaceWave [/X/W=winName] trace=traceName, waveName
+    - signature: ReplaceWave [/X/Y/W=winName] image=imageName, waveName
+    - signature: ReplaceWave [/X/Y/W=winName] contour=contourName, waveName
+  resample:
+    signature: Resample [flags] waveName1[, waveName2...]
+  resumeupdate:
+    signature: ResumeUpdate
+  reverse:
+    signature: Reverse [type_flags][/DIM=d /P] waveA [/D = destWaveA][, waveB [/D = destWaveB]...]
+  rotate:
+    signature: Rotate rotPoints, waveName1[, waveName2...]
+  save:
+    signature: Save [flags] waveList [as fileNameStr]
+  savedata:
+    signature: SaveData [flags] fileOrFolderNameStr
+  saveexperiment:
+    signature: SaveExperiment [flags] [as fileName]
+  savegizmocopy:
+    signature: SaveGizmoCopy [flags][as fileNameStr]
+    minimumVersion: 8.00
+  savegraphcopy:
+    signature: SaveGraphCopy [flags][as fileNameStr]
+  savenotebook:
+    signature: SaveNotebook [flags] notebookName [as fileNameStr]
+  savepackagepreferences:
+    signature: SavePackagePreferences [/FLSH=flush/KILL/P=pathName] packageName, prefsFileName, recordID, prefsStruct
+  savepict:
+    signature: SavePICT [flags] [as fileNameStr]
+  savetablecopy:
+    signature: SaveTableCopy [flags][as fileNameStr]
+  setactivesubwindow:
+    signature: SetActiveSubwindow subWinSpec
+  setaxis:
+    signature: SetAxis [flags] axisName[, num1, num2]
+  setbackground:
+    signature: SetBackground numericExpression
+  setdashpattern:
+    signature: SetDashPattern dashNumber, {d1, s1[, d2, s2...]}
+  setdatafolder:
+    signature: SetDataFolder dataFolderSpec
+  setdimlabel:
+    signature: SetDimLabel dimNumber, dimIndex, label, wavelist
+  setdrawenv:
+    signature: SetDrawEnv [/W=winName] keyword1[=value1][, keyword2[=value2]...]
+  setdrawlayer:
+    signature: SetDrawLayer [/K/W=winName] layerName
+  setfilefolderinfo:
+    signature: SetFileFolderInfo [flags] [fileOrFolderNameStr]
+  setformula:
+    signature: SetFormula waveOrVariableName, expressionStr
+    # overloads:
+    #   - signature: SetFormula waveName, expressionStr
+    #   - signature: SetFormula variableName, expressionStr
+  setidleperiod:
+    signature: SetIdlePeriod period
+    minimumVersion: 8.00
+  setigorhook:
+    signature: SetIgorHook [/K/L] [hookType[=procName]]
+  setigormenumode:
+    signature: SetIgorMenuMode MenuNameStr, MenuItemStr, Action
+  setigoroption:
+    signature: SetIgorOption [mainKeyword,] keyword=value
+    # overloads:
+    #   - signature: SetIgorOption [mainKeyword,] keyword=value
+    #   - signature: SetIgorOption [mainKeyword,] keyword=?
+  setmarquee:
+    signature: SetMarquee [/HAX=hAxisName/VAX=vAxisName/W=winName] left, top, right, bottom
+  setprocesssleep:
+    signature: SetProcessSleep sleepTicks
+    deprecatedMessage: It is obsolete and does nothing as of Igor Pro 7.00. It is documented here in case you come across it in old Igor procedure code. Do not use it in new code.
+  setrandomseed:
+    signature: SetRandomSeed seed
+  setscale:
+    signature: SetScale [/I/P] dim, num1, num2[, unitsStr], waveName1[, waveName2...]
+    overloads:
+      - signature: SetScale [/I/P] dim, num1, num2[, unitsStr], waveName1[, waveName2...]
+      - signature: SetScale d, num1, num2[, unitsStr], waveName1[, waveName2...]
+  setvariable:
+    signature: SetVariable [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  setwavelock:
+    signature: SetWaveLock lockVal, waveList
+  setwavetextencoding:
+    signature: SetWaveTextEncoding [flags] newTextEncoding, elements, [wave1, wave2...]
+  setwindow:
+    signature: SetWindow winName [keyword1=value1[, keyword2=value2...]]
+  showigormenus:
+    signature: ShowIgorMenus [MenuNameStr1[, MenuNameStr2...]
+  showinfo:
+    signature: ShowInfo [/CP=num /W=winName]
+  showtools:
+    signature: ShowTools [/A/W=winName] [toolName]
+  silent:
+    signature: Silent num
+  sleep:
+    signature: Sleep [flags] timeSpec
+  slider:
+    signature: Slider [/Z] controlName [keyword1=value1[, keyword2=value2...]]
+  slow:
+    signature: Slow ticks
+    deprecatedMessage: It is obsolete. Prior to Igor Pro 7 it slowed down execution of macros for debugging purposes. It now does nothing.
+  smooth:
+    signature: Smooth [flags] num, wave1[, wave2...]
+  smoothcustom:
+    signature: SmoothCustom [/E=endEffect] coefsWaveName, waveName1[, waveName2...]
+    deprecatedMessage: It is obsolete. Use the `FilterFIR` operation instead. For multidimensional data use the `MatrixConvolve` or `MatrixFilter` operations.
+  sort:
+    signature: Sort [/A/DIML/C/R] sortKeyWaves, sortedWaveName1[, sortedWaveName2...]
+  sortcolumns:
+    signature: SortColumns [flags] keyWaves={waveList}, sortWaves={waveList}
+    minimumVersion: 7.00
+  soundinrecord:
+    signature: SoundInRecord [/BITS=bits/Z] waveName
+  soundinset:
+    signature: SoundInSet [/Z] [gain=g, agc=a]
+  soundinstartchart:
+    signature: SoundInStartChart [/Z] buffersize, destFIFOName
+  soundinstatus:
+    signature: SoundInStatus [format={intOrFloat,channels,bits,frequency}]
+  soundinstopchart:
+    signature: SoundInStopChart [/Z]
+  soundloadwave:
+    signature: SoundLoadWave [flags] waveName[, fileNameStr]
+    minimumVersion: 7.00
+  soundsavewave:
+    signature: SoundSaveWave [flags] typeStr, waveName[, fileNameStr]
+    minimumVersion: 7.00
+  sphericalinterpolate:
+    signature: SphericalInterpolate triangulationDataWave, dataPointsWave, newLocationsWave
+  sphericaltriangulate:
+    signature: SphericalTriangulate [/Z] tripletWaveName
+  splitstring:
+    signature: SplitString /E=regExprStr str, substring1[, substring2...]
+  splitwave:
+    signature: SplitWave [flags] srcWave
+  sprintf:
+    signature: sprintf stringName, formatStr[, parameter1[, parameter2...]]
+  sscanf:
+    signature: sscanf scanStr, formatStr, var1[, var2...]
+  stack:
+    signature: Stack [flags] [objectName1[, objectName2...]]
+  stackwindows:
+    signature: StackWindows [flags] [windowName1[, windowName2...]]
+  statsangulardistancetest:
+    signature: StatsAngularDistanceTest [flags][srcWave1, srcWave2, srcWave3...]
+  statsanova1test:
+    signature: StatsANOVA1Test [flags] [wave1, wave2...wave100]
+  statsanova2nrtest:
+    signature: StatsANOVA2NRTest [flags] srcWave
+  statsanova2rmtest:
+    signature: StatsANOVA2RMTest [flags] srcWave
+  statsanova2test:
+    signature: StatsANOVA2Test [flags] srcWave
+  statschitest:
+    signature: StatsChiTest [flags] srcWave1, srcWave2
+  statscircularcorrelationtest:
+    signature: StatsCircularCorrelationTest [flags] waveA, waveB
+  statscircularmeans:
+    signature: StatsCircularMeans [flags] srcWave
+  statscircularmoments:
+    signature: StatsCircularMoments [flags] srcWave
+  statscirculartwosampletest:
+    signature: StatsCircularTwoSampleTest [flags] waveA, waveB
+  statscochrantest:
+    signature: StatsCochranTest [flags] [wave1, wave2...wave100]
+  statscontingencytable:
+    signature: StatsContingencyTable [flags] srcWave
+  statsdiptest:
+    signature: StatsDIPTest [/Z] srcWave
+  statsdunnetttest:
+    signature: StatsDunnettTest [flags] [wave1, wave2...wave100]
+  statsfriedmantest:
+    signature: StatsFriedmanTest [flags] [wave1, wave2...wave100]
+  statsftest:
+    signature: StatsFTest [flags] wave1, wave2
+  statshodgesajnetest:
+    signature: StatsHodgesAjneTest [flags] srcWave
+  statsjbtest:
+    signature: StatsJBTest [flags] srcWave
+  statskde:
+    signature: StatsKDE [flags] srcWave
+    minimumVersion: 7.00
+  statskendalltautest:
+    signature: StatsKendallTauTest [flags] wave1[, wave2]
+  statskstest:
+    signature: StatsKSTest [flags] srcWave[, distWave]
+  statskwtest:
+    signature: StatsKWTest [flags] [wave1, wave2...wave100]
+  statslinearcorrelationtest:
+    signature: StatsLinearCorrelationTest [flags] waveA, waveB
+  statslinearregression:
+    signature: StatsLinearRegression [flags] [wave0, wave1...]
+  statsmulticorrelationtest:
+    signature: StatsMultiCorrelationTest [flags] corrWave, sizeWave
+  statsnpmctest:
+    signature: StatsNPMCTest [flags] [wave1, wave2...wave100]
+  statsnpnominalsrtest:
+    signature: StatsNPNominalSRTest [flags] [srcWave]
+  statsquantiles:
+    signature: StatsQuantiles [flags] srcWave
+  statsrankcorrelationtest:
+    signature: StatsRankCorrelationTest [flags] waveA, waveB
+  statsresample:
+    signature: StatsResample /N=numPoints [flags] srcWave
+  statssample:
+    signature: StatsSample /N=numPoints [flags] srcWave
+  statsscheffetest:
+    signature: StatsScheffeTest [flags] [wave1, wave2...wave100]
+  statsshapirowilktest:
+    signature: StatsShapiroWilkTest [flags] srcWave
+  statssigntest:
+    signature: StatsSignTest [flags] wave1, wave2
+  statssrtest:
+    signature: StatsSRTest [flags] srcWave
+  statsttest:
+    signature: StatsTTest [flags] wave1[, wave2]
+  statstukeytest:
+    signature: StatsTukeyTest [flags] [wave1, wave2...wave100]
+  statsvariancestest:
+    signature: StatsVariancesTest [flags] [wave1, wave2...wave100]
+  statswatsonusquaredtest:
+    signature: StatsWatsonUSquaredTest [flags] srcWave1, srcWave2
+  statswatsonwilliamstest:
+    signature: StatsWatsonWilliamsTest [flags] [srcWave1, srcWave2, srcWave3...]
+  statswheelerwatsontest:
+    signature: StatsWheelerWatsonTest [flags] [srcWave1, srcWave2, srcWave3...]
+  statswilcoxonranktest:
+    signature: StatsWilcoxonRankTest [flags] waveA, waveB
+  statswrcorrelationtest:
+    signature: StatsWRCorrelationTest [flags] waveA, waveB
+  stft:
+    signature: STFT [flags] srcWave
+    minimumVersion: 8.00
+  # String
+  structfill:
+    signature: StructFill [/AC=createFlags/SDFR=dfr] structVar
+    minimumVersion: 8.00
+  structget:
+    signature: StructGet ...
+    overloads:
+      - signature: StructGet [/B=b] structVar, waveStruct[[colNum]]
+      - signature: StructGet /S[/B=b] structVar, strStruct
+  structput:
+    signature: StructPut ...
+    overloads:
+      - signature: StructPut [/B=b] structVar, waveStruct[[colNum]]
+      - signature: StructPut /S[/B=b] structVar, strStruct
+  sumdimension:
+    signature: SumDimension [flags] srcWave
+    minimumVersion: 7.00
+  sumseries:
+    signature: SumSeries [flags] keyword=value
+    minimumVersion: 7.00
+  tabcontrol:
+    signature: TabControl [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  tag:
+    signature: Tag [flags] [taggedObjectName, xAttach[, textStr]]
+  text2bezier:
+    signature: Text2Bezier [flags] fontNameStr, fstyle, textStr, xWaveName, yWaveName
+  textbox:
+    signature: TextBox [flags] [textStr]
+  texthistogram:
+    signature: TextHistogram [flags] srcTextWave
+    minimumVersion: 9.00
+  threadgroupputdf:
+    signature: ThreadGroupPutDF tgID, datafolder
+  threadstart:
+    signature: ThreadStart tgID, index, WorkerFunc(param1, param2...)
+  tickwavesfromaxis:
+    signature: TickWavesFromAxis [/W=graphName/DEST={textWaveName, numericWaveName}/O/AUTO=mode] axisName
+    minimumVersion: 8.00
+  tile:
+    signature: Tile [flags] [objectName1[, objectName2...]]
+  tilewindows:
+    signature: TileWindows [flags] [windowName1[, windowName2...]]
+  titlebox:
+    signature: TitleBox [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  tocommandline:
+    signature: ToCommandLine commandsStr
+  toolsgrid:
+    signature: ToolsGrid [/W=winName] keyword1=value1[, keyword2=value2...]
+  triangulate3d:
+    signature: Triangulate3D [/OUT=format] srcWave
+  unwrap:
+    signature: Unwrap modulus, waveName1[, waveName2...]
+  unzipfile:
+    signature: UnzipFile [/O[=mode]/PASS=passwordStr/PIN=inputPathName/POUT=outputPathName/Z[=z]] inputFileStr, outputFolderStr
+    minimumVersion: 9.00
+  urlrequest:
+    signature: URLRequest [flags] url=urlStr [method=methodName, headers=headersStr]
+    minimumVersion: 7.00
+  valdisplay:
+    signature: ValDisplay [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
+  # Variable
+  wavemeanstdv:
+    signature: WaveMeanStdv srcWave binSizeWave
+  wavestats:
+    signature: WaveStats [flags] waveName
+  wavetracking:
+    signature: WaveTracking [/FREE/GLBL/LOCL] keyword
+    minimumVersion: 9.00
+  wavetransform:
+    signature: WaveTransform [flags] keyword srcWave
+  wfprintf:
+    signature: wfprintf refNumOrStr, formatStr [flags] waveName1[, waveName2...]
+  wignertransform:
+    signature: WignerTransform [/Z][/WIDE=wSize][/GAUS=gaussianWidth][/DEST=destWave] srcWave
+  windowfunction:
+    signature: WindowFunction [/FFT[=f]/DEST=destWave] windowKind, srcWave
+  xlloadwave:
+    signature: XLLoadWave [flags] [fileNameStr]
+  # Operation-like features categorized in "Programming"
+  abortonrte:
+    signature: AbortOnRTE
+  abortonvalue:
+    signature: AbortOnValue abortCondition, abortCode
+  doprompt:
+    signature: DoPrompt [/HELP=helpStr] dialogTitleStr, variable1[, variable2...]
+  multithread:
+    signature: MultiThread [/N=numThreads] wave = expression
+  prompt:
+    signature: Prompt variableName, titleStr[, popup, menuListStr]
+  waveclear:
+    signature: WAVEClear localName0[, localName1...]
+  # Declarative operations
+  string:
+    signature: String [/G] strName0[/N=name0][=strExpr0][, strName1[/N=name1][=strExpr1]...]
+  variable:
+    signature: Variable [flags] varName0[/N=name0][=numExpr0][, varName1[/N=name1][=numExpr1]...]
+  # Declarative features categorized in "Programming"
+  complex:
+    signature: Complex localName
+    minimumVersion: 7.00
+  constant:
+    signature: Constant[/C] kName = value
+    overloads:
+      - signature: Constant kName = literalNumber
+      - signature: Constant/C kName = (literalNumberReal, literalNumberImag)
+  dfref:
+    signature: DFREF localName1[=path_or_dfr1][, localName2[= path_or_dfr2]...]
+  double:
+    signature: double localName
+  funcref:
+    signature: FUNCREF protoFunc func[=funcSpec]
+  function:
+    signature: Function [/C/D/S/DF/WAVE] functionName([parameter...])
+  int:
+    signature: int localName
+    minimumVersion: 7.00
+  int64:
+    signature: int64 localName
+    minimumVersion: 7.00
+  nvar:
+    signature: NVAR [/C][/Z][/SDFR=dfr] localName1[=pathToVar1][, localName2[=pathToVar2]...]
+  strconstant:
+    signature: StrConstant ksName="literal string"
+  struct:
+    signature: STRUCT structureName localName
+  svar:
+    signature: SVAR [/Z][/SDFR=dfr] localName0[=pathToStr0][, localName1[=pathToStr1]...]
+  uint64:
+    signature: uint64 localName
+    minimumVersion: 7.00
+  wave:
+    signature: WAVE [/C][/T][/WAVE][/DF][/Z][/ZZ][/SDFR=dfr] localName0[=pathToWave0][, localName1[=pathToWave1]...]
+
+keywords:
+  # flow control keyword
+  break:
+    signature: break
+    description: |-
+      immediately terminates execution of a loop, switch or strswitch.
+      Execution then continues with code following the loop, switch or strswitch.
+  catch:
+    signature: catch
+    description: |-
+      marks the beginning of code in a try-catch-endtry flow control construct for handling any abort conditions.
+  continue:
+    signature: continue
+    description: |-
+      returns execution to the beginning of a loop, bypassing the remainder of the loop's code.
+  default:
+    signature: default
+    description: |-
+      is used in switch and strswitch statements.
+      When none of the case labels in the switch or strswitch match the evaluation expression, execution will continue with the code following the default label, if it is present.
+  do:
+    signature: do
+    description: |-
+      a do-while loop keyword.
+  while:
+    signature: while
+    description: |-
+      a do-while loop keyword.
+  end:
+    signature: End
+    description: |-
+      signals the end of a macro, function, or menu definition.
+      See `Function` for an example.
+  endmacro:
+    signature: EndMacro
+    description: |-
+      signals the end of a macro.
+      You can also use the `End` keyword to end a macro.
+      See `Macro` for an example.
+  endstructure:
+    signature: EndStructure
+    description: |-
+      marks the end of a Structure definition.
+  endtry:
+    signature: endtry
+    description: |-
+      marks the end of a try-catch-endtry flow control construct.
+  for:
+    signature: for
+    description: |-
+      a for-endfor loop keyword.
+  endfor:
+    signature: endfor
+    description: |-
+      marks the end of a for-endfor flow control construct.
+  if:
+    signature: if
+    description: |-
+      an if-elseif-else-endif conditional statement keyword.
+  else:
+    signature: else
+    description: |-
+      an if-elseif-else-endif conditional statement keyword.
+  elseif:
+    signature: elseif
+    description: |-
+      an if-elseif-else-endif conditional statement keyword
+  endif:
+    signature: endif
+    description: |-
+      an if-elseif-else-endif conditional statement keyword
+  return:
+    signature: return
+  strswitch:
+    signature: strswitch
+  case:
+    signature: case
+  endswitch:
+    signature: endswitch
+  switch:
+    signature: switch
+  try:
+    signature: try
+
+  # prefixes
+  override:
+    signature: Override
+    # Override constant objectName = newVal
+    # Override strconstant objectName = newVal
+    # Override Function funcName()
+  static:
+    signature: Static
+    # Static constant objectName = value
+    # Static strconstant objectName = value
+    # Static Function funcName()
+    # Static Structure structureName
+    # Static Picture pictName
+  threadsafe:
+    signature: ThreadSafe
+    # ThreadSafe Function funcName()
+
+  # block structures
+  macro:
+    signature: Macro macroName([parameters...]) [:macro type]
+  menu:
+    signature: Menu menuNameStr[, hideable, dynamic, contextualmenu]
+  picture:
+    signature: Picture pictureName
+  proc:
+    signature: Proc macroName([parameters]) [:macro type]
+  structure:
+    signature: Structure
+    description: |-
+      ```
+      Structure structureName
+        memType memName1[arraySize1][, memName2[arraySize2], ...]
+        ...
+      EndStructure
+      ```
+  submenu:
+    signature: Submenu menuNameStr
+  window:
+    signature: Window macroName([parameters]) [:macro type]
+
+  # others
+  popup:
+    signature: popup
+  galleryglobal:
+    signature: GalleryGlobal
+  procglobal:
+    signature: ProcGlobal
+  root:
+    signature: root
+
+structures:
+  hdf5datainfo:
+    signature: HDF5DataInfo
+  hdf5datatypeinfo:
+    signature: HDF5DatatypeInfo
+  hdf5linkinfostruct:
+    signature: HDF5LinkInfoStruct
+    minimumVersion: 9.00
+  hdf5savedatahookstruct:
+    signature: HDF5SaveDataHookStruct
+  point:
+    signature: Point
+  pointf:
+    signature: PointF
+  rect:
+    signature: Rect
+  rectf:
+    signature: RectF
+  rgbacolor:
+    signature: RGBAColor
+  rgbcolor:
+    signature: RGBColor
+  wmaxishookstruct:
+    signature: WMAxisHookStruct
+  wmbackgroundstruct:
+    signature: WMBackgroundStruct
+  wmbuttonaction:
+    signature: WMButtonAction
+  wmcheckboxaction:
+    signature: WMCheckboxAction
+  wmcustomcontrolaction:
+    signature: WMCustomControlAction
+  wmdrawusershapestruct:
+    signature: WMDrawUserShapeStruct
+  wmfitinfostruct:
+    signature: WMFitInfoStruct
+  wmgizmohookstruct:
+    signature: WMGizmoHookStruct
+  wmlistboxaction:
+    signature: WMListboxAction
+  wmmarkerhookstruct:
+    signature: WMMarkerHookStruct
+  wmpopupaction:
+    signature: WMPopupAction
+  wmsetvariableaction:
+    signature: WMSetVariableAction
+  wmslideraction:
+    signature: WMSliderAction
+  wmtabcontrolaction:
+    signature: WMTabControlAction
+  wmtooltiphookstruct:
+    signature: WMTooltipHookStruct
+  wmwinhookstruct:
+    signature: WMWinHookStruct
+
+subtypes:
+  buttoncontrol:
+    signature: ButtonControl
+  camerawindow:
+    signature: CameraWindow
+  cdffunc:
+    signature: CDFFunc
+  checkboxcontrol:
+    signature: CheckBoxControl
+  cursorstyle:
+    signature: CursorStyle
+  fitfunc:
+    signature: FitFunc
+  gizmoplot:
+    signature: GizmoPlot
+  graph:
+    signature: Graph
+  graphmarquee:
+    signature: GraphMarquee
+  graphstyle:
+    signature: GraphStyle
+  gridstyle:
+    signature: GridStyle
+  layout:
+    signature: Layout
+  layoutmarquee:
+    signature: LayoutMarquee
+  layoutstyle:
+    signature: LayoutStyle
+  listboxcontrol:
+    signature: ListBoxControl
+  panel:
+    signature: Panel
+  popupmenucontrol:
+    signature: PopupMenuControl
+  setvariablecontrol:
+    signature: SetVariableControl
+  slidercontrol:
+    signature: SliderControl
+  tabcontrol:
+    signature: TabControl
+  table:
+    signature: Table
+  tablestyle:
+    signature: TableStyle
+
+pragmas:
+  defaulttab:
+    signature: DefaultTab
+    minimumVersion: 9.00
+  hide:
+    signature: hide
+  igorversion:
+    signature: IgorVersion
+  independentmodule:
+    signature: IndependentModule
+  modulename:
+    signature: ModuleName
+  rtglobals:
+    signature: rtGlobals
+  textencoding:
+    signature: TextEncoding
+    minimumVersion: 7.00
+  version:
+    signature: version
+
+hooks:
+  aftercompiledhook:
+    signature: AfterCompiledHook()
+  afterfileopenhook:
+    signature: AfterFileOpenHook(refNum, fileNameStr, pathNameStr, fileTypeStr, fileCreatorStr, fileKind)
+  aftermdiframesizedhook:
+    signature: AfterMDIFrameSizedHook(param)
+  afterwindowcreatedhook:
+    signature: AfterWindowCreatedHook(windowNameStr, winType)
+  beforedebuggeropenshook:
+    signature: BeforeDebuggerOpensHook(errorInRoutineStr, stoppedByBreakpoint)
+  beforeexperimentsavehook:
+    signature: BeforeExperimentSaveHook(refNum, fileNameStr, pathNameStr, fileTypeStr, fileCreatorStr, fileKind)
+  beforefileopenhook:
+    signature: BeforeFileOpenHook(refNum, fileNameStr, pathNameStr, fileTypeStr, fileCreatorStr, fileKind)
+  beforeuncompiledhook:
+    signature: BeforeUncompiledHook(changeCode, procedureWindowTitleStr, textChangeStr)
+  igorbeforenewhook:
+    signature: IgorBeforeNewHook(igorApplicationNameStr )
+  igorbeforequithook:
+    signature: IgorBeforeQuitHook(unsavedExp, unsavedNotebooks, unsavedProcedures)
+  igormenuhook:
+    signature: IgorMenuHook(isSelection, menuStr, itemStr, itemNo, activeWindowStr, wType)
+  igorquithook:
+    signature: IgorQuitHook(igorApplicationNameStr)
+  igorstartornewhook:
+    signature: IgorStartOrNewHook(igorApplicationNameStr)
