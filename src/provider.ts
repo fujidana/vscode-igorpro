@@ -1,5 +1,12 @@
 import * as vscode from 'vscode';
 import * as igorpro from './igorpro';
+/* eslint-disable @typescript-eslint/naming-convention */
+interface SuppressMessagesConfig {
+    'completionItem.label.detail'?: boolean
+    'completionItem.label.description'?: boolean
+}
+/* eslint-enable @typescript-eslint/naming-convention */
+
 
 const enum TruncationLevel {
     full = 0,
@@ -7,7 +14,7 @@ const enum TruncationLevel {
     line
 }
 
-function truncateString(level: TruncationLevel, item: {description?: string, deprecatedMessage?: string, minimumVersion?: number}): string | undefined {
+function truncateString(level: TruncationLevel, item: { description?: string, deprecatedMessage?: string, minimumVersion?: number }): string | undefined {
     let truncatedString;
     if (item.description) {
         if (level === TruncationLevel.full) {
@@ -26,9 +33,9 @@ function truncateString(level: TruncationLevel, item: {description?: string, dep
             const tmpStr = `It was added in Igor Pro ${item.minimumVersion.toFixed(2)}.`;
             truncatedString = truncatedString ? truncatedString + '\n\n' + tmpStr : tmpStr;
         }
-    
+
         if (item.deprecatedMessage) {
-            const tmpStr = '__[deprecated]:__ ' + item.deprecatedMessage;
+            const tmpStr = '__deprecated:__ ' + item.deprecatedMessage;
             truncatedString = truncatedString ? truncatedString + '\n\n' + tmpStr : tmpStr;
         }
     }
@@ -90,11 +97,20 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
     protected readonly completionItemCollection = new Map<string, igorpro.CompletionItem[]>();
 
     constructor(context: vscode.ExtensionContext) {
+        const configurationChangeListener = (event: vscode.ConfigurationChangeEvent) => {
+            if (event.affectsConfiguration('igorpro.suggest.suppressMessages')) {
+                for (const uriString of this.storageCollection.keys()) {
+                    this.updateCompletionItemsForUriString(uriString);
+                }
+            }
+        };
+
         // register providers
         context.subscriptions.push(
             vscode.languages.registerCompletionItemProvider(igorpro.CMD_SELECTOR, this),
             vscode.languages.registerHoverProvider(igorpro.CMD_SELECTOR, this),
             vscode.languages.registerSignatureHelpProvider(igorpro.CMD_SELECTOR, this, '(', ')', ','),
+            vscode.workspace.onDidChangeConfiguration(configurationChangeListener),
         );
     }
 
@@ -102,9 +118,19 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
      * Generate completion items from the registered storage and cache it in the map using `uri` as the key.
      * Subclass must invoke it when the storage contents are changed.
      */
-     protected updateCompletionItemsForUriString(uriString: string): vscode.CompletionItem[] | undefined {
+    protected updateCompletionItemsForUriString(uriString: string): vscode.CompletionItem[] | undefined {
         const storage = this.storageCollection.get(uriString);
         if (storage) {
+            const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
+            let description: string | undefined;
+
+            const suppressDetail = config !== undefined && 'completionItem.label.detail' in config && config['completionItem.label.detail'] === true;
+            const suppressDescription = config !== undefined && 'completionItem.label.description' in config && config['completionItem.label.description'] === true;
+
+            if (!suppressDescription) {
+                description = 'built-in';
+            }
+
             const completionItems: igorpro.CompletionItem[] = [];
             for (const [refItemKind, map] of storage.entries()) {
                 // Suggest only constants, variables, functions, operations, and keywords. Skip the other types.
@@ -113,17 +139,19 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
                 }
 
                 for (const [identifier, item] of map.entries()) {
-                    if (!item.signature.toLowerCase().startsWith(identifier)) {
-                        console.log('error, mismatch with ID and signature', identifier, item.signature);
-                        continue;
-                    }
                     if (item.deprecatedMessage) {
                         // do not include deprecated items from the completion list.
                         continue;
                     }
+
+                    if (!item.signature.toLowerCase().startsWith(identifier)) {
+                        console.log('error, mismatch with ID and signature', identifier, item.signature);
+                        continue;
+                    }
+
                     const identifier2 = item.signature.substring(0, identifier.length);
-                    const detail = item.signature.substring(identifier.length);
-                    const label: vscode.CompletionItemLabel = { label: identifier2, detail: detail };
+                    const detail = suppressDetail ? undefined : item.signature.substring(identifier.length);
+                    const label: vscode.CompletionItemLabel = { label: identifier2, detail: detail, description };
                     const completionItem = new igorpro.CompletionItem(label, uriString, refItemKind);
                     completionItems.push(completionItem);
                 }
@@ -154,7 +182,7 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
     /**
      * Optional implementation of vscode.CompletionItemProvider
      */
-     public resolveCompletionItem(completionItem: igorpro.CompletionItem, token: vscode.CancellationToken): vscode.ProviderResult<igorpro.CompletionItem> {
+    public resolveCompletionItem(completionItem: igorpro.CompletionItem, token: vscode.CancellationToken): vscode.ProviderResult<igorpro.CompletionItem> {
         if (token.isCancellationRequested) { return; }
 
         const refItemKind = completionItem.refItemKind;
@@ -199,7 +227,7 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
     /**
      * required implementation of vscode.HoverProvider
      */
-     public provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
+    public provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
         if (token.isCancellationRequested) { return; }
 
         const truncationLevel = TruncationLevel.paragraph;
@@ -214,7 +242,7 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
         let hover: vscode.Hover | undefined;
 
         for (const [refUriString, storage] of this.storageCollection.entries()) {
-            for (const [_itemKind, map] of storage) {
+            for (const [_itemKind, map] of storage.entries()) {
                 // find the symbol information about the symbol.
                 const item = map.get(selectorName);
                 if (item) {

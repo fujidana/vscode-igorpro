@@ -66,6 +66,27 @@
             "type": "boolean",
             "default": true,
             "markdownDescription": "Shows a preview (Webview created by built-in Markdown extension) in addition to a markdown source after [Open Reference Manual](command:igorpro.openReferenceManual) command is invoked."
+          },
+          "igorpro.suggest.suppressMessages": {
+            "type": "object",
+            "markdownDescription": "Suppresses messages shown in code completion.",
+            "default": {
+              "completionItem.label.detail": false,
+              "completionItem.label.description": false
+            },
+            "properties": {
+              "completionItem.label.detail": {
+                "type": "boolean",
+                "default": false,
+                "description": "Hides the detail of unresolved completion item labels, where parameters of functions are typically shown."
+              },
+              "completionItem.label.description": {
+                "type": "boolean",
+                "default": false,
+                "description": "Hides the description of unresolved completion item labels, where file paths are typically shown."
+              }
+            },
+            "additionalProperties": false
           }
         }
       }
