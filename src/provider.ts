@@ -4,8 +4,24 @@ import * as igorpro from './igorpro';
 interface SuppressMessagesConfig {
     'completionItem.label.detail'?: boolean
     'completionItem.label.description'?: boolean
+    'completionItem.documentation'?: boolean
+    'signatureHelp.signatures.documentation'?: boolean
+    'hover.contents'?: boolean
 }
 /* eslint-enable @typescript-eslint/naming-convention */
+
+function getStringOfSignatureAndComment(item: igorpro.ReferenceItem, itemKind: igorpro.ReferenceItemKind) {
+    let symbolLabel: string;
+
+    symbolLabel = igorpro.getReferenceItemKindMetadata(itemKind).label;
+
+    let mainText = `${item.signature} // ${symbolLabel}`;
+    if (item.overloads && item.overloads.length > 1) {
+        mainText += `, ${item.overloads.length} overloads`;
+    }
+
+    return mainText;
+}
 
 
 const enum TruncationLevel {
@@ -122,10 +138,9 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
         const storage = this.storageCollection.get(uriString);
         if (storage) {
             const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
-            let description: string | undefined;
-
             const suppressDetail = config !== undefined && 'completionItem.label.detail' in config && config['completionItem.label.detail'] === true;
             const suppressDescription = config !== undefined && 'completionItem.label.description' in config && config['completionItem.label.description'] === true;
+            let description: string | undefined;
 
             if (!suppressDescription) {
                 description = 'built-in';
@@ -149,14 +164,16 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
                         continue;
                     }
 
-                    const identifier2 = item.signature.substring(0, identifier.length);
+                    const label = item.signature.substring(0, identifier.length);
                     const detail = suppressDetail ? undefined : item.signature.substring(identifier.length);
-                    const label: vscode.CompletionItemLabel = { label: identifier2, detail: detail, description };
-                    const completionItem = new igorpro.CompletionItem(label, uriString, refItemKind);
+                    const completionItem = new igorpro.CompletionItem(
+                        { label, detail, description }, uriString, refItemKind
+                    );
                     completionItems.push(completionItem);
                 }
             }
             this.completionItemCollection.set(uriString, completionItems);
+
             return completionItems;
         } else {
             this.completionItemCollection.delete(uriString);
@@ -188,7 +205,8 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
         const refItemKind = completionItem.refItemKind;
         const refUriString = completionItem.uriString;
 
-        const truncationlevel = TruncationLevel.line;
+        const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
+        const truncationlevel = (config !== undefined && 'completionItem.documentation' in config && config['completionItem.documentation'] === true) ? TruncationLevel.line : TruncationLevel.paragraph;
 
         // find the symbol information about the symbol.
         const label = typeof completionItem.label === 'string' ? completionItem.label : completionItem.label.label;
@@ -198,29 +216,27 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
         // copy completion item.
         const newCompletionItem = Object.assign({}, completionItem);
 
-        // set the detail of the completion item
-        newCompletionItem.detail = `${refItem.signature}`;
-
         // set the description of the completion item
         // if the main description exists, append it.
 
-        const descriptionMarkdown = new vscode.MarkdownString(truncateString(truncationlevel, refItem));
+        const documentation = new vscode.MarkdownString(truncateString(truncationlevel, refItem));
 
         // if overloaded signature exists, append them.
         if (refItem.overloads) {
             for (const overload of refItem.overloads) {
-                // descriptionMarkdown.appendMarkdown('---');
-                descriptionMarkdown.appendCodeblock(overload.signature);
+                // documentation.appendMarkdown('---');
+                documentation.appendCodeblock(overload.signature);
                 const truncatedString = truncateString(truncationlevel, overload);
                 if (truncatedString) {
-                    descriptionMarkdown.appendMarkdown(truncatedString);
+                    documentation.appendMarkdown(truncatedString);
                 }
             }
         }
 
-        if (descriptionMarkdown.value) {
-            newCompletionItem.documentation = descriptionMarkdown;
-        }
+        // set the detail of the completion item
+        newCompletionItem.detail = getStringOfSignatureAndComment(refItem, refItemKind);
+        newCompletionItem.documentation = documentation;
+    
         return newCompletionItem;
     }
 
@@ -230,7 +246,8 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
     public provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
         if (token.isCancellationRequested) { return; }
 
-        const truncationLevel = TruncationLevel.paragraph;
+        const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
+        const truncationLevel = (config !== undefined && 'hover.contents' in config && config['hover.contents'] === true) ? TruncationLevel.paragraph : TruncationLevel.full;
 
         const range = document.getWordRangeAtPosition(position);
         if (range === undefined) { return; }
@@ -239,26 +256,21 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
         if (!/^[a-z][a-z0-9_]*$/.test(selectorName)) { return; }
 
         // start to seek if the selection is a proper identifier.
-        let hover: vscode.Hover | undefined;
+        const hovers: vscode.MarkdownString[] = [];
 
-        for (const [refUriString, storage] of this.storageCollection.entries()) {
-            for (const [_itemKind, map] of storage.entries()) {
+        for (const [_refUriString, storage] of this.storageCollection.entries()) {
+            for (const [itemKind, map] of storage.entries()) {
                 // find the symbol information about the symbol.
                 const item = map.get(selectorName);
                 if (item) {
-                    let mainMarkdown = new vscode.MarkdownString().appendCodeblock(`${item.signature} // built-in symbols`);
+                    let mainMarkdown = new vscode.MarkdownString().appendCodeblock(getStringOfSignatureAndComment(item, itemKind));
 
                     // prepare the second line: the description (if it exists)
-                    const truncatedString = truncateString(TruncationLevel.paragraph, item);
+                    const truncatedString = truncateString(truncationLevel, item);
                     if (truncatedString) {
                         mainMarkdown = mainMarkdown.appendMarkdown(truncatedString);
                     }
-
-                    if (!hover) {
-                        hover = new vscode.Hover(mainMarkdown);
-                    } else {
-                        hover.contents.push(mainMarkdown);
-                    }
+                    hovers.push(mainMarkdown);
 
                     // for overloaded functions, prepare additional markdown blocks
                     if (item.overloads) {
@@ -268,14 +280,13 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
                             if (truncatedString2) {
                                 overloadMarkdown = overloadMarkdown.appendMarkdown(truncatedString2);
                             }
-                            hover.contents.push(overloadMarkdown);
+                            hovers.push(overloadMarkdown);
                         }
                     }
-                    // return hover;
                 }
             }
         }
-        return hover;
+        return new vscode.Hover(hovers);
     }
 
     /**
@@ -287,6 +298,9 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
         const signatureHint = parseSignatureInEditing(document.lineAt(position.line).text, position.character);
         if (signatureHint === undefined) { return; }
 
+        const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
+        const truncationLevel = (config !== undefined && 'signatureHelp.signatures.documentation' in config && config['signatureHelp.signatures.documentation'] === true) ? TruncationLevel.paragraph : TruncationLevel.full;
+
         for (const storage of this.storageCollection.values()) {
             const map = storage.get(igorpro.ReferenceItemKind.function);
             let item: igorpro.ReferenceItem | undefined;
@@ -296,8 +310,8 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
 
                 for (const overload of overloads) {
                     // assume that usage.signature must exist.
-                    const truncatedString = truncateString(TruncationLevel.full, overload);
                     const signatureInformation = new vscode.SignatureInformation(overload.signature);
+                    const truncatedString = truncateString(truncationLevel, overload);
                     if (truncatedString) {
                         signatureInformation.documentation = new vscode.MarkdownString(truncatedString);
                     }
