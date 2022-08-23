@@ -11,6 +11,19 @@
     "Programming Languages",
     "Snippets"
   ],
+  "keywords": [
+    "technical graphing",
+    "data analysis"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fujidana/vscode-igorpro/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fujidana/vscode-igorpro.git"
+  },
+	"homepage": "https://github.com/fujidana/vscode-igorpro#readme",
   "activationEvents": [
     "onLanguage:igorpro",
 		"onCommand:igorpro.openReferenceManual"
