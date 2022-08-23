@@ -132,7 +132,7 @@ repository:
                 name: entity.other.attribute-name.igorpro
               - match: .+
                 name: invalid.illegal.unknown-pragma-parameter.igorpro
-      - match: (?i)(?<=^)((#)include)\s+(?:((<)[^>]+(>))|("(?:\\.|[^"])+"))\s*(?=;|//|$)
+      - match: (?i)(?<=^)((#)include)\s+(?:((<)[^>]+(>))|("(?:\\.|[^"])+"))\s*(.*)(?=;|//|$)
         # name: meta.preprocessor.include.igorpro
         captures:
           "1": { name: keyword.control.directive.include.igorpro }
@@ -141,7 +141,8 @@ repository:
           "4": { name: punctuation.string.begin.igorpro }
           "5": { name: punctuation.string.end.igorpro }
           "6": { patterns: [{ include: "#literal-string" }] }
-      - match: (?i)(?<=^\s*)((#)define|ifn?def|undef)\s+(\w+)\s*(?=;|//|$)
+          "7": { patterns: [{ include: "#expression" }] }
+      - match: (?i)(?<=^\s*)((#)(?:define|undef))\s+(\w+)\s*(?=;|//|$)
         captures:
           "1": { name: keyword.control.directive.define.igorpro }
           "2": { name: punctuation.definition.directive.igorpro }
@@ -151,7 +152,7 @@ repository:
           "1": { name: keyword.control.directive.conditional.igorpro }
           "2": { name: punctuation.definition.directive.igorpro }
           "3": { name: entity.name.tag.symbol-preprocessor.igorpro }
-      - match: (?i)(?<=^\s*)((#)if|el(?:se|if)|endif)\b.*
+      - match: (?i)(?<=^\s*)((#)(?:if|el(?:se|if)|endif))\b.*
         captures:
           "1": { name: keyword.control.directive.conditional.igorpro }
           "2": { name: punctuation.definition.directive.igorpro }
@@ -243,7 +244,7 @@ repository:
               "4": { name: operator.assignment.igorpro }
             end: (?=;|//|$)
             patterns: [{ include: "#expression" }]
-          - match: (?i)(?<=^|;)\s*(STRUCT)\s+(\w+)\s+(&)?(\w+)(?=;|//|$)
+          - match: (?i)(?<=^|;)\s*(STRUCT)\s+(\w+)\s+(&)?(\w+)\s*(?=;|//|$)
             captures:
               "1": { name: storage.type.struct.igorpro }
               "2": { name: entity.name.type.structure.igorpro, patterns: [{ include: "#validate-structure" }]}
@@ -335,7 +336,7 @@ repository:
         name: keyword.operator.binary.bitwise.shift.igorpro
       - match: ==|!=|<=?|>=?
         name: keyword.operator.binary.arithmetic.comparison.igorpro
-      - match: "[−+*/:]?="
+      - match: "[-+*/:]?="
         name: keyword.operator.assignment.arithmetic.igorpro
       - match: \|\||&&
         name: keyword.operator.binary.logical.and-or.igorpro
