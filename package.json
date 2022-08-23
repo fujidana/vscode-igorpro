@@ -3,7 +3,7 @@
   "name": "igorpro",
   "displayName": "Igor Pro",
   "description": "Igor Pro support for VS Code",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -15,7 +15,7 @@
     "technical graphing",
     "data analysis"
   ],
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE.txt",
   "bugs": {
     "url": "https://github.com/fujidana/vscode-igorpro/issues"
   },
@@ -23,10 +23,10 @@
     "type": "git",
     "url": "https://github.com/fujidana/vscode-igorpro.git"
   },
-	"homepage": "https://github.com/fujidana/vscode-igorpro#readme",
+  "homepage": "https://github.com/fujidana/vscode-igorpro#readme",
   "activationEvents": [
     "onLanguage:igorpro",
-		"onCommand:igorpro.openReferenceManual"
+    "onCommand:igorpro.openReferenceManual"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -59,9 +59,9 @@
     "commands": [
       {
         "command": "igorpro.openReferenceManual",
-				"title": "Open Reference Manual",
-				"category": "Igor Pro",
-				"icon": "$(references)"
+        "title": "Open Reference Manual",
+        "category": "Igor Pro",
+        "icon": "$(references)"
       }
     ],
     "menus": {
@@ -71,7 +71,7 @@
         }
       ]
     },
-    "configuration":[
+    "configuration": [
       {
         "title": "Igor Pro",
         "properties": {
@@ -89,7 +89,7 @@
               "completionItem.documentation": false,
               "hover.contents": false,
               "signatureHelp.signatures.documentation": false
-              },
+            },
             "properties": {
               "completionItem.label.detail": {
                 "type": "boolean",
@@ -134,8 +134,8 @@
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
     "js-yaml:snippets": "js-yaml ./src/igorpro.snippets.yaml > ./syntaxes/igorpro.snippets.json",
-		"js-yaml:tmLanguage": "js-yaml ./src/igorpro.tmLanguage.yaml > ./syntaxes/igorpro.tmLanguage.json",
-		"js-yaml:apiReference": "js-yaml ./src/igorpro.apiReference.yaml > ./syntaxes/igorpro.apiReference.json"
+    "js-yaml:tmLanguage": "js-yaml ./src/igorpro.tmLanguage.yaml > ./syntaxes/igorpro.tmLanguage.json",
+    "js-yaml:apiReference": "js-yaml ./src/igorpro.apiReference.yaml > ./syntaxes/igorpro.apiReference.json"
   },
   "devDependencies": {
     "@types/vscode": "^1.70.0",
