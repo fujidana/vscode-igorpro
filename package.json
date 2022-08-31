@@ -71,6 +71,11 @@
         }
       ]
     },
+    "configurationDefaults": {
+      "[igorpro]": {
+        "editor.insertSpaces": false
+      }
+    },
     "configuration": [
       {
         "title": "Igor Pro",
