@@ -1,6 +1,6 @@
 {
   "publisher": "fujidana",
-  "name": "igorpro",
+  "name": "vscode-igorpro",
   "displayName": "Igor Pro",
   "description": "Igor Pro support for VS Code",
   "version": "1.0.0",
