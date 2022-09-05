@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-export const CMD_SELECTOR = { language: 'igorpro' };
-// export const CMD_SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
+export const IPF_SELECTOR = { language: 'igorpro' };
+// export const IPF_SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
 export const BUILTIN_URI = 'igorpro://system/built-in.md';
 
 export const enum ReferenceItemKind {

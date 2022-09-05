@@ -140,9 +140,9 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
 
         // register providers
         context.subscriptions.push(
-            vscode.languages.registerCompletionItemProvider(igorpro.CMD_SELECTOR, this),
-            vscode.languages.registerHoverProvider(igorpro.CMD_SELECTOR, this),
-            vscode.languages.registerSignatureHelpProvider(igorpro.CMD_SELECTOR, this, '(', ')', ','),
+            vscode.languages.registerCompletionItemProvider(igorpro.IPF_SELECTOR, this),
+            vscode.languages.registerHoverProvider(igorpro.IPF_SELECTOR, this),
+            vscode.languages.registerSignatureHelpProvider(igorpro.IPF_SELECTOR, this, '(', ')', ','),
             vscode.workspace.onDidChangeConfiguration(configurationChangeListener),
         );
     }
