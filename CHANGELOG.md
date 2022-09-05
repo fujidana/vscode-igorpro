@@ -10,6 +10,7 @@ All notable changes to the "igor" extension will be documented in this file.
   - Hists for built-in operartions are shown only at the beginning word of the command.
   - Hints for built-in functions are not shown at the beginning word of the command.
   - Hists are disabled when a word starts with a slash, `/`. Usually it is a flag of an operation.
+- Support a file drop on an editor (automatically format as an `#include` statement).
 
 ## [1.0.0]
 
@@ -22,8 +23,8 @@ All notable changes to the "igor" extension will be documented in this file.
   - syntax highlighting
   - code snippets
     - flow controls such as `if` and `for`.
-    - declarations, such as `Function`, and `Macro`
-    - compiler directives, such as `#prgama` and `#ifdef`
+    - declarations such as `Function` and `Macro`
+    - compiler directives such as `#prgama` and `#ifdef`
   - language configurations
     - comment toggling (line comment only (`//`). Igor Pro does not support block comments)
     - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
