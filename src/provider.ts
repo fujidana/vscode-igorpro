@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as igorpro from './igorpro';
+
 /* eslint-disable @typescript-eslint/naming-convention */
 interface SuppressMessagesConfig {
     'completionItem.label.detail'?: boolean
@@ -98,6 +99,22 @@ function parseSignatureInEditing(line: string, position: number) {
     return prevMatch ? { 'signature': prevMatch[2].toLowerCase(), 'argumentIndex': substr.split(',').length - 1 } : undefined;
 }
 
+const enum WordType {
+    unclassified = 0,
+    firstWord,
+    flag
+}
+
+function getWordTypeInCommand(document: vscode.TextDocument, position: vscode.Position): WordType {
+    const preceedingText = document.getText(new vscode.Range(position.with({ character: 0 }), position));
+    if (/(?<=;|^)\s*[a-zA-Z][a-zA-Z0-9_]*$/.test(preceedingText)) {
+        return WordType.firstWord;
+    } else if (/\/[a-zA-Z][a-zA-Z0-9_]*$/.test(preceedingText)) {
+        return WordType.flag;
+    }
+    return WordType.unclassified;
+}
+
 /**
  * Provider class
  */
@@ -189,11 +206,33 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
 
         const range = document.getWordRangeAtPosition(position);
         if (range === undefined) { return; }
-
+    
         const selectorName = document.getText(range);
         if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(selectorName)) { return; }
 
-        return new Array<igorpro.CompletionItem>().concat(...this.completionItemCollection.values());
+        const wordType = getWordTypeInCommand(document, position);
+
+        // If it is flag, currently no suggestion.
+        if (wordType === WordType.flag) {
+            return null;
+        }
+
+        const itemsArray = new Array<igorpro.CompletionItem[]>();
+        for (const [uriString, items] of this.completionItemCollection) {
+            if (uriString === igorpro.BUILTIN_URI) {
+                itemsArray.push(items.filter(item => {
+                    if (wordType === WordType.firstWord) {
+                        return (item.kind === vscode.CompletionItemKind.Function) ? false : true;
+                    } else {
+                        return (item.kind === vscode.CompletionItemKind.Module) ? false : true;
+                    }
+                }));
+            } else {
+                itemsArray.push(items);
+            }
+        }
+
+        return new Array<igorpro.CompletionItem>().concat(...itemsArray);
     }
 
     /**
@@ -251,15 +290,36 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
 
         const range = document.getWordRangeAtPosition(position);
         if (range === undefined) { return; }
-
+    
+        const wordType = getWordTypeInCommand(document, position);
+    
+        // If it is flag, currently no suggestion.
+        if (wordType === WordType.flag) {
+            return null;
+        }
+    
         const selectorName = document.getText(range).toLowerCase();
         if (!/^[a-z][a-z0-9_]*$/.test(selectorName)) { return; }
 
         // start to seek if the selection is a proper identifier.
         const hovers: vscode.MarkdownString[] = [];
 
-        for (const [_refUriString, storage] of this.storageCollection.entries()) {
+        for (const [uriString, storage] of this.storageCollection.entries()) {
             for (const [itemKind, map] of storage.entries()) {
+                // Built-in functions are not placed at the begining of the sentence.
+                // Operations are placed only at the begining of the sentence.
+                if (uriString === igorpro.BUILTIN_URI) {
+                    if (wordType === WordType.firstWord) {
+                        if (itemKind === igorpro.ReferenceItemKind.function) {
+                            continue;
+                        }
+                    } else {
+                        if (itemKind === igorpro.ReferenceItemKind.operation) {
+                            continue;
+                        }
+                    }
+                }
+
                 // find the symbol information about the symbol.
                 const item = map.get(selectorName);
                 if (item) {

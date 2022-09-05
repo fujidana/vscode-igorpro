@@ -4,6 +4,13 @@ All notable changes to the "igor" extension will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Make IntelliSence context-sensitive (refer to "IV-1 — Working with Commands / Types of Commands" in the Igor Pro Manual)
+  - Hists for built-in operartions are shown only at the beginning word of the command.
+  - Hints for built-in functions are not shown at the beginning word of the command.
+  - Hists are disabled when a word starts with a slash, `/`. Usually it is a flag of an operation.
+
 ## [1.0.0]
 
 - Initial release. The following features are implemented:

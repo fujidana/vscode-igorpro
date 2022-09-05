@@ -2350,6 +2350,8 @@ operations:
     signature: Prompt variableName, titleStr[, popup, menuListStr]
   waveclear:
     signature: WAVEClear localName0[, localName1...]
+
+keywords:
   # Declarative operations
   string:
     signature: String [/G] strName0[/N=name0][=strExpr0][, strName1[/N=name1][=strExpr1]...]
@@ -2392,7 +2394,6 @@ operations:
   wave:
     signature: WAVE [/C][/T][/WAVE][/DF][/Z][/ZZ][/SDFR=dfr] localName0[=pathToWave0][, localName1[=pathToWave1]...]
 
-keywords:
   # flow control keyword
   break:
     signature: break
