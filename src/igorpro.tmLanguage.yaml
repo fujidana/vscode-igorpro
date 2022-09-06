@@ -66,7 +66,7 @@ patterns:
       "5": { name: punctuation.macro-argument.end.igorpro }
       "6": { name: punctuation.delimiter.subtype.igorpro }
       "7": { name: entity.name.type.subtype.igorpro, patterns: [{ include: "#validate-subtype" }] }
-    end: (?i)^\s*(End(?:Macro))\s*(?=;|//|$)
+    end: (?i)^\s*(End(?:Macro)?)\s*(?=;|//|$)
     endCaptures:
       "1": { name: storage.type.end-macro.igorpro }
     contentName: meta.macro-body.igorpro

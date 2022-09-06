@@ -1,6 +1,6 @@
 # Change Log
 
-All notable changes to the "igor" extension will be documented in this file.
+All notable changes to the `vscode-igorpro` extension will be documented in this file.
 
 ## [Unreleased]
 
@@ -11,6 +11,10 @@ All notable changes to the "igor" extension will be documented in this file.
   - Hints for built-in functions are not shown at the beginning word of the command.
   - Hists are disabled when a word starts with a slash, `/`. Usually it is a flag of an operation.
 - Support a file drop on an editor (automatically format as an `#include` statement).
+
+### Fixed
+
+- a minor bug in syntax highlighting rules
 
 ## [1.0.0]
 
