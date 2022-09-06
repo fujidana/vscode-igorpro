@@ -16,6 +16,8 @@ The textual contents of the IntelliSens code hints are cited from [the official 
   - __code completion proposals__ - autocompletion that works during a user types a symbol
     - __code snippets__ - templates that make it easier to enter repeating code patterns, such as loops and conditional-statements
   - __Help with function signatures__ - help that appears during a user types an argument in a function call
+- __Code navigation__
+  - __Symbol navigation inside a document__ - available from _Go to Symbol in Editor_ (Ctrl+Shift+O) menubar item and the navigation bar at the top the editor pane (aka breadcrumbs)
 
 Currently IntelliSense features only support built-in symbols; it does not cover functions and variables in a user's procedure file.
 

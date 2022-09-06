@@ -4,6 +4,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [1.1.0] -- 2022-09-06
+
 ### Added
 
 - symbol navigation inside a file, including breadcrumbs. Functions, macros, structures, and constants are marked as symbols.
@@ -20,7 +22,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 - a minor bug in syntax highlighting rules.
 
-## [1.0.0] -- initial release
+## [1.0.0] -- 2022-08-31 (initial release)
 
 ### Added
 
@@ -39,5 +41,6 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/fujidana/vscode-igorpro/releases/tag/v1.0.0
