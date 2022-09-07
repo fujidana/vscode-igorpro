@@ -1,13 +1,16 @@
 import * as vscode from 'vscode';
+import { IFileRange } from "./grammar";
 
-export const IPF_SELECTOR = { language: 'igorpro' };
-// export const IPF_SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
+export const SELECTOR = { language: 'igorpro' };
+// export const SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
 export const BUILTIN_URI = 'igorpro://system/built-in.md';
 
 export const enum ReferenceItemKind {
     undefined = 0,
     constant,
     variable,
+    picture,
+    macro,
     function,
     operation,
     keyword,
@@ -35,6 +38,20 @@ export function getReferenceItemKindMetadata(refItemKind: ReferenceItemKind) : R
                 completionItemKind: vscode.CompletionItemKind.Variable,
                 symbolKind: vscode.SymbolKind.Variable
             };
+        case ReferenceItemKind.picture:
+            return {
+                label: "picture",
+                iconIdentifier: 'symbol-misc',
+                completionItemKind: vscode.CompletionItemKind.File,
+                symbolKind: vscode.SymbolKind.File
+            };
+        case ReferenceItemKind.macro:
+            return {
+                label: "macro",
+                iconIdentifier: 'symbol-method',
+                completionItemKind: vscode.CompletionItemKind.Method,
+                symbolKind: vscode.SymbolKind.Method
+            };
         case ReferenceItemKind.function:
             return {
                 label: "function",
@@ -45,9 +62,9 @@ export function getReferenceItemKindMetadata(refItemKind: ReferenceItemKind) : R
         case ReferenceItemKind.operation:
             return {
                 label: "operation",
-                iconIdentifier: 'symbol-module',
-                completionItemKind: vscode.CompletionItemKind.Module,
-                symbolKind: vscode.SymbolKind.Module
+                iconIdentifier: 'symbol-field',
+                completionItemKind: vscode.CompletionItemKind.Field,
+                symbolKind: vscode.SymbolKind.Field
             };
         case ReferenceItemKind.keyword:
             return {
@@ -104,11 +121,13 @@ export function getReferenceItemKindMetadata(refItemKind: ReferenceItemKind) : R
 export class CompletionItem extends vscode.CompletionItem {
     readonly uriString: string;
     readonly refItemKind: ReferenceItemKind;
+    readonly isStatic: boolean;
 
-    constructor(label: string | vscode.CompletionItemLabel, uriString: string, refItemKind: ReferenceItemKind) {
+    constructor(label: string | vscode.CompletionItemLabel, uriString: string, refItemKind: ReferenceItemKind, isStatic: boolean) {
         super(label, getReferenceItemKindMetadata(refItemKind).completionItemKind);
         this.uriString = uriString;
         this.refItemKind = refItemKind;
+        this.isStatic = isStatic;
     };
 }
 
@@ -118,7 +137,8 @@ export type ReferenceItem = {
     minimumVersion?: number;
     deprecatedMessage?: string;
     // snippet?: string;
-    // location?: IFileRange;
+    location?: IFileRange;
+    static?: boolean;
     overloads?: {
         signature: string;
         description?: string;
@@ -128,3 +148,35 @@ export type ReferenceItem = {
 export type ReferenceMap = Map<string, ReferenceItem>;
 
 export type ReferenceStorage = Map<ReferenceItemKind, ReferenceMap>;
+
+
+// type BaseReferenceItem = {
+//     type: string;
+//     signature: string;
+//     description?: string;
+//     minimumVersion?: number;
+//     deprecatedMessage?: string;
+//     // snippet?: string;
+//     location?: IFileRange;
+//     overloads?: {
+//         signature: string;
+//         description?: string;
+//     }[];
+// };
+
+// interface FunctionReferenceItem extends BaseReferenceItem {
+//     params?: string
+// }
+
+// interface ReferenceMap2 {
+//     constant?: BaseReferenceItem
+//     variable?: BaseReferenceItem
+//     macro?: FunctionReferenceItem
+//     function?: FunctionReferenceItem
+//     operation?: BaseReferenceItem
+//     keyword?: BaseReferenceItem
+//     structure?: BaseReferenceItem
+//     subtype?: BaseReferenceItem
+//     pragma?: BaseReferenceItem
+//     hook?: BaseReferenceItem
+// }

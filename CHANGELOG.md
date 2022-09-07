@@ -4,6 +4,16 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Added
+
+- Primitive "Provide Diagnostics" feature. Currently only top-level elements are checked.
+- "Show all Symbol Definitions Within a Document" feature.
+- "Show Definitions of a Symbol" feature
+- Extend IntelliSense support to symobls in workspace.
+  - Currently IntelliSense does not trace `#include` statements and thus it suggests all non-static functions and constants in workspaces.
+  - Local variables and waves are not yet supported.
+- Improve "Show all Symbol Definitions Within a Document" feature. A menu block and a picture declaration are now marked as symbols.
+  
 ## [1.1.0] -- 2022-09-06
 
 ### Added
@@ -16,7 +26,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 - Make IntelliSence context-sensitive (refer to "IV-1 — Working with Commands / Types of Commands" in the Igor Pro Manual).
   - Hists for built-in operartions are shown only at the beginning word of the command.
   - Hints for built-in functions are not shown at the beginning word of the command.
-  - Hists are disabled when a word starts with a slash, `/`. Usually it is a flag of an operation.
+  - Hints are disabled when a word starts with a slash, `/`. Usually it is a flag of an operation.
 
 ### Fixed
 
@@ -27,9 +37,9 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 ### Added
 
 - following IntelliSense features for built-in symbols (functions, operations, keywords, etc.)
-  - hovers
-  - completion items
-  - signature helps for functions
+  - "Show Code Completion Proposals" feature
+  - "Show Hovers" feature
+  - "Help With Function and Method Signatures" feature
 - virtual document that lists built-in symbols (call "Igor Pro: Open Reference Manual" from Command Pallete)
 - syntax highlighting
 - code snippets

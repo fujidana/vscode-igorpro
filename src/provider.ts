@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as igorpro from './igorpro';
+import * as lang from './igorpro';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 interface SuppressMessagesConfig {
@@ -11,12 +11,12 @@ interface SuppressMessagesConfig {
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 
-function getStringOfSignatureAndComment(item: igorpro.ReferenceItem, itemKind: igorpro.ReferenceItemKind) {
+function getStringOfSignatureAndComment(item: lang.ReferenceItem, itemKind: lang.ReferenceItemKind) {
     let symbolLabel: string;
 
-    symbolLabel = igorpro.getReferenceItemKindMetadata(itemKind).label;
+    symbolLabel = lang.getReferenceItemKindMetadata(itemKind).label;
 
-    let mainText = `${item.signature} // ${symbolLabel}`;
+    let mainText = `${item.signature} // ${item.static ? 'static ' : ''}${symbolLabel}`;
     if (item.overloads && item.overloads.length > 1) {
         mainText += `, ${item.overloads.length} overloads`;
     }
@@ -118,7 +118,7 @@ function getWordTypeInCommand(document: vscode.TextDocument, position: vscode.Po
 /**
  * Provider class
  */
-export class Provider implements vscode.CompletionItemProvider<igorpro.CompletionItem>, vscode.HoverProvider, vscode.SignatureHelpProvider {
+export class Provider implements vscode.CompletionItemProvider<lang.CompletionItem>, vscode.HoverProvider, vscode.SignatureHelpProvider {
     // vscode.Uri objects can not be used as a key for a Map object because these 
     // objects having the same string representation can be recognized different,
     // i.e., uriA.toString() === uriB.toString() but uriA !== uriB.
@@ -126,8 +126,8 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
     // (File System Path). To avoid this problem, the string representation of a Uri 
     // object is used as a key.
 
-    protected readonly storageCollection = new Map<string, igorpro.ReferenceStorage>();
-    protected readonly completionItemCollection = new Map<string, igorpro.CompletionItem[]>();
+    protected readonly storageCollection = new Map<string, lang.ReferenceStorage>();
+    protected readonly completionItemCollection = new Map<string, lang.CompletionItem[]>();
 
     constructor(context: vscode.ExtensionContext) {
         const configurationChangeListener = (event: vscode.ConfigurationChangeEvent) => {
@@ -140,9 +140,9 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
 
         // register providers
         context.subscriptions.push(
-            vscode.languages.registerCompletionItemProvider(igorpro.IPF_SELECTOR, this),
-            vscode.languages.registerHoverProvider(igorpro.IPF_SELECTOR, this),
-            vscode.languages.registerSignatureHelpProvider(igorpro.IPF_SELECTOR, this, '(', ')', ','),
+            vscode.languages.registerCompletionItemProvider(lang.SELECTOR, this),
+            vscode.languages.registerHoverProvider(lang.SELECTOR, this),
+            vscode.languages.registerSignatureHelpProvider(lang.SELECTOR, this, '(', ')', ','),
             vscode.workspace.onDidChangeConfiguration(configurationChangeListener),
         );
     }
@@ -160,13 +160,19 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
             let description: string | undefined;
 
             if (!suppressDescription) {
-                description = 'built-in';
+                if (uriString === lang.BUILTIN_URI) {
+                    description = 'built-in';
+                    // } else if (uriString === igorpro.ACTIVE_FILE_URI) {
+                    //     description = 'local';
+                } else {
+                    description = vscode.workspace.asRelativePath(vscode.Uri.parse(uriString));
+                }
             }
 
-            const completionItems: igorpro.CompletionItem[] = [];
+            const completionItems: lang.CompletionItem[] = [];
             for (const [refItemKind, map] of storage.entries()) {
                 // Suggest only constants, variables, functions, operations, and keywords. Skip the other types.
-                if (refItemKind !== igorpro.ReferenceItemKind.constant && refItemKind !== igorpro.ReferenceItemKind.variable && refItemKind !== igorpro.ReferenceItemKind.function && refItemKind !== igorpro.ReferenceItemKind.operation && refItemKind !== igorpro.ReferenceItemKind.keyword) {
+                if (refItemKind !== lang.ReferenceItemKind.constant && refItemKind !== lang.ReferenceItemKind.variable && refItemKind !== lang.ReferenceItemKind.function && refItemKind !== lang.ReferenceItemKind.operation && refItemKind !== lang.ReferenceItemKind.keyword) {
                     continue;
                 }
 
@@ -183,8 +189,8 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
 
                     const label = item.signature.substring(0, identifier.length);
                     const detail = suppressDetail ? undefined : item.signature.substring(identifier.length);
-                    const completionItem = new igorpro.CompletionItem(
-                        { label, detail, description }, uriString, refItemKind
+                    const completionItem = new lang.CompletionItem(
+                        { label, detail, description }, uriString, refItemKind, !!item.static
                     );
                     completionItems.push(completionItem);
                 }
@@ -201,44 +207,46 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
     /**
      * Required implementation of vscode.CompletionItemProvider
      */
-    public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionList<igorpro.CompletionItem> | igorpro.CompletionItem[]> {
+    public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionList<lang.CompletionItem> | lang.CompletionItem[]> {
         if (token.isCancellationRequested) { return; }
 
         const range = document.getWordRangeAtPosition(position);
         if (range === undefined) { return; }
-    
-        const selectorName = document.getText(range);
-        if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(selectorName)) { return; }
+
+        const selectorName = document.getText(range).toLowerCase();
+        if (!/^[a-z][a-z0-9_]*$/.test(selectorName)) { return; }
 
         const wordType = getWordTypeInCommand(document, position);
 
-        // If it is flag, currently no suggestion.
+        // If it is a flag in operation, currently no suggestion.
         if (wordType === WordType.flag) {
-            return null;
+            return undefined;
         }
 
-        const itemsArray = new Array<igorpro.CompletionItem[]>();
+        const itemsArray = new Array<lang.CompletionItem[]>();
         for (const [uriString, items] of this.completionItemCollection) {
-            if (uriString === igorpro.BUILTIN_URI) {
+            if (uriString === lang.BUILTIN_URI) {
                 itemsArray.push(items.filter(item => {
                     if (wordType === WordType.firstWord) {
                         return (item.kind === vscode.CompletionItemKind.Function) ? false : true;
                     } else {
-                        return (item.kind === vscode.CompletionItemKind.Module) ? false : true;
+                        return (item.kind === vscode.CompletionItemKind.Field) ? false : true;
                     }
                 }));
+            } else if (uriString !== document.uri.toString()) {
+                itemsArray.push(items.filter(item => !item.isStatic));
             } else {
                 itemsArray.push(items);
             }
         }
 
-        return new Array<igorpro.CompletionItem>().concat(...itemsArray);
+        return new Array<lang.CompletionItem>().concat(...itemsArray);
     }
 
     /**
      * Optional implementation of vscode.CompletionItemProvider
      */
-    public resolveCompletionItem(completionItem: igorpro.CompletionItem, token: vscode.CancellationToken): vscode.ProviderResult<igorpro.CompletionItem> {
+    public resolveCompletionItem(completionItem: lang.CompletionItem, token: vscode.CancellationToken): vscode.ProviderResult<lang.CompletionItem> {
         if (token.isCancellationRequested) { return; }
 
         const refItemKind = completionItem.refItemKind;
@@ -275,7 +283,7 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
         // set the detail of the completion item
         newCompletionItem.detail = getStringOfSignatureAndComment(refItem, refItemKind);
         newCompletionItem.documentation = documentation;
-    
+
         return newCompletionItem;
     }
 
@@ -290,31 +298,31 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
 
         const range = document.getWordRangeAtPosition(position);
         if (range === undefined) { return; }
-    
+
         const wordType = getWordTypeInCommand(document, position);
-    
-        // If it is flag, currently no suggestion.
+
+        // If it is a flag in operation, currently no suggestion.
         if (wordType === WordType.flag) {
-            return null;
+            return undefined;
         }
-    
+
         const selectorName = document.getText(range).toLowerCase();
         if (!/^[a-z][a-z0-9_]*$/.test(selectorName)) { return; }
 
         // start to seek if the selection is a proper identifier.
-        const hovers: vscode.MarkdownString[] = [];
+        const contents: vscode.MarkdownString[] = [];
 
         for (const [uriString, storage] of this.storageCollection.entries()) {
             for (const [itemKind, map] of storage.entries()) {
                 // Built-in functions are not placed at the begining of the sentence.
                 // Operations are placed only at the begining of the sentence.
-                if (uriString === igorpro.BUILTIN_URI) {
+                if (uriString === lang.BUILTIN_URI) {
                     if (wordType === WordType.firstWord) {
-                        if (itemKind === igorpro.ReferenceItemKind.function) {
+                        if (itemKind === lang.ReferenceItemKind.function) {
                             continue;
                         }
                     } else {
-                        if (itemKind === igorpro.ReferenceItemKind.operation) {
+                        if (itemKind === lang.ReferenceItemKind.operation) {
                             continue;
                         }
                     }
@@ -322,7 +330,7 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
 
                 // find the symbol information about the symbol.
                 const item = map.get(selectorName);
-                if (item) {
+                if (item && (!item.static || uriString === document.uri.toString())) {
                     let mainMarkdown = new vscode.MarkdownString().appendCodeblock(getStringOfSignatureAndComment(item, itemKind));
 
                     // prepare the second line: the description (if it exists)
@@ -330,7 +338,7 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
                     if (truncatedString) {
                         mainMarkdown = mainMarkdown.appendMarkdown(truncatedString);
                     }
-                    hovers.push(mainMarkdown);
+                    contents.push(mainMarkdown);
 
                     // for overloaded functions, prepare additional markdown blocks
                     if (item.overloads) {
@@ -340,13 +348,13 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
                             if (truncatedString2) {
                                 overloadMarkdown = overloadMarkdown.appendMarkdown(truncatedString2);
                             }
-                            hovers.push(overloadMarkdown);
+                            contents.push(overloadMarkdown);
                         }
                     }
                 }
             }
         }
-        return new vscode.Hover(hovers);
+        return new vscode.Hover(contents);
     }
 
     /**
@@ -361,10 +369,10 @@ export class Provider implements vscode.CompletionItemProvider<igorpro.Completio
         const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
         const truncationLevel = (config !== undefined && 'signatureHelp.signatures.documentation' in config && config['signatureHelp.signatures.documentation'] === true) ? TruncationLevel.paragraph : TruncationLevel.full;
 
-        for (const storage of this.storageCollection.values()) {
-            const map = storage.get(igorpro.ReferenceItemKind.function);
-            let item: igorpro.ReferenceItem | undefined;
-            if (map && (item = map.get(signatureHint.signature)) !== undefined) {
+        for (const [uriString, storage] of this.storageCollection.entries()) {
+            const map = storage.get(lang.ReferenceItemKind.function);
+            let item: lang.ReferenceItem | undefined;
+            if (map && (item = map.get(signatureHint.signature)) !== undefined && (!item.static || uriString === document.uri.toString())) {
                 const overloads = (item.overloads) ? item.overloads : [{ signature: item.signature, description: item.description }];
                 const signatureHelp = new vscode.SignatureHelp();
 

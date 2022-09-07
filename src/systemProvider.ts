@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
-import * as igorpro from './igorpro';
+import * as lang from './igorpro';
 import { Provider } from "./provider";
 import { TextDecoder } from 'util';
 
 interface APIReference {
-    constants: igorpro.ReferenceItem[];
-    variables: igorpro.ReferenceItem[];
-    functions: igorpro.ReferenceItem[];
-    operations: igorpro.ReferenceItem[];
-    keywords: igorpro.ReferenceItem[];
-    structures: igorpro.ReferenceItem[];
-    subtypes: igorpro.ReferenceItem[];
-    pragmas: igorpro.ReferenceItem[];
-    hooks: igorpro.ReferenceItem[];
+    constants: lang.ReferenceItem[];
+    variables: lang.ReferenceItem[];
+    functions: lang.ReferenceItem[];
+    operations: lang.ReferenceItem[];
+    keywords: lang.ReferenceItem[];
+    structures: lang.ReferenceItem[];
+    subtypes: lang.ReferenceItem[];
+    pragmas: lang.ReferenceItem[];
+    hooks: lang.ReferenceItem[];
 }
 
 /**
@@ -31,48 +31,39 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
             const apiReference: APIReference = JSON.parse(new TextDecoder('utf-8').decode(uint8Array));
 
             // convert the object to ReferenceMap and register the set.
-            this.storageCollection.set(igorpro.BUILTIN_URI, new Map(
-                [
-                    [igorpro.ReferenceItemKind.constant, new Map(Object.entries(apiReference.constants))],
-                    [igorpro.ReferenceItemKind.variable, new Map(Object.entries(apiReference.variables))],
-                    [igorpro.ReferenceItemKind.function, new Map(Object.entries(apiReference.functions))],
-                    [igorpro.ReferenceItemKind.operation, new Map(Object.entries(apiReference.operations))],
-                    [igorpro.ReferenceItemKind.keyword, new Map(Object.entries(apiReference.keywords))],
-                    [igorpro.ReferenceItemKind.structure, new Map(Object.entries(apiReference.structures))],
-                    [igorpro.ReferenceItemKind.subtype, new Map(Object.entries(apiReference.subtypes))],
-                    [igorpro.ReferenceItemKind.pragma, new Map(Object.entries(apiReference.pragmas))],
-                    [igorpro.ReferenceItemKind.hook, new Map(Object.entries(apiReference.hooks))],
-                ]
-            ));
-            this.updateCompletionItemsForUriString(igorpro.BUILTIN_URI);
+            this.storageCollection.set(lang.BUILTIN_URI, new Map([
+                [lang.ReferenceItemKind.constant, new Map(Object.entries(apiReference.constants))],
+                [lang.ReferenceItemKind.variable, new Map(Object.entries(apiReference.variables))],
+                [lang.ReferenceItemKind.function, new Map(Object.entries(apiReference.functions))],
+                [lang.ReferenceItemKind.operation, new Map(Object.entries(apiReference.operations))],
+                [lang.ReferenceItemKind.keyword, new Map(Object.entries(apiReference.keywords))],
+                [lang.ReferenceItemKind.structure, new Map(Object.entries(apiReference.structures))],
+                [lang.ReferenceItemKind.subtype, new Map(Object.entries(apiReference.subtypes))],
+                [lang.ReferenceItemKind.pragma, new Map(Object.entries(apiReference.pragmas))],
+                [lang.ReferenceItemKind.hook, new Map(Object.entries(apiReference.hooks))],
+            ]));
+            this.updateCompletionItemsForUriString(lang.BUILTIN_URI);
         });
 
         // register command to show reference manual as a virtual document
         const openReferenceManualCallback = () => {
-            const showReferenceManual = (storage: igorpro.ReferenceStorage) => {
+            const showReferenceManual = async (storage: lang.ReferenceStorage) => {
                 const quickPickItems = [{ key: 'all', label: '$(references) all' }];
                 for (const itemKind of storage.keys()) {
-                    const metadata = igorpro.getReferenceItemKindMetadata(itemKind);
+                    const metadata = lang.getReferenceItemKindMetadata(itemKind);
                     quickPickItems.push({ key: metadata.label, label: `$(${metadata.iconIdentifier}) ${metadata.label}` });
                 }
-                vscode.window.showQuickPick(quickPickItems).then(quickPickItem => {
-                    if (quickPickItem) {
-                        let uri = vscode.Uri.parse(igorpro.BUILTIN_URI);
-                        if (quickPickItem.key !== 'all') {
-                            uri = uri.with({ query: quickPickItem.key });
-                        }
-                        vscode.window.showTextDocument(uri, { preview: false }).then(editor => {
-                            const flag = vscode.workspace.getConfiguration('igorpro').get<boolean>('showReferenceManualInPreview');
-                            if (flag) {
-                                vscode.commands.executeCommand('markdown.showPreview').then(() => {
-                                    // vscode.window.showTextDocument(editor.document).then(() => {
-                                    //     vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-                                    // });
-                                });
-                            }
-                       });
+                const quickPickItem = await vscode.window.showQuickPick(quickPickItems);
+                if (quickPickItem) {
+                    const uri = vscode.Uri.parse(lang.BUILTIN_URI).with({ query: quickPickItem.key });
+                    const editor = await vscode.window.showTextDocument(uri, { preview: false });
+                    const flag = vscode.workspace.getConfiguration('igorpro').get<boolean>('showReferenceManualInPreview');
+                    if (flag) {
+                        await vscode.commands.executeCommand('markdown.showPreview');
+                        // await vscode.window.showTextDocument(editor.document);
+                        // vscode.commands.executeCommand('workbench.action.closeActiveEditor');
                     }
-                });
+                }
             };
 
             // The API reference database may have not been loaded 
@@ -80,7 +71,7 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
             // Therefore, wait until the database is loaded or 0.05 * 5 seconds passes.
             let trial = 0;
             const timer = setInterval(() => {
-                const storage = this.storageCollection.get(igorpro.BUILTIN_URI);
+                const storage = this.storageCollection.get(lang.BUILTIN_URI);
                 if (storage) {
                     clearInterval(timer);
                     showReferenceManual(storage);
@@ -121,10 +112,10 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
                 mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) and command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';
 
                 for (const [itemKind, map] of storage.entries()) {
-                    const itemKindLabel = igorpro.getReferenceItemKindMetadata(itemKind).label;
+                    const itemKindLabel = lang.getReferenceItemKindMetadata(itemKind).label;
 
-                    // if 'query' is specified, skip maps other than the speficed query.
-                    if (uri.query && uri.query !== itemKindLabel) {
+                    // if 'query' is not 'all', skip maps other than the speficed query.
+                    if (uri.query && uri.query !== 'all' && uri.query !== itemKindLabel) {
                         continue;
                     }
 
