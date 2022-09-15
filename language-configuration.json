@@ -22,7 +22,7 @@
         ["'", "'"]
     ],
     "indentationRules": {
-        "increaseIndentPattern": "^\\s*(?:[Tt]hread[Ss]afe)?\\s*\\b(?:[Ss]tatic|[Oo]verride)?\\s*\\b(?:if|else(?:if)?|do|for|switch|strswitch|try|catch|[Mm](?:acro|enu)|[Ff]unction|[Ss]ub[Mm]enu|[Pp](?:roc|icture)|[Ww]indow)\\b.*$",
+        "increaseIndentPattern": "^\\s*(?:[Tt]hread[Ss]afe)?\\s*\\b(?:[Ss]tatic|[Oo]verride)?\\s*\\b(?:if|else(?:if)?|do|for|switch|strswitch|try|catch|[Mm](?:acro|enu)|[Ff]unction|[Ss]ub[Mm]enu|[Ss]tructure|[Pp](?:roc|icture)|[Ww]indow)\\b.*$",
         "decreaseIndentPattern": "^\\s*(?:else(?:if)?|while|catch|[Ee]nd(?:[Ii]f|[Ff]or|[Ss](?:witch|tructure)|[Tt]ry|[Mm]acro)?)\\b.*$"
     }
 }
