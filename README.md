@@ -2,7 +2,7 @@
 
 The extension helps you editing Igor procedure files (`*.ipf`).
 
-The author of this extension is independent from Wavemetrics, Inc., which develops Igor Pro itself.
+The author of this extension is just a Igor Pro user and has no more relation with Wavemetrics, Inc., which develops Igor Pro itself.
 Use [GitHub issues](https://github.com/fujidana/vscode-igorpro/issues) for bug reports and feature requests about this extension.
 
 The textual contents of the IntelliSens code hints are cited from [the official manual](https://www.wavemetrics.com/products/igorpro/manual) (manual revision: June 24, 2022 (9.01)) and command helps (application version: 9.01 (Build 39200)) in the in-app help browser.

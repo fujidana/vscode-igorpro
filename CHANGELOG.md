@@ -4,13 +4,15 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [1.2.0] -- 2022-09-06
+
 ### Added
 
 - Primitive "Provide Diagnostics" feature. Currently only top-level elements are checked.
-- "Show all Symbol Definitions Within a Document" feature.
-- "Show Definitions of a Symbol" feature
-- Extend IntelliSense support to symobls in workspace.
-  - Currently IntelliSense does not trace `#include` statements and thus it suggests all non-static functions and constants in workspaces.
+- Add "Show all Symbol Definitions in Folder" feature.
+- Add "Show Definitions of a Symbol" feature.
+- Extend IntelliSense support to symobls in workspaces.
+  - Currently IntelliSense does not trace files included by `#include`; it suggests all non-static functions and constants in workspaces.
   - Local variables and waves are not yet supported.
 - Improve "Show all Symbol Definitions Within a Document" feature. A menu block and a picture declaration are now marked as symbols.
   
@@ -18,8 +20,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Added
 
-- symbol navigation inside a file, including breadcrumbs. Functions, macros, structures, and constants are marked as symbols.
-- support of a file drop on an editor. The file path is automatically formatted as an `#include` statement.
+- Add "Show all Symbol Definitions Within a Document" feature, including breadcrumbs. Functions, macros, structures, and constants are marked as symbols.
+- Support a file drop on an editor. The file path is automatically formatted as an `#include` statement.
 
 ### Changed
 
@@ -36,21 +38,22 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Added
 
-- following IntelliSense features for built-in symbols (functions, operations, keywords, etc.)
+- Add following IntelliSense features for built-in symbols (functions, operations, keywords, etc.):
   - "Show Code Completion Proposals" feature
   - "Show Hovers" feature
   - "Help With Function and Method Signatures" feature
-- virtual document that lists built-in symbols (call "Igor Pro: Open Reference Manual" from Command Pallete)
-- syntax highlighting
-- code snippets
+- Add feature to list built-in symbols (call "Igor Pro: Open Reference Manual" from Command Pallete).
+- Add syntax highlighting.
+- Add code snippets.
   - flow controls such as `if` and `for`.
   - declarations such as `Function` and `Macro`
   - compiler directives such as `#prgama` and `#ifdef`
-- language configurations
+- Add language configurations.
   - comment toggling (line comment only (`//`). Igor Pro does not support block comments)
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/fujidana/vscode-igorpro/releases/tag/v1.0.0
