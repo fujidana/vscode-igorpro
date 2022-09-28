@@ -324,10 +324,11 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         }
 
         this.diagnosticCollection.delete(uri);
-        // if (diagnoseProblems) {
-        //     const diagnostics = program.exDiagnostics.map(item => new vscode.Diagnostic(spec.convertRange(item.location), item.message, item.severity));
-        //     this.diagnosticCollection.set(uri, diagnostics);
-        // }
+        if (diagnoseProblems) {
+            this.diagnosticCollection.set(uri, program.problems.map(
+                problem => new vscode.Diagnostic(tree.convertRange(problem.loc), problem.message, problem.severity))
+            );
+        }
 
         // if (isOpenDocument) {
         //     this.treeCollection.set(uriString, program);
@@ -413,11 +414,13 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             return undefined;
         }
 
-        // const workspcaes = vscode.workspace.workspaceFolders;
-        // if (workspcaes !== undefined) {
-        //     vscode.workspace.fs.writeFile(vscode.Uri.joinPath(workspcaes[0].uri, 'tmp.json'), new TextEncoder().encode(JSON.stringify(program.body, undefined, 2)));
+        // if (document.isUntitled) {
+        //     const workspcaes = vscode.workspace.workspaceFolders;
+        //     if (workspcaes !== undefined) {
+        //         vscode.workspace.fs.writeFile(vscode.Uri.joinPath(workspcaes[0].uri, 'tmp.json'), new TextEncoder().encode(JSON.stringify(program.body, undefined, 2)));
+        //     }
+        //     console.log(JSON.stringify(program.body));
         // }
-        // console.log(JSON.stringify(program.body));
 
         function getDocumentSymbol(node: tree.TopLevelDeclaration | tree.SubmenuDeclaration, kind: vscode.SymbolKind) {
             if (node.loc && node.id.loc) {

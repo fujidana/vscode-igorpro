@@ -1,6 +1,6 @@
 {
     "tspegjs": {
-        "customHeader": "/* eslint-disable @typescript-eslint/naming-convention */\nimport * as tree from './igorproTree';\n"
+        "customHeader": "/* eslint-disable @typescript-eslint/naming-convention */\nimport { DiagnosticSeverity } from 'vscode';\nimport * as tree from './igorproTree';\n"
     },
     "returnTypes": {
         "Program": "tree.Program",

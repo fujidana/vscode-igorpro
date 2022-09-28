@@ -44,11 +44,12 @@ export interface BaseBlock extends BaseStatement {
     interceptingComment?: Comment;
 }
 
-// export interface NodeMap {
-//     Program: Program;
-//     Identifier: Identifier;
-//     Statement: Statement;
-// }
+
+export interface Problem {
+    message: string;
+    severity: vscode.DiagnosticSeverity;
+    loc: IFileRange;
+}
 
 // export type Node = NodeMap[keyof NodeMap];
 
@@ -60,6 +61,7 @@ export interface Comment extends BaseNode {
 export interface Program extends BaseNode {
     type: 'Program';
     body: TopLevelStatement[];
+    problems: Problem[];
 }
 
 export type TopLevelStatement =
@@ -239,3 +241,67 @@ export interface StringIdentifier extends Identifier {
 // }
 
 // export type Expression = ExpressionMap[keyof ExpressionMap];
+
+export interface IfStatement extends BaseStatement {
+    type: 'IfStatement';
+    cases: IfCase[];
+}
+
+export interface IfCase extends BaseBlock {
+    type: 'IfCase';
+    test?: BaseExpression;
+    consequent: FunctionStatement[];
+}
+
+export interface SwitchStatement extends BaseBlock {
+    type: 'SwitchStatement';
+    kind: 'number' | 'string';
+    discriminant: BaseExpression;
+    cases: SwitchCase[];
+}
+
+interface SwitchCase extends BaseBlock {
+    type: 'SwitchCase';
+    test?: BaseExpression;
+    consequent: FunctionStatement[] | BreakStatement ;
+}
+
+interface TryStatement extends BaseBlock {
+    type: 'TryStatement';
+    block: FunctionStatement[];
+    handler: FunctionStatement[];
+}
+
+interface DoWhileStatement extends BaseBlock {
+    type: 'DoWhileStatement';
+    body: FunctionStatement[] | BreakStatement | ContinueStatement;
+    test: BaseExpression;
+}
+
+interface ForStatement extends BaseBlock {
+    type: 'ForStatement';
+    test: BaseExpression;
+    body: FunctionStatement[] | BreakStatement | ContinueStatement;
+}
+
+interface BreakStatement extends BaseStatement {
+    type: 'BreakStatement';
+}
+
+interface ContinueStatement extends BaseStatement {
+    type: 'ContinueStatement';
+}
+
+
+interface CallExpression extends BaseExpression {
+    type: 'CallExpression';
+    callee: BaseExpression;
+    arguments: string;
+    // arguments: BaseExpression[];
+}
+
+interface Literal extends BaseExpression {
+    type: 'Literal';
+    value: string | number;
+    raw: string;
+}
