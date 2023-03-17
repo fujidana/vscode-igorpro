@@ -305,14 +305,10 @@ repository:
     # name: constant.character.escape.igorpro
   literal-numeric:
     patterns:
-      - match: \b(?<!\.)(0[xX])[0-9a-fA-F]+(?![\.\w])
+      - match: \b(?<!\.)(0x)[0-9a-fA-F]+(?![\.\w])
         name: constant.numeric.integer.hexadecimal.igorpro
         captures:
           "1": { name: keyword.other.integer.hexadecimal.igorpro }
-      - match: \b(?<!\.)(0)[0-7]+(?![\.\w])
-        name: constant.numeric.integer.octal.igorpro
-        captures:
-          "1": { name: keyword.other.integer.otcal.igorpro }
       - match: \b(?<!\.)(0|[1-9][0-9]*)(?![\.\w])
         name: constant.numeric.integer.decimal.igorpro
       - match: \b(?<!\.)[0-9]+(?:\.[0-9]*)?(?:(e|E)[+-]?[0-9]+)?(?![\.\w])
@@ -430,7 +426,7 @@ repository:
     ValDisplay|Variable|\
     Wave(?:MeanStdv|Stats|Tracking|Transform)|wfprintf|WignerTransform|WindowFunction|\
     XLLoadWave\
-    )|(DoPrompt|MultiThread|Prompt|WaveClear))\\b\
+    )|DoPrompt|MultiThread|Prompt|WaveClear)\\b\
     "
     captures:
       "1": { name: support.function.operation.igorpro }
