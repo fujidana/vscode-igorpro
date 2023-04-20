@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { IFileRange } from "./grammar";
+import { FileRange } from "./grammar";
 
 export const SELECTOR = { language: 'igorpro' };
 // export const SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
@@ -137,7 +137,7 @@ export type ReferenceItem = {
     minimumVersion?: number;
     deprecatedMessage?: string;
     // snippet?: string;
-    location?: IFileRange;
+    location?: FileRange;
     static?: boolean;
     overloads?: {
         signature: string;
@@ -157,7 +157,7 @@ export type ReferenceStorage = Map<ReferenceItemKind, ReferenceMap>;
 //     minimumVersion?: number;
 //     deprecatedMessage?: string;
 //     // snippet?: string;
-//     location?: IFileRange;
+//     location?: FileRange;
 //     overloads?: {
 //         signature: string;
 //         description?: string;

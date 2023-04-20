@@ -10,7 +10,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Changed
 
-- Update Node.js packages.
+- Update Node.js packages, including peggy (ver. 2 -> 3) and ts-pegjs (ver. 3 -> 4).
 - Raise the minimum VS Code version to 1.76.0.
 
 ## [1.2.0] -- 2022-09-15

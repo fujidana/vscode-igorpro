@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as lang from "./igorpro";
 import { Provider } from "./provider";
-import { SyntaxError, parse } from './grammar';
+import { PeggySyntaxError, parse } from './grammar';
 import * as tree from './igorproTree';
 import { TextDecoder, TextEncoder } from "util";
 
@@ -305,7 +305,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         try {
             program = parse(contents);
         } catch (error) {
-            if (error instanceof SyntaxError) {
+            if (error instanceof PeggySyntaxError) {
                 if (diagnoseProblems) {
                     const diagnostic = new vscode.Diagnostic(tree.convertRange(error.location), error.message, vscode.DiagnosticSeverity.Error);
                     this.diagnosticCollection.set(uri, [diagnostic]);

@@ -3,7 +3,7 @@
   "name": "vscode-igorpro",
   "displayName": "Igor Pro",
   "description": "Igor Pro support for VS Code",
-  "version": "1.3.0-alpha.1",
+  "version": "1.3.0-alpha.2",
   "engines": {
     "vscode": "^1.76.0"
   },
@@ -126,7 +126,7 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "pnpm run pegjs && pnpm run js-yaml && pnpm run package",
+    "vscode:prepublish": "pnpm run peggy && pnpm run js-yaml && pnpm run package",
     "compile": "webpack",
     "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
@@ -139,7 +139,7 @@
     "js-yaml:tmLanguage": "js-yaml ./src/igorpro.tmLanguage.yaml > ./syntaxes/igorpro.tmLanguage.json",
     "js-yaml:apiReference": "js-yaml ./src/igorpro.apiReference.yaml > ./syntaxes/igorpro.apiReference.json",
     "js-yaml": "pnpm run js-yaml:snippets && pnpm run js-yaml:tmLanguage && pnpm run js-yaml:apiReference",
-    "pegjs": "peggy --cache --plugin ./node_modules/ts-pegjs/src/tspegjs -c ./src/pegconfig.json -o ./src/grammar.ts ./src/grammar.pegjs"
+    "peggy": "peggy --cache --plugin ./node_modules/ts-pegjs/dist/tspegjs -c ./src/pegconfig.json -o ./src/grammar.ts ./src/grammar.pegjs"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
@@ -153,9 +153,9 @@
     "glob": "^8.1.0",
     "js-yaml": "^4.1.0",
     "mocha": "^10.2.0",
-    "peggy": "^2.0.1",
+    "peggy": "^3.0.2",
     "ts-loader": "^9.4.2",
-    "ts-pegjs": "^2.1.0",
+    "ts-pegjs": "^4.1.0",
     "typescript": "^4.9.5",
     "webpack": "^5.76.3",
     "webpack-cli": "^5.0.1"

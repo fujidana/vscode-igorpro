@@ -7,23 +7,23 @@
 
 import * as vscode from 'vscode';
 
-interface IFilePosition {
+interface FilePosition {
     offset: number;
     line: number;
     column: number;
 }
 
-interface IFileRange {
-    start: IFilePosition;
-    end: IFilePosition;
+interface FileRange {
+    start: FilePosition;
+    end: FilePosition;
     source: string;
 }
 
-export function convertPosition(position: IFilePosition): vscode.Position {
+export function convertPosition(position: FilePosition): vscode.Position {
     return new vscode.Position(position.line - 1, position.column - 1);
 }
 
-export function convertRange(range: IFileRange): vscode.Range {
+export function convertRange(range: FileRange): vscode.Range {
     return new vscode.Range(convertPosition(range.start), convertPosition(range.end));
 }
 
@@ -32,7 +32,7 @@ export function convertRange(range: IFileRange): vscode.Range {
 
 export interface BaseNode {
     type: string;
-    loc?: IFileRange;
+    loc?: FileRange;
 }
 
 export interface BaseStatement extends BaseNode {
@@ -48,7 +48,7 @@ export interface BaseBlock extends BaseStatement {
 export interface Problem {
     message: string;
     severity: vscode.DiagnosticSeverity;
-    loc: IFileRange;
+    loc: FileRange;
 }
 
 // export type Node = NodeMap[keyof NodeMap];

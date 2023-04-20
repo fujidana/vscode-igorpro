@@ -1,6 +1,6 @@
 {
     "tspegjs": {
-        "customHeader": "/* eslint-disable @typescript-eslint/naming-convention */\nimport { DiagnosticSeverity } from 'vscode';\nimport * as tree from './igorproTree';\n"
+        "customHeader": "import { DiagnosticSeverity } from 'vscode';\nimport * as tree from './igorproTree';\n"
     },
     "returnTypes": {
         "Program": "tree.Program",
@@ -22,7 +22,7 @@
         "EmptyEolStmt": "tree.EmptyStatement",
         "EmptyStmtWLComments": "tree.EmptyStatement",
         "UnclassifiedEolStmt": "tree.UnclassifiedStatement",
-        "End": "[string, IFileRange]",
+        "End": "[string, FileRange]",
         "Directive": "tree.Directive",
         "TLDecl": "tree.TopLevelDeclaration",
         "ConstDecl": "tree.ConstantDeclaration",
