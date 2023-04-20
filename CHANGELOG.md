@@ -4,6 +4,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [1.3.0] -- 2023-04-21
+
 ### Added
 
 - Make "Provide Diagnostics" feature check grammar of statements inside top-level elements.
@@ -62,7 +64,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/fujidana/vscode-igorpro/releases/tag/v1.0.0
