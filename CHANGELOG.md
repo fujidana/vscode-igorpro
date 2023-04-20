@@ -4,11 +4,20 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
-## [1.2.0] -- 2022-09-06
+### Added
+
+- Make "Provide Diagnostics" feature check grammar of statements inside top-level elements.
+
+### Changed
+
+- Update Node.js packages.
+- Raise the minimum VS Code version to 1.76.0.
+
+## [1.2.0] -- 2022-09-15
 
 ### Added
 
-- Primitive "Provide Diagnostics" feature. Currently only top-level elements are checked.
+- Add primitive "Provide Diagnostics" feature. Currently only top-level elements are checked.
 - Add "Show all Symbol Definitions in Folder" feature.
 - Add "Show Definitions of a Symbol" feature.
 - Extend IntelliSense support to symobls in workspaces.
