@@ -4,6 +4,10 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Fixed
+
+- Suport obsolete bit-wise operators (`%~`, `%&`, `%|`). (#6)
+
 ## [1.3.0] -- 2023-04-21
 
 ### Added

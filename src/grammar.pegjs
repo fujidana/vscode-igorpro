@@ -54,6 +54,27 @@
   function addProblem(message: string, loc: FileRange, severity = DiagnosticSeverity.Error) {
     problems.push({ message, loc, severity });
   }
+
+
+  /**
+   * Return a new range object whose 'end' is moved to the 'start' location.
+   */
+  function getStartLocation(loc?: FileRange, length: number = 0, offset: number = 0) {
+    const loc2 = loc === undefined ? location() : { ...loc };
+    if (offset !== 0) {
+      loc2.start = { ...loc2.start };
+      loc2.start.offset += offset;
+      loc2.start.column += offset;
+    }
+    if (length === 0) {
+      loc2.end = loc2.start;
+    } else {
+      loc2.end = { ...loc2.start };
+      loc2.end.offset += length;
+      loc2.end.column += length;
+    }
+    return loc2;
+  }
 }
 
 Program = body:TLStmt* {
@@ -501,11 +522,25 @@ Order8 =
 // bitwise AND, OR, XOR: '&', '|', '%^'
 // evaluated from right to left; e.g, `1 | 3 & 2` returns 3, not 2.
 Order7 =
-  heads:(Order6 _0 $('&' !'&' / '|' !'|' / '%^') _0)* tail:Order6 {
+  heads:(Order6 _0 $('&' !'&' / '|' !'|' / '%^' / '%&' / '%|') _0)* tail:Order6 {
     return heads.reduceRight((accumulator: any, currentValue: any) => {
+      if (currentValue[2] === '%&' || currentValue[2] === '%|') {
+        let loc = location();
+        if ('loc' in currentValue[0]) {
+          loc = getStartLocation(loc, 2, currentValue[0].loc.end.offset - currentValue[0].loc.start.offset + currentValue[1].length)
+        }
+        addProblem('Obsolete bit-wise binary operator.', loc, DiagnosticSeverity.Information);
+      }
       return { type: 'BinaryExpression', op: currentValue[2], left: currentValue[0], right: accumulator, };
     }, tail);
   }
+
+ObsoleteBitwiseBinary =
+  a: $('%&' / '%|') {
+    addProblem('Obsolete bit-wise binary operator.', location(), DiagnosticSeverity.Information);
+    return a;
+  }
+
 
 // comparison: '==', '!=', '>', '<', '>=', '<='
 // evaluated from right to left; e.g, `2==1>= 0` returns 0, not 1.
@@ -541,8 +576,11 @@ Order4 =
 // continous '!' and '~'.
 // E.g., `print ! ! !! 1` is valid but `print - - -- 1` is invalid.
 Order3 =
-  heads:($('!' / '~' / '-' ! '-'/ '+' ! '+') _0)* tail:Order2 {
+  heads:($('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)* tail:Order2 {
     return heads.reduceRight((accumulator: any, currentValue: any) => {
+      if (currentValue[0] == '%~') {
+        addProblem('Obsolete bit-wise unary operator.', getStartLocation(undefined, 2, 0), DiagnosticSeverity.Information);
+      }
       return { type: 'UnaryExpression', op: currentValue[0], arg: accumulator, };
     }, tail);
   }
