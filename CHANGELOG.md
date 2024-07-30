@@ -6,7 +6,10 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Fixed
 
-- Suport obsolete bit-wise operators (`%~`, `%&`, `%|`). (#6)
+- Fix an issue where `String` keyword was not properly tokenized and thus, not colorized.
+- Fix other minor problems in syntax highlighting rules.
+- Support optional function parameters. [#5]
+- Support obsolete bit-wise operators (`%~`, `%&`, `%|`). [#6]
 
 ## [1.3.0] -- 2023-04-21
 
@@ -47,7 +50,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Fixed
 
-- a minor bug in syntax highlighting rules.
+- Fix a minor bug in syntax highlighting rules.
 
 ## [1.0.0] -- 2022-08-31 (initial release)
 

@@ -387,14 +387,14 @@ repository:
         name: punctuation.delimiter.parameter.igorpro
       - match: (?i)\b(STRUCT)\s*(\w+)\b
         captures:
-          "1": { name: storage.type.structure.igorpro }
+          "1": { name: storage.type.struct.igorpro }
           "2": { name: entity.name.type.structure.igorpro, patterns: [{ include: "#validate-structure" }] }
       - match: (?i)\b(FUNCREF)\s*(\w+)\b
         captures:
           "1": { name: storage.type.funcref.igorpro }
           "2": { name: entity.name.function.function.igorpro, patterns: [{ include: "#validate-parameter" }] }
-      - match: (?i)\b(?:complex|double|int(?:64)?|uint64|DFREF|Variable|Wave)\b
-        name: storage.type.funcref.igorpro
+      - match: (?i)\b(?:complex|double|int(?:64)?|uint64|DFREF|Variable|String|Wave)\b
+        name: storage.type.common.igorpro
       - include: "#optional-flag"
       - match: \b(\w+)\b
         captures:
