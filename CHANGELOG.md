@@ -4,6 +4,11 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Changed
+
+- Update Node.js packages, including a vulnerable dependency.
+- Raise the minimum VS Code version to 1.91.0.
+
 ### Fixed
 
 - Fix an issue where `String` keyword was not properly tokenized and thus, not colorized.
