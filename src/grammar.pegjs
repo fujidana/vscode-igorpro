@@ -273,14 +273,14 @@ InvalidStructStmt =
 
 FuncStmt 'statement in macro and function' =
   lComments:(_0 @Comment)+ funcStmt:(
-    _0 @(Directive / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / BreakStmt / ContinueStmt / MultCmndStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt / InvalidFuncStmt)
+    _0 @(Directive / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / MultCmndStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt / InvalidFuncStmt)
     // _0 @(UnclassifiedEolStmt / EmptyEolStmt / EmptyEofStmt)
   ) {
     return leadingCommentsAddedNode(funcStmt, lComments);
   }
   /
   // _0 @(UnclassifiedEolStmt / EmptyEolStmt)
-  _0 @(Directive / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / BreakStmt / ContinueStmt / MultCmndStmt / EmptyEolStmt / InvalidFuncStmt)
+  _0 @(Directive / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / MultCmndStmt / EmptyEolStmt / InvalidFuncStmt)
   /
   _1 @EmptyEofStmt
 
@@ -415,19 +415,36 @@ DoWhileStmt 'do-while statement' =
     return trailingCommentAddedNode(node, tComment);
   }
 
-ForStmt 'for statement' =
+ForStmt 'for-loop' =
   node:(
     // TODOS: not strict rule
-    'for'i _0 '(' _0 CommaSepAssignUpdateExpr? _0 ';' _0 test:Expr _0 ';' _0 CommaSepAssignUpdateExpr? _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    'for'i _0 '(' _0 init:CommaSepAssignUpdateExpr? _0 ';' _0 test:Expr _0 ';' _0 update:CommaSepAssignUpdateExpr? _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
-        return { type: 'ForStatement', test: test, body: body, interceptingComment: iComment, loc: location(), }; 
+      return { type: 'ForStatement', init: init, test: test, update:update, body: body, interceptingComment: iComment, loc: location(), }; 
+    }
+  ) _0 tComment:EolWWOComment {
+    return trailingCommentAddedNode(node, tComment);
+  }
+
+ForInStmt 'range-based for-loop' =
+  node:(
+    // TODOS: not strict rule
+    'for'i _0 '(' _0 left:VariableWWOTypeExpr? _0 ':' _0 right:Expr _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
+      if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
+      return { type: 'ForInStatement', left: left, right: right, interceptingComment: iComment, loc: location(), }; 
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(node, tComment);
   }
 
 CommaSepAssignUpdateExpr 'comma-separated assignment or update expressions' =
+  // TODOS: currently the returned value is not an AST object.
   head:(AssignStmt / UpdateExpr) tails:(_0  ',' _0 @(AssignStmt / UpdateExpr))*
+
+VariableWWOTypeExpr 'variable with or without type' =
+  // TODOS: not strict rule
+  // TODOS: currently the returned value is not an AST object.
+  type:StdName option:('/' [a-zA-Z0-9]+)* _1 name:StdName / StdId
 
 BreakStmt 'braek statement' =
   node:(

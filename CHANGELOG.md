@@ -4,6 +4,13 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Added
+
+- Support the following syntaxes:
+  - _Optional Parameters_ of functions. [#5]
+  - _Obsolete Operators_ for bit-wise operations (`%~`, `%&`, `%|`), used before Igor Pro 4. [#6]
+  - _Range-based For-Loop_, introduced in Igor Pro 9. [#9]
+
 ### Changed
 
 - Update Node.js packages, including a vulnerable dependency.
@@ -13,8 +20,6 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 - Fix an issue where `String` keyword was not properly tokenized and thus, not colorized.
 - Fix other minor problems in syntax highlighting rules.
-- Support optional function parameters. [#5]
-- Support obsolete bit-wise operators (`%~`, `%&`, `%|`). [#6]
 
 ## [1.3.0] -- 2023-04-21
 
