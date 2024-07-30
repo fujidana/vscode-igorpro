@@ -617,13 +617,18 @@ UpdateExpr =
   }
 
 CallExpr 'function call' =
-  callee1:(@(StdId / LiberalId) _0) callee2:('#' _0 @(StdId / LiberalId) _0)? '(' _0 args:(expr0:Expr exprs1toN:(_0 ',' _0 @Expr)* { return [expr0, ...exprs1toN]; })? _0')' {
+  callee1:(@(StdId / LiberalId) _0) callee2:('#' _0 @(StdId / LiberalId) _0)? '(' _0 args:(expr0:FuncParam exprs1toN:(_0 ',' _0 @FuncParam)* { return [expr0, ...exprs1toN]; })? _0')' {
     if (callee2) {
       return { type: 'CallExpression', callee: callee2, module: callee1, arguments: args ?? [], loc: location(), };
     } else {
       return { type: 'CallExpression', callee: callee1, arguments: args ?? [], loc: location(), };
     }
   }
+
+FuncParam 'function parameter' =
+  left:StdId _0 '=' _0 right:Expr {
+    return { type: 'AssignmentStatement', operator: '=', left, right, };
+  } / Expr
 
 Variable =
   object:(PathExpr / MemberExpr) indexes:(
