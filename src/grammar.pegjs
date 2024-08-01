@@ -27,10 +27,9 @@
     + 'XLLoadWave|'
     + 'DoPrompt|Prompt|WaveClear|'
     + 'complex|double|int(?:64)?|uint64|Variable|String|WAVE|NVAR|SVAR|DFREF|'
-    + 'STRUCT|FUNCREF|'
-    + 'return)$', 'i'
+    + 'STRUCT|FUNCREF)$', 'i'
   );
-  // MultiThread
+  // MultiThread|return
 }}
 
 {
@@ -225,8 +224,15 @@ MacroDecl 'macro declaration' =
 FuncDecl 'function declaration' =
   // TODOS: parse parameters
   declNode:(
+    // TODOS: `ret` is not parsed at all.
     // TODOS: `params` is not strictly parsed.
-    ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i ret:($(_0 ('/' [a-zA-Z0-9]+ _0)+) / $(_0 '[' (!EolWWOComment [^\]])* ']' _0) / _1) id:StdId _0 '(' params:$(!EolWWOComment [^)])* ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i ret:(
+      $(_0 ('/' [a-zA-Z0-9]+ _0)+)
+      /
+      $(_0 '[' (!EolWWOComment [^\]])* ']' _0)
+      /
+      _1
+    ) id:StdId _0 '(' params:$(!EolWWOComment [^)])* ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
       return { type: 'FunctionDeclaration', id: id, threadsafe: !!ts, override: !!or, static: !!s0, params: params, return: ret, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
     }
@@ -429,7 +435,7 @@ ForStmt 'for-loop' =
 ForInStmt 'range-based for-loop' =
   node:(
     // TODOS: not strict rule
-    'for'i _0 '(' _0 left:VariableWWOTypeExpr? _0 ':' _0 right:Expr _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    'for'i _0 '(' _0 left:VariableWWOType? _0 ':' _0 right:Expr _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
       return { type: 'ForInStatement', left: left, right: right, interceptingComment: iComment, loc: location(), }; 
     }
@@ -441,10 +447,17 @@ CommaSepAssignUpdateExpr 'comma-separated assignment or update expressions' =
   // TODOS: currently the returned value is not an AST object.
   head:(AssignStmt / UpdateExpr) tails:(_0  ',' _0 @(AssignStmt / UpdateExpr))*
 
-VariableWWOTypeExpr 'variable with or without type' =
+VariableWWOType 'variable with or without type' =
   // TODOS: not strict rule
-  // TODOS: currently the returned value is not an AST object.
-  type:StdName option:('/' [a-zA-Z0-9]+)* _1 name:StdName / StdId
+  type:$('FUNCREF'i / 'STRUCT'i) _0 proto:StdName _0 pbr:(@'&' _0)? name:StdName {
+    return { type: 'VariableDeclaration', declarations: [{ type: 'VariableDeclarator', id: name, type: type.toLowerCase(), proto, pbr: pbr === '&', }] };
+  }
+  /
+  type:StdName option:('/' [a-zA-Z0-9]+)* _1 pbr:(@'&' _0)? name:StdName {
+    return { type: 'VariableDeclaration', declarations: [ { type: 'VariableDeclarator', id: name, type: type.toLowerCase(), option, pbr: pbr === '&', } ]};
+  }
+  /
+  StdId
 
 BreakStmt 'braek statement' =
   node:(
@@ -477,9 +490,17 @@ MultCmndStmt 'multiple commands statement' =
 // Expr 'expression' =
 // CallExpr / StdId / LiberalId / StringLiteral / NumericLiteral
 CmndStmt =
-  OpStmt / AssignStmt / UpdateExpr / CallExpr
+  ReturnStmt / OpStmt / AssignStmt / UpdateExpr / CallExpr
 
-// 'assignment statement'
+ReturnStmt 'return statement' =
+  'Return'i args:(_0 @(
+    Expr / '[' _0 head:Expr _0 tails:(',' _0 @Expr _0)* ']' {
+      return { type: 'ArrayExpression', elements: [head, ...tails], };
+    }
+  )?
+) {
+    return { type: 'ReturnStatement', arguments: args, };
+  }
 
 AssignStmt 'assignment statement' =
   multiThread:('MultiThread'i (_0 @Flag)* _1)?
@@ -492,7 +513,7 @@ OpStmt 'operation statement' =
     (_0 ',' _0 / _1) @(Expr _0 '=' _0 (Expr / BraceListExpr / ParenListExpr / BracketListExpr+) / Expr / BraceListExpr)
   )* flags2:(_0 @Flag)* _0 {
     // TODOS: object properties
-    return { type: 'OperationStatement', name, flags, args, flags2};
+    return { type: 'OperationStatement', name, flags, args, flags2, };
   }
 
 // list of values surrounded with braces ('{}')
@@ -708,6 +729,10 @@ LValue =
     } else {
       return object;
     }
+  }
+  /
+  '[' _0 head:VariableWWOType tails:(_0 ',' _0 @VariableWWOType)* _0 ']' {
+    return { type: 'ArrayExpression', elements: [head, ...tails], };
   }
 
 LabeledIndex = 
