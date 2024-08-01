@@ -225,7 +225,7 @@ repository:
         captures:
           "1": { patterns: [{ include: "#preprocessor" }] }
       - include: "#flow-control"
-      - include: "#definition"
+      # - include: "#definition"
       - include: "#operation"
       # root, popup
       - include: "#optional-flag"
@@ -235,36 +235,36 @@ repository:
         match: (?i)(?<=^|;)\s*(break|case|catch|continue|default|do|else(?:if)?|end(?:if|for|try|switch)|for|if|return|strswitch|switch|try|while|AbortOn(?:RTE|Value))\b
         captures:
           "1": { name: keyword.control.flow.igorpro }
-      definition:
-        patterns:
-          - begin: (?i)(?<=^|;)\s*(FUNCREF)\s+(\w+)+(\w+)\s*(=)?
-            beginCaptures:
-              "1": { name: storage.type.funcref.igorpro }
-              "2": { name: entity.name.type.funcref.igorpro, patterns: [{ include: "#validate-parameter" }]}
-              "3": { name: variable.parameter.funcref.igorpro, patterns: [{ include: "#validate-parameter" }]}
-              "4": { name: operator.assignment.igorpro }
-            end: (?=;|//|$)
-            patterns: [{ include: "#expression" }]
-          - match: (?i)(?<=^|;)\s*(STRUCT)\s+(\w+)\s+(&)?(\w+)\s*(?=;|//|$)
-            captures:
-              "1": { name: storage.type.struct.igorpro }
-              "2": { name: entity.name.type.structure.igorpro, patterns: [{ include: "#validate-structure" }]}
-              "3": { name: keyword.operator.reference.igorpro }
-              "4": { name: variable.parameter.struct.igorpro, patterns: [{ include: "#validate-parameter" }]}
-          - begin: (?i)(?<=^|;)\s*(complex|double|int(?:64)?|uint64|Variable|String|WAVE|NVAR|SVAR|DFREF)\s*((?:/\w+\s*)*)\b
-            beginCaptures:
-              "1": { name: storage.type.common.igorpro }
-              "2": { patterns: [{ include: "#optional-flag" }]}
-            end: (?=;|//|$)
-            patterns: [{ include: "#expression" }]
-          - begin: (?i)(?<=^|;)\s*(\[)\s*([^\]]*)(\])\s*([-+*/:]?=)\s*
-            beginCaptures:
-              "1": { name: punctuation.bracket.begin.igorpro }
-              "2": { patterns: [{ include: "#list-parameter" }]}
-              "3": { name: punctuation.bracket.end.igorpro }
-              "4": { name: keyword.operator.assignment.arithmetic.igorpro }
-            end: (?=;|//|$)
-            patterns: [{ include: "#expression" }]
+      # definition:
+      #   patterns:
+      #     - begin: (?i)(?<=^|;)\s*(FUNCREF)\s+(\w+)+(\w+)\s*(=)?
+      #       beginCaptures:
+      #         "1": { name: storage.type.funcref.igorpro }
+      #         "2": { name: entity.name.type.funcref.igorpro, patterns: [{ include: "#validate-parameter" }]}
+      #         "3": { name: variable.parameter.funcref.igorpro, patterns: [{ include: "#validate-parameter" }]}
+      #         "4": { name: operator.assignment.igorpro }
+      #       end: (?=;|//|$)
+      #       patterns: [{ include: "#expression" }]
+      #     - match: (?i)(?<=^|;)\s*(STRUCT)\s+(\w+)\s+(&)?(\w+)\s*(?=;|//|$)
+      #       captures:
+      #         "1": { name: storage.type.struct.igorpro }
+      #         "2": { name: entity.name.type.structure.igorpro, patterns: [{ include: "#validate-structure" }]}
+      #         "3": { name: keyword.operator.reference.igorpro }
+      #         "4": { name: variable.parameter.struct.igorpro, patterns: [{ include: "#validate-parameter" }]}
+      #     - begin: (?i)(?<=^|;)\s*(complex|double|int(?:64)?|uint64|Variable|String|WAVE|NVAR|SVAR|DFREF)\s*((?:/\w+\s*)*)\b
+      #       beginCaptures:
+      #         "1": { name: storage.type.common.igorpro }
+      #         "2": { patterns: [{ include: "#optional-flag" }]}
+      #       end: (?=;|//|$)
+      #       patterns: [{ include: "#expression" }]
+      #     - begin: (?i)(?<=^|;)\s*(\[)\s*([^\]]*)(\])\s*([-+*/:]?=)\s*
+      #       beginCaptures:
+      #         "1": { name: punctuation.bracket.begin.igorpro }
+      #         "2": { patterns: [{ include: "#list-parameter" }]}
+      #         "3": { name: punctuation.bracket.end.igorpro }
+      #         "4": { name: keyword.operator.assignment.arithmetic.igorpro }
+      #       end: (?=;|//|$)
+      #       patterns: [{ include: "#expression" }]
 
   expression:
     patterns:
@@ -275,6 +275,23 @@ repository:
       - include: "#literal-numeric"
       - include: "#operator"
       - include: "#function-call"
+      - match: (?i)(?<=^|;|,|\(|\[)\s*(FUNCREF)\s+(\w+)+(\w+)\b
+        captures:
+          "1": { name: storage.type.funcref.igorpro }
+          "2": { name: entity.name.type.funcref.igorpro, patterns: [{ include: "#validate-parameter" }]}
+          "3": { name: variable.parameter.funcref.igorpro, patterns: [{ include: "#validate-parameter" }]}
+      - match: (?i)(?<=^|;|,|\(|\[)\s*(STRUCT)\s+(\w+)\s+(&)?(\w+)\b
+        captures:
+          "1": { name: storage.type.struct.igorpro }
+          "2": { name: entity.name.type.structure.igorpro, patterns: [{ include: "#validate-structure" }]}
+          "3": { name: keyword.operator.reference.igorpro }
+          "4": { name: variable.parameter.struct.igorpro, patterns: [{ include: "#validate-parameter" }]}
+      - match: (?i)(?<=^|;|,|\(|\[)\s*(complex|double|int(?:64)?|uint64|Variable|String|WAVE|NVAR|SVAR|DFREF)\s*((?:/\w+\s*)*)(&)?\b(\w+)\b
+        captures:
+          "1": { name: storage.type.common.igorpro }
+          "2": { patterns: [{ include: "#optional-flag" }]}
+          "3": { name: keyword.operator.reference.igorpro }
+          "4": { name: variable.parameter.common.igorpro, patterns: [{ include: "#validate-parameter" }]}
       - match: (?i)\b(DateTime|ScreenResolution|StartMSTimer|ThreadProcessorCount|ticks)\b
         name: support.variable.igorpro
       - match: (?i)\b(e|gammaEuler|Pi)\b
