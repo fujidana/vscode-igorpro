@@ -9,6 +9,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 - Support the following syntaxes:
   - _Optional Parameters_ of functions. [#5]
   - _Obsolete Operators_ for bit-wise operations (`%~`, `%&`, `%|`), used before Igor Pro 4. [#6]
+  - _Multiple Return Syntax_, introduced in Igor Pro 8 and extended in Igor Pro 9. [#8]
   - _Range-based For-Loop_, introduced in Igor Pro 9. [#9]
 
 ### Changed
