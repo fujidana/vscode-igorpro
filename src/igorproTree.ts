@@ -280,7 +280,16 @@ interface DoWhileStatement extends BaseBlock {
 
 interface ForStatement extends BaseBlock {
     type: 'ForStatement';
+    init: BaseExpression | null; // Inaccurate. Actually comma-separated expressions can be accepted.
     test: BaseExpression;
+    update: BaseExpression | null; // Inaccurate. Actually comma-separated expressions can be accepted.
+    body: FunctionStatement[] | BreakStatement | ContinueStatement;
+}
+
+interface ForInStatement extends BaseBlock {
+    type: 'ForInStatement';
+    left: BaseExpression;
+    right: BaseExpression;
     body: FunctionStatement[] | BreakStatement | ContinueStatement;
 }
 
@@ -290,6 +299,11 @@ interface BreakStatement extends BaseStatement {
 
 interface ContinueStatement extends BaseStatement {
     type: 'ContinueStatement';
+}
+
+interface ReturnStatement extends BaseStatement {
+    type: 'ReturnStatement';
+    arguments: BaseExpression | null;
 }
 
 
@@ -304,4 +318,8 @@ interface Literal extends BaseExpression {
     type: 'Literal';
     value: string | number;
     raw: string;
+}
+
+interface VariableDeclaration extends BaseStatement {
+    
 }

@@ -25,7 +25,7 @@
     + 'ValDisplay|Variable|'
     + 'Wave(?:MeanStdv|Stats|Tracking|Transform)|wfprintf|WignerTransform|WindowFunction|'
     + 'XLLoadWave|'
-    + 'DoPrompt|Prompt|WaveClear|'
+    + 'AbortOn(?:Value|RTE)|DoPrompt|Prompt|WaveClear|'
     + 'complex|double|int(?:64)?|uint64|Variable|String|WAVE|NVAR|SVAR|DFREF|'
     + 'STRUCT|FUNCREF)$', 'i'
   );
@@ -224,15 +224,25 @@ MacroDecl 'macro declaration' =
 FuncDecl 'function declaration' =
   // TODOS: parse parameters
   declNode:(
-    // TODOS: `ret` is not parsed at all.
+    // TODOS: `ret` is not parsed.
     // TODOS: `params` is not strictly parsed.
     ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i ret:(
-      $(_0 ('/' [a-zA-Z0-9]+ _0)+)
+      @(_0 @Flag)+ _1
       /
-      $(_0 '[' (!EolWWOComment [^\]])* ']' _0)
+      _0 '[' _0 head:VariableWWOType _0 tails:(',' _0 @VariableWWOType _0)* ']' _0 {return [head, ...tails]; }
       /
-      _1
-    ) id:StdId _0 '(' params:$(!EolWWOComment [^)])* ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
+      _1 { return null; }
+    ) id:StdId _0 '(' _0 params:(
+      (head:VariableWWOType _0 tails:(',' _0 @VariableWWOType)* _0 optionals:(
+        ','  _0 '[' _0 head2:VariableWWOType _0 tails2:(',' _0 @VariableWWOType)* _0 ']' { return [head2, ...tails2]; }
+      )? { if (optionals) {
+        return [head, ...tails, ...optionals];
+       } else {
+        return [head, ...tails];
+       }})?
+      /
+      '[' _0 head2:VariableWWOType _0 tails2:(',' _0 @VariableWWOType)* _0 ']' { return [head2, ...tails2]; }
+    ) _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
       return { type: 'FunctionDeclaration', id: id, threadsafe: !!ts, override: !!or, static: !!s0, params: params, return: ret, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
     }
@@ -360,11 +370,11 @@ StructMemberDeclr 'structure member declarator' =
 IfStmt 'if statement' =
   node:(
     ifCase:(
-      'if'i _0 '(' _0 test0:Expr _0 ')' _0 iComment0:EolWWOComment consequent0:FuncStmt* {
+      'if'i _0 '(' _0 test0:BaseExpr _0 ')' _0 iComment0:EolWWOComment consequent0:FuncStmt* {
         return { type: 'IfCase', test: test0, consequent: consequent0, interceptingComment: iComment0, loc: location(), };
       }
     ) elseifCases:(
-      _0 'elseif'i _0 '(' _0 testI:Expr _0 ')' _0 iCommentI:EolWWOComment consequentI:FuncStmt* {
+      _0 'elseif'i _0 '(' _0 testI:BaseExpr _0 ')' _0 iCommentI:EolWWOComment consequentI:FuncStmt* {
         return { type: 'IfCase', test: testI, consequent: consequentI, interceptingComment: iCommentI, loc: location(), };
       }
     )* elseCase:(
@@ -383,7 +393,7 @@ IfStmt 'if statement' =
 
 SwitchStmt 'switch statement' =
   node:(
-    kind:$('str'i? 'switch'i) _0 '(' _0 discriminant:Expr _0 ')' _0 iComment:EolWWOComment (_0 (Comment / Directive))*
+    kind:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment (_0 (Comment / Directive))*
     cases:(
       _0 'case'i _1 test:(StringLiteral / SignedNumericLiteral / StdId) ':' _0 iCommentI:EolWWOComment consequent:FuncStmt* {
         return { type: 'SwitchCase', test, consequent, interceptingComment: iCommentI, loc: location(), };
@@ -424,7 +434,7 @@ DoWhileStmt 'do-while statement' =
 ForStmt 'for-loop' =
   node:(
     // TODOS: not strict rule
-    'for'i _0 '(' _0 init:CommaSepAssignUpdateExpr? _0 ';' _0 test:Expr _0 ';' _0 update:CommaSepAssignUpdateExpr? _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    'for'i _0 '(' _0 init:CommaSepAssignUpdateExpr? _0 ';' _0 test:BaseExpr _0 ';' _0 update:CommaSepAssignUpdateExpr? _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
       return { type: 'ForStatement', init: init, test: test, update:update, body: body, interceptingComment: iComment, loc: location(), }; 
     }
@@ -435,7 +445,7 @@ ForStmt 'for-loop' =
 ForInStmt 'range-based for-loop' =
   node:(
     // TODOS: not strict rule
-    'for'i _0 '(' _0 left:VariableWWOType? _0 ':' _0 right:Expr _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    'for'i _0 '(' _0 left:VariableWWOType? _0 ':' _0 right:BaseExpr _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
       return { type: 'ForInStatement', left: left, right: right, interceptingComment: iComment, loc: location(), }; 
     }
@@ -445,16 +455,20 @@ ForInStmt 'range-based for-loop' =
 
 CommaSepAssignUpdateExpr 'comma-separated assignment or update expressions' =
   // TODOS: currently the returned value is not an AST object.
-  head:(AssignStmt / UpdateExpr) tails:(_0  ',' _0 @(AssignStmt / UpdateExpr))*
+  head:(AssignExpr / UpdateExpr) tails:(_0  ',' _0 @(AssignExpr / UpdateExpr))*
 
 VariableWWOType 'variable with or without type' =
   // TODOS: not strict rule
-  type:$('FUNCREF'i / 'STRUCT'i) _0 proto:StdName _0 pbr:(@'&' _0)? name:StdName {
-    return { type: 'VariableDeclaration', declarations: [{ type: 'VariableDeclarator', id: name, type: type.toLowerCase(), proto, pbr: pbr === '&', }] };
+  kind:$('FUNCREF'i / 'STRUCT'i) _0 proto:StdName _0 declarator:Declarator {
+    return { type: 'VariableDeclaration', kind: kind.toLowerCase(), proto, declarations: [declarator] };
   }
   /
-  type:StdName option:('/' [a-zA-Z0-9]+)* _1 pbr:(@'&' _0)? name:StdName {
-    return { type: 'VariableDeclaration', declarations: [ { type: 'VariableDeclarator', id: name, type: type.toLowerCase(), option, pbr: pbr === '&', } ]};
+  kind:$('u'i? ('char'i / 'int'i ('16' / '32' / '64')?) / 'float'i / 'double'i) _1 declarator:Declarator {
+    return { type: 'VariableDeclaration', kind: kind.toLowerCase(), declarations: [declarator] };
+  }
+  /
+  kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) option:(_0 '/' [a-zA-Z0-9]+)* _1 declarator:Declarator {
+    return { type: 'VariableDeclaration', kind: kind.toLowerCase(), option, declarations: [declarator] };
   }
   /
   StdId
@@ -487,51 +501,100 @@ MultCmndStmt 'multiple commands statement' =
     return trailingCommentAddedNode(node, tComment);
   }
 
-// Expr 'expression' =
-// CallExpr / StdId / LiberalId / StringLiteral / NumericLiteral
 CmndStmt =
-  ReturnStmt / OpStmt / AssignStmt / UpdateExpr / CallExpr
+  @(ReturnStmt / DeclStmt / AssignStmt / OpStmt / (@UpdateExpr _0 &(Eol / ';' / '//')) / (@CallExpr _0 &(Eol / ';' / '//')))
 
 ReturnStmt 'return statement' =
   'Return'i args:(_0 @(
-    Expr / '[' _0 head:Expr _0 tails:(',' _0 @Expr _0)* ']' {
+    BaseExpr / '[' _0 head:BaseExpr _0 tails:(',' _0 @BaseExpr _0)* _0 ']' {
       return { type: 'ArrayExpression', elements: [head, ...tails], };
-    }
-  )?
+    } 
+  )? _0 &(Eol / ';' / '//')
 ) {
     return { type: 'ReturnStatement', arguments: args, };
   }
 
+DeclStmt 'declaration statement' =
+  node0:(
+    kind:$('u'i? ('char'i / 'int'i ('16' / '32' / '64')?) / 'float'i / 'double'i) {
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), };
+    }
+    / 
+    kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) flags:(_0 @Flag)* {
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), flags, };
+    }
+    /
+    kind:$('FUNCREF'i / 'STRUCT'i) flags:(_0 @Flag)* _1 proto:StdName {
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), proto, flags, };
+    }
+  ) _1 elem0:DeclaratorWWOInit elem1ToN:(_0 ',' _0 @DeclaratorWWOInit)* _0 &(Eol / ';' / '//') {
+      node0.declarations = [elem0, ...elem1ToN];
+      node0.loc = location();
+      return node0;
+  }
+
+Declarator 'variable delarator' =
+  pbr:(@'&' _0)? name:StdName {
+    return { type: 'VariableDeclarator', id: name, init: null, pbr: pbr === '&', };
+  }
+
+DeclaratorWWOInit 'variable delarator with or without initialization' =
+  '&' name:StdName { return { type: 'VariableDeclarator', id: name, init: null, pbr: true, }; }
+  /
+  name:PathExpr init:(_0 '=' _0 @BaseExpr)? {
+    return { type: 'VariableDeclarator', id: name, init, pbr: false, }
+  }
+
 AssignStmt 'assignment statement' =
+  // Assignment statement does not exist in the original AST.
   multiThread:('MultiThread'i (_0 @Flag)* _1)?
-  left:LValue _0 op:$('=' !'=' / '+=' / '-=' / '*=' / '/=' / ':=') _0 right:(BraceListExpr / Expr) {
+  left:LValue _0 op:$('=' !'=' / '+=' / '-=' / '*=' / '/=' / ':=') _0 right:(BraceListExpr / BaseExpr) _0 &(Eol / ';' / '//') {
     return { type: 'AssignmentStatement', op, left, right, multiThread: !!multiThread, };
   }
 
+AssignExpr 'assignment expression' =
+  left:LValue _0 operator:$('=' !'=' / '+=' / '-=' / '*=' / '/=' / ':=') _0 right:(BraceListExpr / BaseExpr) {
+    return { type: 'AssignmentExpression', operator, left, right, multiThread: false, };
+  }
+
+
 OpStmt 'operation statement' =
   name:$([a-zA-Z][a-zA-Z0-9]*) &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
-    (_0 ',' _0 / _1) @(Expr _0 '=' _0 (Expr / BraceListExpr / ParenListExpr / BracketListExpr+) / Expr / BraceListExpr)
-  )* flags2:(_0 @Flag)* _0 {
+    Flag+ / Word+ / StringLiteral / _1 / !(Eol / ';' / '//') .)* {
     // TODOS: object properties
-    return { type: 'OperationStatement', name, flags, args, flags2, };
+    return { type: 'ExOperationStatement', name, args, };
   }
+  // name:$([a-zA-Z][a-zA-Z0-9]*) &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
+  //   (_0 ',' _0 / _1) @(
+  //     BaseExpr (_0 '=' _0 (BaseExpr / BraceListExpr / ParenListExpr / BracketListExpr+))?
+  //     /
+  //     BraceListExpr
+  //     /
+  //     Word+
+  //   )
+  //   /
+  //   (_0 @Flag)+
+  // )* _0 &(Eol / ';' / '//') {
+  //   // TODOS: object properties
+  //   return { type: 'ExOperationStatement', name, flags, args, };
+  // }
 
 // list of values surrounded with braces ('{}')
 BraceListExpr 'list of values' =
-  opener:'{' _0 head:(BraceListExpr / Expr) _0 tails:(',' _0 @(BraceListExpr / Expr) _0)* '}' {
-    return { type: 'ListExpression', elements: [head, ...tails], opener, };
+  '{' _0 head:(BraceListExpr / BaseExpr) _0 tails:(',' _0 @(BraceListExpr / BaseExpr) _0)* '}' {
+    return { type: 'ArrayExpression', elements: [head, ...tails], exkind: 0, };
   }
 
 // list of values surrounded with parentheses ('()')
 ParenListExpr 'list of values' =
-  opener:'(' _0 head:(BraceListExpr / Expr) _0 tails:(',' _0 @(BraceListExpr / Expr) _0)* ')' {
-    return { type: 'ListExpression', elements: [head, ...tails], opener, };
+  '(' _0 head:(BraceListExpr / BaseExpr) _0 tails:(',' _0 @(BraceListExpr / BaseExpr) _0)* ')' {
+    return { type: 'ArrayExpression', elements: [head, ...tails], exkind: 1, };
   }
 
 // list of values surrounded with brackets ('[]')
 BracketListExpr '' =
-  '[' _0 head:(BraceListExpr / Expr)? _0 tails:(',' _0 @(BraceListExpr / Expr)? _0)* ']' {
-    return { type: 'BracketListExpression', elements: [head, ...tails], };
+  '[' _0 head:(BraceListExpr / BaseExpr)? _0 tails:(',' _0 @(BraceListExpr / BaseExpr)? _0)* ']' {
+    return { type: 'ArrayExpression', elements: [head, ...tails], exkind: 2,};
   }
 
 //
@@ -540,7 +603,7 @@ RefExpr 'reference expression' =
     return { type: 'ReferenceExpression', arg: arg, };
   }
 
-Expr =
+BaseExpr =
   RefExpr / Order8
 
 // logical AND, OR and conditional (aka ternery) operator
@@ -610,9 +673,6 @@ Order4 =
 // negation, logical complement, bitwise complement: '-', '!', '~'.
 // evaluated from left to right.
 // The extension author adds '+' (without preceding parameter) in this order.
-// Igor Pro does not accept continuous '+' and '-' signs while it accepts
-// continous '!' and '~'.
-// E.g., `print ! ! !! 1` is valid but `print - - -- 1` is invalid.
 Order3 =
   heads:($('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)* tail:Order2 {
     return heads.reduceRight((accumulator: any, currentValue: any) => {
@@ -642,12 +702,12 @@ Order1 =
 
 
 Factor =
-  '(' _0 @Expr _0 ')'
+  '(' _0 @BaseExpr _0 ')'
   / NumericLiteral / StringLiteral / CallExpr / Variable
 
 UpdateExpr =
   op:('++' / '--') _0 arg:(StdId / LiberalId) {
-    return { type: 'UpdateExpression', op: op, arg: arg, prefix: true, };
+    return { type: 'Gession', op: op, arg: arg, prefix: true, };
   }
   /
   arg:(StdId / LiberalId) _0 op:('++' / '--') {
@@ -655,7 +715,7 @@ UpdateExpr =
   }
 
 CallExpr 'function call' =
-  callee1:(@(StdId / LiberalId) _0) callee2:('#' _0 @(StdId / LiberalId) _0)? '(' _0 args:(expr0:FuncParam exprs1toN:(_0 ',' _0 @FuncParam)* { return [expr0, ...exprs1toN]; })? _0')' {
+  callee1:(@(StdId / LiberalId) _0) callee2:('#' _0 @(StdId / LiberalId) _0)? '(' _0 args:(expr0:FuncParam exprs1toN:(_0 ',' _0 @FuncParam)* { return [expr0, ...exprs1toN]; })? _0')' !(_0 ('[' / '(')) {
     if (callee2) {
       return { type: 'CallExpression', callee: callee2, module: callee1, arguments: args ?? [], loc: location(), };
     } else {
@@ -664,81 +724,126 @@ CallExpr 'function call' =
   }
 
 FuncParam 'function parameter' =
-  left:StdId _0 '=' _0 right:Expr {
+  left:StdId _0 '=' _0 right:BaseExpr {
     return { type: 'AssignmentStatement', operator: '=', left, right, };
-  } / Expr
+  } / BaseExpr
 
 Variable =
-  object:(PathExpr / MemberExpr) indexes:(
-    _0 '[' _0 index:(@(LabeledIndex / '*') _0)? ']' {
-      return { type: 'WaveIndex', scaled: false, index, };
+  object:(
+    heads:(@ArrayElement _0 '.' _0)+ tail:ArrayElement _0 {
+      return heads.reduce((accumulator: any, currentValue: any) => {
+        return { type: 'MemberExpression', object: accumulator, property: currentValue, };
+      }, tail);
     }
     /
-    _0 '(' _0 index:(@(Expr / '*') _0)? ')' {
-      return { type: 'WaveIndex', scaled: true, index, };
+    @PathExpr _0
+  ) indexes:(
+    '[' _0 rangeOrIndex:(@ArrayElementAccessor _0)? ']'_0 {
+      if (rangeOrIndex) {
+        rangeOrIndex.scaled = false;
+      }
+      return rangeOrIndex;
     }
     /
-    _0 '[' _0 start:(@Expr _0)? ',' _0 end:(@Expr _0)? ']' {
-      return { type: 'Slice', scaled: false, start, end, };
+    '(' _0 rangeOrIndex:(@ArrayElementAccessor _0)? ')' _0 {
+      if (rangeOrIndex) {
+        rangeOrIndex.scaled = true;
+      }
+      return rangeOrIndex;
     }
+    /
+    '#' _0 BaseExpr
   )* {
     if (indexes && indexes.length !== 0) {
-      return { type: 'ArrayElementExpression', object, indexes, };
+      return { type: 'ExArrayElementExpression', object, indexes, };
     } else {
       return object;
     }
   }
 
-MemberExpr =
-  head:ArrayElement tails:(_0 '.' _0 @ArrayElement)* {
-    return tails.reduce((accumulator: any, currentValue: any) => {
-      return { type: 'MemberExpression', object: accumulator, property: currentValue, };
-    }, head);
-}
+/*
+Identifiers connected by a dot. e.g., `mystruct0.mss[0].wv[0]`
+
+```
+Structure MyStruct
+  STRUCT MySubStruct mss[2]
+EndStructure
+
+Structure MySubStruct
+  WAVE wv[2]
+EndStructure
+
+Function test()
+	WAVE wave2
+	Make/FREE/N=3 fw
+	fw = p
+
+	STRUCT MyStruct mystruct0
+	STRUCT MySubStruct mss0
+	WAVE mss0.wv[0] = fw
+	mystruct0.mss[0] = mss0
+
+  WAVE w = mystruct0.mss[0].wv[0]
+End
+```
+*/
 
 ArrayElement =
-  object:(StdId / LiberalId) element:(_0 '[' _0 @Expr _0 ']')? {
-    if (element) {
-      return { type: 'ArrayElement', object, element, };
+  object:(StdId / LiberalId) index:(_0 '[' _0 @BaseExpr _0 ']')? {
+    if (index) {
+      return { type: 'ExArrayElement', object, index, };
     } else {
       return object;
     }
   }
-
 
 PathExpr 'path expression' =
   heads:(@(RefExpr / StdId / LiberalId)? ':')+ tail:(RefExpr / StdId / LiberalId)? {
-    return { type: 'PathExpression', paths: [...heads, tail], loc: location(), };
-  }
-
-// // identifiers connected by a dot.
-// MemberExpr 'member expression' =
-
-LValue =
-  object:(PathExpr / MemberExpr) _0 slices:(
-    '[' _0 start:(@LabeledIndex _0)? end:(',' _0 @(LabeledIndex / '*')? _0)? step:(';' _0 @Expr _0)? ']' {
-      return { type: 'Slicer', scaled: false, start, end, step, };
-    }
-    /
-    '(' _0 start:(@Expr _0)? end:(',' _0 @(Expr / '*')? _0)? step:(';' _0 Expr _0)? ')' {
-      return { type: 'Slicer', scaled: true, start, end, step, };
-    }
-  )* {
-    if (slices && slices.length !== 0) {
-      return { type: 'SliceExpression', object, slices, };
-    } else {
-      return object;
-    }
+    return { type: 'ExPathExpression', paths: [...heads, tail], loc: location(), };
   }
   /
-  '[' _0 head:VariableWWOType tails:(_0 ',' _0 @VariableWWOType)* _0 ']' {
+  RefExpr / StdId / LiberalId
+
+LValue =
+  Variable
+  /
+  '[' _0 head:VariableWWOType _0 tails:(',' _0 @VariableWWOType _0)* ']' {
     return { type: 'ArrayExpression', elements: [head, ...tails], };
   }
 
-LabeledIndex = 
-  label:('%' _0)? arg:Expr {
+/* 
+Expression used to access elements of an array-like object (wave and structure member),
+which appears inside braces or parentheses.
+For example: wave0[*], wave1(1.5), wave2[1, 7; 2], mystruct.mybytes[2]
+
+- wildcard and empty, e.g., `wave0[*]`, wave1()`
+  - left value only.
+  - both point number and scaled index.
+- subrange (slice), e.g., `wave0[1, 7; 2]`.
+  - left value only.
+  - both point number and scaled index.
+  - Label can be used for `start` and `end`.
+  - `start` can be empty or a label.
+  - `end` can be either empty, a number, label, or wildcard `*`.
+- label, e.g., `wave0[1][%red]`
+  - both left and right values
+  - used with braces only, not with parentheses
+*/
+ArrayElementAccessor =
+  start:(@LabelOrIndex _0)? ',' _0 end:(@LabelOrIndex _0)? step:(';' _0 @LabelOrIndex)? {
+    return { type: 'ExWaveSubrange', start, end, step, };
+  }
+  /
+  arg:LabelOrIndex _0 {
+    return { type: 'ExElementIndex', arg, };
+  }
+
+LabelOrIndex = 
+  '*' { return { type: 'Literal', value: Infinity, raw: '*', loc: location(), }; }
+  /
+  label:(@'%' _0)? arg:BaseExpr {
     if (label) {
-      return { type: 'LabeledIndex', arg: arg, };
+      return { type: 'ExDimensionLabel', arg: arg, loc: location(), };
     } else {
       return arg;
     }
@@ -754,8 +859,8 @@ StdId 'standard identifier' =
   }
 
 LiberalName 'liberal name' =
-  // "'" @$[^'";:]+ "'"
-  "'" str:$[^'";:]+ "'" { return str; }
+  // "'" @$[^'";:]* "'"
+  "'" str:$[^'";:]* "'" { return str; }
 
 LiberalId 'liberal identifier' =
   name:LiberalName {
@@ -808,8 +913,7 @@ StringLiteral 'string literal' =
   }
   /
   'U+' body:$([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) {
-    return { type: 'Literal', value: String.fromCodePoint(parseInt(body, 16)), raw: text(), loc: location(), };
-  }
+    return { type: 'Literal', value: String.fromCodePoint(parseInt(body, 16)), raw: text(), loc: location(), };  }
 
 StringId 'string identifier' =
   name:StringRaw {
@@ -817,6 +921,7 @@ StringId 'string identifier' =
   }
 
 Flag 'operation flag' =
-  '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / SignedNumericLiteral / StringLiteral / CallExpr / RefExpr / Variable))? {
-    return { type: 'OperationFlag', key: key, value: value, };
+  // '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / SignedNumericLiteral / StringLiteral / CallExpr / RefExpr / Variable))? {
+  '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / BaseExpr))? {
+    return { type: 'ExFlag', key, value, };
   }
