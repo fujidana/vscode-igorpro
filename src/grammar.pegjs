@@ -86,6 +86,9 @@ Program = body:TLStmt* {
 _0 = [ \t]* { return text(); }
 _1 = [ \t]+ { return text(); }
 
+Comma = _0 ',' _0
+CommaWithLoc = _0 ',' _0 { return location(); }
+
 // Eol: end of line.
 // Eof: enf of file.
 
@@ -125,10 +128,10 @@ UnclassifiedEolStmt =
 // top-level statements
 
 TLStmt 'top-level statement' =
-  lComments:(_0 @Comment)+ tlStmt:(_0 @(TLDecl / Directive / InvalidTLStmt / EmptyEolStmt / EmptyEofStmt)) {
+  lComments:(_0 @Comment)+ tlStmt:(_0 @(TLDecl / EmptyEolStmt / EmptyEofStmt)) {
     return leadingCommentsAddedNode(tlStmt, lComments);
   }
-  / _0 @(TLDecl / Directive / InvalidTLStmt / EmptyEolStmt) / _1 @EmptyEofStmt
+  / _0 @(TLDecl / EmptyEolStmt) / _1 @EmptyEofStmt
 
 // non-empty statement
 InvalidTLStmt =
@@ -161,8 +164,9 @@ Directive 'directive' =
     return { type: 'Directive', id: id, trailingComment: tComment, };
   }
 
+// top-level declarations and compiler derivatives
 TLDecl 'top-level declaration' =
-  ConstDecl / MenuDecl / PictDecl / StructDecl / MacroDecl / FuncDecl
+  ConstDecl / MenuDecl / PictDecl / StructDecl / MacroDecl / FuncDecl / Directive / InvalidTLStmt
 
 ConstDecl 'constant declaration' =
   // TODOS: parse a value
@@ -226,24 +230,24 @@ FuncDecl 'function declaration' =
   declNode:(
     // TODOS: `ret` is not parsed.
     // TODOS: `params` is not strictly parsed.
-    ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i ret:(
-      @(_0 @Flag)+ _1
-      /
-      _0 '[' _0 head:VariableWWOType _0 tails:(',' _0 @VariableWWOType _0)* ']' _0 {return [head, ...tails]; }
-      /
-      _1 { return null; }
-    ) id:StdId _0 '(' _0 params:(
-      (head:VariableWWOType _0 tails:(',' _0 @VariableWWOType)* _0 optionals:(
-        ','  _0 '[' _0 head2:VariableWWOType _0 tails2:(',' _0 @VariableWWOType)* _0 ']' { return [head2, ...tails2]; }
-      )? { if (optionals) {
-        return [head, ...tails, ...optionals];
-       } else {
-        return [head, ...tails];
-       }})?
-      /
-      '[' _0 head2:VariableWWOType _0 tails2:(',' _0 @VariableWWOType)* _0 ']' { return [head2, ...tails2]; }
-    ) _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i flag:(_0 @Flag)* _1 ret:(
+      _0 '[' _0 par:VariableWWOType|.., Comma| cm:CommaWithLoc? _0 ']' _0 { return { type: par, extraComma: cm, }; }
+    )? id:StdId _0 '(' _0 params:VariableWWOType|.., Comma| cm1:CommaWithLoc? _0 optParams:(
+      '[' _0 optParams2:VariableWWOType|.., Comma| cm3:CommaWithLoc? _0 ']' { return {main: optParams2, extraComma: cm3, loc: location(), }; }
+    )? cm2:CommaWithLoc?
+    _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
+      if (ret && ret.extraComma) { addProblem('Trailing comma not allowed.', ret.extraComma); }
+      if (params && params.length > 0 && optParams) {
+        if (!cm1) {addProblem('Use a comma before optional parameters.', getStartLocation(optParams.loc, 1), DiagnosticSeverity.Warning); }
+      } else {
+        if (cm1) { addProblem('Preceding comma not allowed.', cm1); }
+      }
+      if (cm2) { addProblem('Trailing comma not allowed.', cm2); }
+      if (optParams) {
+          if (optParams.main.length == 0) { addProblem('Empty parameter not allowed.', optParams.loc); }
+          if (optParams.extraComma) { addProblem('Trailing comma not allowed.', optParams.extraComma); }
+      }
       return { type: 'FunctionDeclaration', id: id, threadsafe: !!ts, override: !!or, static: !!s0, params: params, return: ret, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
     }
   ) _0 tComment:EolWWOComment {
@@ -351,8 +355,8 @@ StructMemberDecl 'structure member declaration'=
       kind:$('FUNCREF'i / 'STRUCT'i) flag:(_0 '/' @[a-zA-Z]+)* _1 proto:StdName {
         return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), proto: proto, };
       }
-    ) _1 elem0:StructMemberDeclr elem1ToN:(_0 ',' _0 @StructMemberDeclr)* {
-        node0.declarations = [elem0, ...elem1ToN];
+    ) _1 declarations:StructMemberDeclr|1.., Comma| {
+        node0.declarations = declarations;
         node0.loc = location();
         return node0;
     }
@@ -455,7 +459,7 @@ ForInStmt 'range-based for-loop' =
 
 CommaSepAssignUpdateExpr 'comma-separated assignment or update expressions' =
   // TODOS: currently the returned value is not an AST object.
-  head:(AssignExpr / UpdateExpr) tails:(_0  ',' _0 @(AssignExpr / UpdateExpr))*
+  (AssignExpr / UpdateExpr)|.., Comma|
 
 VariableWWOType 'variable with or without type' =
   // TODOS: not strict rule
@@ -490,11 +494,11 @@ ContinueStmt 'continue statement' =
 //
 MultCmndStmt 'multiple commands statement' =
   !End node:(
-    head:CmndStmt tails:(_0 ';' _0 @CmndStmt)* {
-      if (tails && tails.length > 0) {
-        return { type: 'MultipleStatement', args:[head, ...tails], loc: location(), };
+    statements:CmndStmt|1.., _0 ';' _0| {
+      if (statements.length == 1) {
+        return statements[0];
       } else {
-        return head;
+        return { type: 'MultipleStatement', args:statements, loc: location(), };
       }
     }
   ) _0 tComment:EolWWOComment {
@@ -504,10 +508,14 @@ MultCmndStmt 'multiple commands statement' =
 CmndStmt =
   @(ReturnStmt / DeclStmt / AssignStmt / OpStmt / (@UpdateExpr _0 &(Eol / ';' / '//')) / (@CallExpr _0 &(Eol / ';' / '//')))
 
+// > DisplayHelpTopic "Multiple Return Syntax"
 ReturnStmt 'return statement' =
   'Return'i args:(_0 @(
-    BaseExpr / '[' _0 head:BaseExpr _0 tails:(',' _0 @BaseExpr _0)* _0 ']' {
-      return { type: 'ArrayExpression', elements: [head, ...tails], };
+    BaseExpr
+    /
+    '[' _0 elements:BaseExpr|.., Comma| exComma:CommaWithLoc? _0 ']' {
+      if (exComma) { addProblem('Trailing comma not allowed.', exComma); };
+      return { type: 'ArrayExpression', elements, };
     } 
   )? _0 &(Eol / ';' / '//')
 ) {
@@ -517,20 +525,24 @@ ReturnStmt 'return statement' =
 DeclStmt 'declaration statement' =
   node0:(
     kind:$('u'i? ('char'i / 'int'i ('16' / '32' / '64')?) / 'float'i / 'double'i) {
-      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), };
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location(), };
     }
     / 
     kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) flags:(_0 @Flag)* {
-      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), flags, };
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location(), flags, };
     }
     /
     kind:$('FUNCREF'i / 'STRUCT'i) flags:(_0 @Flag)* _1 proto:StdName {
-      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), proto, flags, };
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location(), proto, flags, };
     }
-  ) _1 elem0:DeclaratorWWOInit elem1ToN:(_0 ',' _0 @DeclaratorWWOInit)* _0 &(Eol / ';' / '//') {
-      node0.declarations = [elem0, ...elem1ToN];
-      node0.loc = location();
-      return node0;
+  ) _1 elements:DeclaratorWWOInit|1.., Comma| exComma:CommaWithLoc? _0 &(Eol / ';' / '//') {
+    if (exComma) { addProblem('Trailing comma not allowed.', exComma); };
+    if (/^(?:char|uchar|int(?:16|32)|uint(?:16|32)?)$/.test(node0.kind)) {
+      addProblem('This type is available only for structure, not for function.', node0.loc);
+    }
+    node0.declarations = elements;
+    node0.loc = location();
+    return node0;
   }
 
 Declarator 'variable delarator' =
@@ -581,20 +593,20 @@ OpStmt 'operation statement' =
 
 // list of values surrounded with braces ('{}')
 BraceListExpr 'list of values' =
-  '{' _0 head:(BraceListExpr / BaseExpr) _0 tails:(',' _0 @(BraceListExpr / BaseExpr) _0)* '}' {
-    return { type: 'ArrayExpression', elements: [head, ...tails], exkind: 0, };
+  '{' _0 elements:(BraceListExpr / BaseExpr)|1.., Comma| _0 '}' {
+    return { type: 'ArrayExpression', elements, exkind: 0, };
   }
 
 // list of values surrounded with parentheses ('()')
 ParenListExpr 'list of values' =
-  '(' _0 head:(BraceListExpr / BaseExpr) _0 tails:(',' _0 @(BraceListExpr / BaseExpr) _0)* ')' {
-    return { type: 'ArrayExpression', elements: [head, ...tails], exkind: 1, };
+  '(' _0 elements:BraceListExpr / BaseExpr|1.., Comma| _0 ')' {
+    return { type: 'ArrayExpression', elements, exkind: 1, };
   }
 
 // list of values surrounded with brackets ('[]')
 BracketListExpr '' =
-  '[' _0 head:(BraceListExpr / BaseExpr)? _0 tails:(',' _0 @(BraceListExpr / BaseExpr)? _0)* ']' {
-    return { type: 'ArrayExpression', elements: [head, ...tails], exkind: 2,};
+  '[' _0 elements:(BraceListExpr / BaseExpr / '')|.., Comma| _0 ']' {
+    return { type: 'ArrayExpression', elements, exkind: 2, };
   }
 
 //
@@ -715,7 +727,7 @@ UpdateExpr =
   }
 
 CallExpr 'function call' =
-  callee1:(@(StdId / LiberalId) _0) callee2:('#' _0 @(StdId / LiberalId) _0)? '(' _0 args:(expr0:FuncParam exprs1toN:(_0 ',' _0 @FuncParam)* { return [expr0, ...exprs1toN]; })? _0')' !(_0 ('[' / '(')) {
+  callee1:(@(StdId / LiberalId) _0) callee2:('#' _0 @(StdId / LiberalId) _0)? '(' _0 args:FuncParam|.., Comma| _0')' !(_0 ('[' / '(')) {
     if (callee2) {
       return { type: 'CallExpression', callee: callee2, module: callee1, arguments: args ?? [], loc: location(), };
     } else {
@@ -807,8 +819,8 @@ PathExpr 'path expression' =
 LValue =
   Variable
   /
-  '[' _0 head:VariableWWOType _0 tails:(',' _0 @VariableWWOType _0)* ']' {
-    return { type: 'ArrayExpression', elements: [head, ...tails], };
+  '[' _0 elements:VariableWWOType|.., Comma| _0 ']' {
+    return { type: 'ArrayExpression', elements, };
   }
 
 /* 
