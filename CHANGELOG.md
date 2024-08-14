@@ -4,6 +4,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [1.4.0] -- 2024-08-14
+
 ### Added
 
 - Support the following syntaxes:
@@ -11,6 +13,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - _Obsolete Operators_ for bit-wise operations (`%~`, `%&`, `%|`), used before Igor Pro 4. #6
   - _Multiple Return Syntax_, introduced in Igor Pro 8 and extended in Igor Pro 9. #8
   - _Range-based For-Loop_, introduced in Igor Pro 9. #9
+  - _Pass-By-Reference_, which is not a new feature of Igor Pro but had been left unsupported by this extension. #12
+  - special precedence rule of power operator `^` that allows `2^-2`. #17
 
 ### Changed
 
@@ -82,7 +86,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.0.0...v1.1.0

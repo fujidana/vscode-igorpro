@@ -2,15 +2,16 @@
 
 The extension helps you editing Igor procedure files (`*.ipf`).
 
-The author of this extension is just a Igor Pro user and has no more relation with Wavemetrics, Inc., which develops Igor Pro itself.
+The author of this extension is just a Igor Pro user and has no special relation with Wavemetrics, Inc., which develops Igor Pro itself.
 Use [GitHub issues](https://github.com/fujidana/vscode-igorpro/issues) for bug reports and feature requests about this extension.
 
 The textual contents of the IntelliSens code hints are cited from [the official manual](https://www.wavemetrics.com/products/igorpro/manual) (manual revision: June 24, 2022 (9.01)) and command helps (application version: 9.01 (Build 39200)) in the in-app help browser.
 
 ## Features
 
+- __Diagnostics__ - syntax check
 - __basic linguistic support for editing__ - comment toggling, indentation adjustment, etc.
-- __syntax highlighting__ - colorizing symbols using a grammer
+- __syntax highlighting__ - colorizing symbols using a grammar
 - __IntelliSens__ - code completion and hinting
   - __hovers__
   - __code completion proposals__ - autocompletion that works during a user types a symbol
@@ -37,7 +38,7 @@ See [Language Configuration Guide / Indentation Rules](https://code.visualstudio
 
 ### Limitations of Syntax Highlighting
 
-While Igor Pro allows function declarations which span several lines, this extension can not colorize them properly, owing to the limitation of the syntax highlithing grammer of VS Code.
+While Igor Pro allows function declarations which span several lines, this extension can not colorize them properly, owing to the limitation of the syntax highlithing grammar of VS Code.
 It is recommended to declare functions in a single line.
 
 ```igorpro
@@ -57,3 +58,11 @@ Function Example2(Variable a, [Variable b, double c])
     Print a,b,c
 End
 ```
+
+### Limitations of Diagnostics
+
+The current syntax parser is far from perfect.
+If you find any problems, report it on [GitHub issues](https://github.com/fujidana/vscode-igorpro/issues).
+
+In Igor Pro, several _Operations_ such as `FuncFit` and `MatrixOp` have a special grammar that is different from the basic syntax used for arithmetic calculation, etc.
+To avoid lines of such an _Operation_ being listed in "Problems" view of VS Code, currently the parser simply skips strict syntax check when the line starts with a built-in _Operation_ name.
