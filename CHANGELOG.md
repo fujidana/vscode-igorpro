@@ -9,6 +9,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 - Support the following syntaxes, which the extension author had missed to implement.
   - wave subrange without a comma, e.g., `wv[1; 3]`. #19
   - call of function defined in nested modules, e.g., `IndependentModuleA#RegularModuleA#Test()`. #20
+- Fix a bug on special precedence rule of power operator, introduced in v1.4.0.
 
 ## [1.4.0] -- 2024-08-14
 
