@@ -74,6 +74,16 @@
     }
     return loc2;
   }
+
+  function checkWaveElemInc(inc: any) {
+    if (inc && inc.type === 'Literal') {
+      if (inc.raw === '') {
+        addProblem('Empty value not allowed at increment of wave subrange.', inc.loc);
+      } else if (inc.raw === '*') {
+        addProblem('"*" not allowed at increment of wave subrange.', inc.loc);
+      }
+    }
+  }
 }
 
 Program = body:TLStmt* {
@@ -860,12 +870,27 @@ For example: wave0[*], wave1(1.5), wave2[1, 7; 2], mystruct.mybytes[2]
   - used with braces only, not with parentheses
 */
 ArrayElementAccessor =
-  start:(@LabelOrIndex _0)? ',' _0 end:(@LabelOrIndex _0)? step:(';' _0 @LabelOrIndex)? {
-    return { type: 'ExWaveSubrange', start, end, step, };
+  start:LabelOrIndex _0 extra:(
+    end:ArrayElemEnd inc:ArrayElemInc? { return { end, inc, }; }
+    /
+    inc:ArrayElemInc { return { end: null, inc, }; }
+  )? {
+    if (extra) {
+      checkWaveElemInc(extra.inc);
+      return { type: 'ExWaveSubrange', start, end: extra.end, inc: extra.inc, };
+    } else {
+    return { type: 'ExElementIndex', arg: start, };
+    }
   }
   /
-  arg:LabelOrIndex _0 {
-    return { type: 'ExElementIndex', arg, };
+  end:ArrayElemEnd inc:ArrayElemInc? {
+    checkWaveElemInc(inc);
+    return { type: 'ExWaveSubrange', start: null, end, inc, };
+  }
+  /
+  inc:ArrayElemInc {
+    checkWaveElemInc(inc);
+    return { type: 'ExWaveSubrange', start: null, end: null, inc, };
   }
 
 LabelOrIndex = 
@@ -877,6 +902,15 @@ LabelOrIndex =
     } else {
       return arg;
     }
+}
+
+ArrayElemEnd =
+  ',' _0 end:(@LabelOrIndex _0)? {
+    return end ?? { type: 'Literal', value: '', raw: '', loc: getStartLocation(undefined, 0, 1), };
+  }
+
+ArrayElemInc = ';' _0 inc:(@LabelOrIndex _0)? {
+    return inc ?? { type: 'Literal', value: '', raw: '', loc: getStartLocation(undefined, 0, 1), };
   }
 
 StdName 'standard name' =
