@@ -4,6 +4,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [1.4.1] -- 2024-08-16
+
 ### Fixed
 
 - Support the following syntaxes, which the extension author had missed to implement.
