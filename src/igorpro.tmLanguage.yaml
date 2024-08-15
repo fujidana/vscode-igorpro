@@ -458,17 +458,21 @@ repository:
       "1": { name: support.function.operation.igorpro }
       "2": { name: support.function.misc.igorpro }    
   function-call:
-    begin: \b(?:(\w+)(#))?(\w+)\s*\(
+    begin: \b((?:\w+\s*#\s*)*)(\w+)\s*(\()
     beginCaptures:
-      "1": { name: entity.name.type.module.igorpro }
-      "2": { name: keyword.operator.module.igorpro }
-      "3": { name: entity.name.function.igorpro, patterns: [{ include: "#validate-function"}] }
-      "4": { name: punctuation.function-parameter.begin.igorpro }
+      "1": { patterns: [{ include: "#function-call-module"}] }
+      "2": { name: entity.name.function.igorpro, patterns: [{ include: "#validate-function"}] }
+      "3": { name: punctuation.function-parameter.begin.igorpro }
     end: \)|(?=//|$)
     endCaptures:
       "0": { name: punctuation.function-parameter.end.igorpro }
     patterns:
       - include: "#expression"
+  function-call-module:
+    match: (\w+)\s*(#)
+    captures:
+      "1": { name: entity.name.type.module.igorpro }
+      "2": { name: keyword.operator.module.igorpro }
   optional-flag:
     match: (/)(?:\w+)\b
     name: support.other.optional-flag.igorpro
