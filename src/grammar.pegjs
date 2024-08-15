@@ -668,7 +668,7 @@ ObsoleteBitwiseBinary =
 // comparison: '==', '!=', '>', '<', '>=', '<='
 // evaluated from right to left; e.g, `2==1>= 0` returns 0, not 1.
 Order6 =
-  heads:(Order5 _0 $('==' / '!=' / '>' '='? / '<' '='?) _0)* tail:Order5 {
+  heads:(Order5 _0 $('==' / '!=' / '>' !'>' '='? / '<' !'<' '='?) _0)* tail:Order5 {
     return heads.reduceRight((accumulator: any, currentValue: any) => {
       return { type: 'BinaryExpression', op: currentValue[2], left: currentValue[0], right: accumulator, };
     }, tail);
@@ -712,23 +712,23 @@ Order3 =
 // exponentation binds less tightly than an arithmetic or bitwise unary operator on its right.
 // Owing to this rule, expression such as 2^-2 is allowed.
 Order2 =
-  head:Order1 tails:(_0 '^' _0 heads2:($('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)* tail2:Order1 {
-     return heads2.reduceRight((accumulator: any, currentValue: any) => {
-      if (currentValue[0] == '%~') {
-        addProblem('Obsolete bit-wise unary operator.', getStartLocation(undefined, 2, 0), DiagnosticSeverity.Information);
-      }
-      return { type: 'UnaryExpression', op: currentValue[0], arg: accumulator, };
-    }, tail2);
-  })* {
+  head:Order1 tails:(
+    _0 op:('^' / '<<' / '>>') _0 right:Order1 {
+      return { op, right, };
+    }
+    /
+    _0 op:'^' _0 uos2:(@$('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)+ right2:Order1 {
+      const right = uos2.reduceRight((accumulator: any, currentValue: any) => {
+        if (currentValue[0] == '%~') {
+          addProblem('Obsolete bit-wise unary operator.', getStartLocation(undefined, 2, 0), DiagnosticSeverity.Information);
+        }
+        return { type: 'UnaryExpression', op: currentValue, arg: accumulator, };
+      }, right2);
+      return { op, right, } ; 
+    }
+  )* {
     return tails.reduce((accumulator: any, currentValue: any) => {
-      const right = currentValue[3] != null ? { type: 'UnaryExpression', op: currentValue[3], arg: currentValue[4], } : currentValue[4];
-      return { type: 'BinaryExpression', op: currentValue[1], left: accumulator, right, };
-    }, head);
-  }
-  /
-  head:Order1 tails:(_0 ('<<' / '>>') _0 Order1)* {
-    return tails.reduce((accumulator: any, currentValue: any) => {
-      return { type: 'BinaryExpression', op: currentValue[1], left: accumulator, right: currentValue[3], };
+      return { type: 'BinaryExpression', op: currentValue.op, left: accumulator, right: currentValue.right, };
     }, head);
   }
 
