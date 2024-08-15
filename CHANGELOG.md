@@ -4,17 +4,13 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Fixed
+
+- Support the following syntaxes, which the extension author had missed to implement.
+  - wave subrange without a comma, e.g., `wv[1; 3]`. #19
+  - call of function defined in nested modules, e.g., `IndependentModuleA#RegularModuleA#Test()`. #20
+
 ## [1.4.0] -- 2024-08-14
-
-### Added
-
-- Support the following syntaxes:
-  - _Optional Parameters_ of functions. #5
-  - _Obsolete Operators_ for bit-wise operations (`%~`, `%&`, `%|`), used before Igor Pro 4. #6
-  - _Multiple Return Syntax_, introduced in Igor Pro 8 and extended in Igor Pro 9. #8
-  - _Range-based For-Loop_, introduced in Igor Pro 9. #9
-  - _Pass-By-Reference_, which is not a new feature of Igor Pro but had been left unsupported by this extension. #12
-  - special precedence rule of power operator `^` that allows `2^-2`. #17
 
 ### Changed
 
@@ -23,6 +19,13 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Fixed
 
+- Support the following syntaxes, which the extension author had missed to implement.
+  - _Optional Parameters_ of functions. #5
+  - _Obsolete Operators_ for bit-wise operations (`%~`, `%&`, `%|`), used before Igor Pro 4. #6
+  - _Multiple Return Syntax_, introduced in Igor Pro 8 and extended in Igor Pro 9. #8
+  - _Range-based For-Loop_, e.g., `for (String s : tw)`, introduced in Igor Pro 9. #9
+  - _Pass-By-Reference_. #12
+  - special precedence rule of power operator `^` that allows `2^-2`. #17
 - Fix an issue where `String` keyword was not properly tokenized and thus, not colorized.
 - Fix other minor problems in syntax highlighting rules.
 
@@ -86,7 +89,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.1.0...v1.2.0
