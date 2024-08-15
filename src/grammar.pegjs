@@ -755,12 +755,11 @@ UpdateExpr =
   }
 
 CallExpr 'function call' =
-  callee1:(@(StdId / LiberalId) _0) callee2:('#' _0 @(StdId / LiberalId) _0)? '(' _0 args:FuncParam|.., Comma| _0')' !(_0 ('[' / '(')) {
-    if (callee2) {
-      return { type: 'CallExpression', callee: callee2, module: callee1, arguments: args ?? [], loc: location(), };
-    } else {
-      return { type: 'CallExpression', callee: callee1, arguments: args ?? [], loc: location(), };
+  callees:(@(StdId / LiberalId) _0)|1.., '#' _0| '(' _0 args:FuncParam|.., Comma| _0')' !(_0 ('[' / '(')) {
+    if (callees.length > 3) {
+      addProblem('Too many "#"s.', location());
     }
+    return { type: 'CallExpression', callee:callees[callees.length - 1] , modules: callees.slice(0, -1), arguments: args ?? [], loc: location(), };
   }
 
 FuncParam 'function parameter' =
