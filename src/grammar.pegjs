@@ -609,7 +609,7 @@ BraceListExpr 'list of values' =
 
 // list of values surrounded with parentheses ('()')
 ParenListExpr 'list of values' =
-  '(' _0 elements:BraceListExpr / BaseExpr|1.., Comma| _0 ')' {
+  '(' _0 elements:(BraceListExpr / BaseExpr)|1.., Comma| _0 ')' {
     return { type: 'ArrayExpression', elements, exkind: 1, };
   }
 
@@ -766,7 +766,9 @@ CallExpr 'function call' =
 FuncParam 'function parameter' =
   left:StdId _0 '=' _0 right:BaseExpr {
     return { type: 'AssignmentStatement', operator: '=', left, right, };
-  } / BaseExpr
+  }
+  /
+  BaseExpr
 
 Variable =
   object:(
