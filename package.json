@@ -3,7 +3,7 @@
   "name": "vscode-igorpro",
   "displayName": "Igor Pro",
   "description": "Igor Pro support for VS Code",
-  "version": "1.4.1",
+  "version": "1.5.0-alpha.1",
   "engines": {
     "vscode": "^1.91.0"
   },
@@ -117,6 +117,22 @@
                 "type": "boolean",
                 "default": false,
                 "description": "Truncates explanatory text in a signature help, which is shown when the user edits function arguments, to a paragraph."
+              }
+            },
+            "additionalProperties": false
+          },
+          "igorpro.analysis.operationSyntax": {
+            "type": "object",
+            "markdownDescription": "Configure the level of syntax diagnosis for a given _operation_ name (for example, `\"MatrixOp\": \"generic\"`). Built-in _operations_ are by default parsed with the generic syntax.",
+            "default": {},
+            "patternProperties": {
+              "^[a-zA-Z][a-zA-Z0-9_]*$": {
+                "type": "string",
+                "default": "generic",
+                "enum": [
+                  "generic",
+                  "lenient"
+                ]
               }
             },
             "additionalProperties": false

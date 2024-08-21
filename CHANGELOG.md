@@ -4,6 +4,11 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Added
+
+- Diagnose expressions in _Operation_ statements using common syntaxes.
+- Provide `igorpro.analysis.operationDiagnosticMode` setting, which contols the level of syntax diagnostics for given _Operations_. Use this if your code is mistakenly diagnosed due to an irregular operation syntax or a bug of parser itself. This feature is experimental; the key may be renamed or removed in a future release.
+
 ## [1.4.1] -- 2024-08-16
 
 ### Fixed
@@ -36,7 +41,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Added
 
-- Make "Provide Diagnostics" feature check grammar of statements inside top-level elements.
+- Make "Provide Diagnostics" feature check grammar of statements inside top-level elements such as flow controls (e.g., `for`, `if`) and arithmetic statements. Diagnostics on _Operation_ statements are left unimplemented.
 
 ### Changed
 

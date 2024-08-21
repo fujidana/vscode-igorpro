@@ -300,10 +300,20 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
 
     private parseDocumentContents(contents: string, uri: vscode.Uri, isOpenDocument: boolean, diagnoseProblems: boolean) {
         const uriString = uri.toString();
+        const operationRules = vscode.workspace.getConfiguration('igorpro.analysis').get<Record<string, string>>('operationDiagnosticMode', {});
+        const operationsLenientlyDiagnosed = [];
+        const operationsNoarmallyDiagnosed = [];
+        for (const [key, value] of Object.entries(operationRules)) {
+            if (value === 'lenient') {
+                operationsLenientlyDiagnosed.push(key.toLowerCase());
+            } else if (value === 'generic') {
+                operationsNoarmallyDiagnosed.push(key.toLowerCase());
+            }
+        }
 
         let program: tree.Program;
         try {
-            program = parse(contents);
+            program = parse(contents, { operationsLenientlyDiagnosed, operationsNoarmallyDiagnosed, });
         } catch (error) {
             if (error instanceof PeggySyntaxError) {
                 if (diagnoseProblems) {

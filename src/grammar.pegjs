@@ -304,12 +304,10 @@ InvalidStructStmt =
 FuncStmt 'statement in macro and function' =
   lComments:(_0 @Comment)+ funcStmt:(
     _0 @(Directive / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / MultCmndStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt / InvalidFuncStmt)
-    // _0 @(UnclassifiedEolStmt / EmptyEolStmt / EmptyEofStmt)
   ) {
     return leadingCommentsAddedNode(funcStmt, lComments);
   }
   /
-  // _0 @(UnclassifiedEolStmt / EmptyEolStmt)
   _0 @(Directive / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / MultCmndStmt / EmptyEolStmt / InvalidFuncStmt)
   /
   _1 @EmptyEofStmt
@@ -409,7 +407,13 @@ SwitchStmt 'switch statement' =
   node:(
     kind:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment (_0 (Comment / Directive))*
     cases:(
-      _0 'case'i _1 test:(StringLiteral / SignedNumericLiteral / StdId) ':' _0 iCommentI:EolWWOComment consequent:FuncStmt* {
+      _0 'case'i _1 test:(
+        StringLiteral
+        /
+        op:('+' /  '-')? _0 arg:NumericLiteral { return op ? { type: 'UnaryExpression', op, arg, } : arg; }
+        /
+        StdId
+      ) ':' _0 iCommentI:EolWWOComment consequent:FuncStmt* {
         return { type: 'SwitchCase', test, consequent, interceptingComment: iCommentI, loc: location(), };
       }
       /
@@ -579,58 +583,97 @@ AssignExpr 'assignment expression' =
     return { type: 'AssignmentExpression', operator, left, right, multiThread: false, };
   }
 
-
 OpStmt 'operation statement' =
-  name:$([a-zA-Z][a-zA-Z0-9]*) &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
-    Flag+ / Word+ / StringLiteral / _1 / !(Eol / ';' / '//') .)* {
-    // TODOS: object properties
-    return { type: 'ExOperationStatement', name, args, };
+  // TODOS: The returned object is currently not structured.
+  name:$([a-zA-Z][a-zA-Z0-9]*) flags:(_0 @Flag)* args:(
+    &{
+      return options.operationsLenientlyDiagnosed.includes(name.toLowerCase());
+    } a:(
+      Flag+ / Word+ / StringLiteral / _1 / !(Eol / ';' / '//') .
+    )*  {
+      return a;
+    }
+    /
+    &{
+      return options.operationsNoarmallyDiagnosed.includes(name.toLowerCase()) || operationRegExp.test(name);
+    } (Comma / _0) @(
+      expr:(
+        BraceListExpr2
+        /
+        BaseExpr (
+          _0 $('=' / '+=') _0 (('#' / '_NUM:'i / '_STR:'i)? BaseExpr
+          /
+          BraceListExpr / ParenListExpr / BracketListExpr+)
+        )?
+        /
+        Word+
+      ) flags2:(_0 @Flag)* { return [expr, flags]; }
+    )|.., (Comma / _1)|
+  ) _0 &(Eol / ';' / '//') {
+    return { type: 'OperationStatement', name, args: args};
   }
-  // name:$([a-zA-Z][a-zA-Z0-9]*) &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
-  //   (_0 ',' _0 / _1) @(
-  //     BaseExpr (_0 '=' _0 (BaseExpr / BraceListExpr / ParenListExpr / BracketListExpr+))?
-  //     /
-  //     BraceListExpr
-  //     /
-  //     Word+
-  //   )
-  //   /
-  //   (_0 @Flag)+
-  // )* _0 &(Eol / ';' / '//') {
-  //   // TODOS: object properties
-  //   return { type: 'ExOperationStatement', name, flags, args, };
-  // }
 
-// list of values surrounded with braces ('{}')
-BraceListExpr 'list of values' =
-  '{' _0 elements:(BraceListExpr / BaseExpr)|1.., Comma| _0 '}' {
+/* 
+ * List of values surrounded with braces, `{}`.
+ * 
+ * The elements consist of comma-separated values.
+ * The list can be nested.
+ * E.g., `{1, myvar, 3*2, myfunc()}`, `{{1, 2, 3}, {4, 5, 6}}`.
+ * `{*,*,Grays,1}` in `ModifyImage ctab=...`
+ */
+BraceListExpr =
+  '{' _0 elements:(BraceListExpr / BaseExpr / '*')|1.., Comma| _0 '}' {
     return { type: 'ArrayExpression', elements, exkind: 0, };
   }
 
-// list of values surrounded with parentheses ('()')
-ParenListExpr 'list of values' =
+/* 
+ * A list of values or key-value pairs surrounded with braces, `{}`.
+ * 
+ * The elements can be key-value pairs, in addition to those of `BraceListExpr`.
+ * E.g., `{ key1 = param2, key = param2 }`
+ * `{{func1, coef1, keyword = value },{func2, coef2, keyword = value }, ...}` (in `FuncFit`)
+ */
+BraceListExpr2 =
+  '{' _0 elements:(
+    BraceListExpr2 / @StdId _0 '=' _0 @BaseExpr / BaseExpr / '*'
+  )|1.., Comma| _0 '}' {
+    return { type: 'ArrayExpression', elements, exkind: 0, };
+  }
+
+/* 
+ * List of values surrounded with parentheses, `()`.
+ * E.g., `({1, 2, 3})`, `(1, myvar, 2*3)`.
+ */
+ParenListExpr =
   '(' _0 elements:(BraceListExpr / BaseExpr)|1.., Comma| _0 ')' {
     return { type: 'ArrayExpression', elements, exkind: 1, };
   }
 
-// list of values surrounded with brackets ('[]')
+/* 
+ * List of values surrounded with brackets, `[]`.
+ * Brackets with no element is allowed.
+ * E.g., `[]`, `[1, myVar, 2*3]`
+ */
 BracketListExpr '' =
-  '[' _0 elements:(BraceListExpr / BaseExpr / '')|.., Comma| _0 ']' {
+  '[' _0 elements:(BraceListExpr / BaseExpr)|.., Comma| _0 ']' {
     return { type: 'ArrayExpression', elements, exkind: 2, };
   }
 
 //
 RefExpr 'reference expression' =
-  '$' _0 arg:Factor {
+  '$' _0 arg:Factor ('#' [0-9]+)? {
     return { type: 'ReferenceExpression', arg: arg, };
   }
 
 BaseExpr =
   RefExpr / Order8
 
-// logical AND, OR and conditional (aka ternery) operator
-// evaluated from left to right; e.g., `1 ? 2 : 3 ? 4 : 5` returns 4, not 2.
-// Unlike C and other several languages, AND and OR have the same priority.
+/* 
+ * Logical AND (`&&`), OR(`||`) and conditional (a.k.a. ternery; `A ? B : C`) operator.
+ * 
+ * Evaluated from left to right; e.g., `1 ? 2 : 3 ? 4 : 5` returns 4, not 2.
+ * Unlike C and other several languages, AND and OR have the same priority.
+ */
 Order8 =
   head:Order7 tails:(_0 ('&&' / '||') _0 Order7 / _0 '?' _0 Order7 _0 ':' _0 Order7)* {
     return tails.reduce((accumulator: any, currentValue: any) => {
@@ -642,8 +685,11 @@ Order8 =
     }, head);
   }
 
-// bitwise AND, OR, XOR: '&', '|', '%^'
-// evaluated from right to left; e.g, `1 | 3 & 2` returns 3, not 2.
+/* 
+ * Bitwise AND (`&`), OR (`|`), XOR (`%^`).
+ *
+ * Evaluated from right to left; e.g, `1 | 3 & 2` returns 3, not 2.
+ */
 Order7 =
   heads:(Order6 _0 $('&' !'&' / '|' !'|' / '%^' / '%&' / '%|') _0)* tail:Order6 {
     return heads.reduceRight((accumulator: any, currentValue: any) => {
@@ -658,15 +704,11 @@ Order7 =
     }, tail);
   }
 
-ObsoleteBitwiseBinary =
-  a: $('%&' / '%|') {
-    addProblem('Obsolete bit-wise binary operator.', location(), DiagnosticSeverity.Information);
-    return a;
-  }
 
-
-// comparison: '==', '!=', '>', '<', '>=', '<='
-// evaluated from right to left; e.g, `2==1>= 0` returns 0, not 1.
+/*
+ * Comparison: '==', '!=', '>', '<', '>=', '<='
+ * evaluated from right to left; e.g, `2==1>= 0` returns 0, not 1.
+ */
 Order6 =
   heads:(Order5 _0 $('==' / '!=' / '>' !'>' '='? / '<' !'<' '='?) _0)* tail:Order5 {
     return heads.reduceRight((accumulator: any, currentValue: any) => {
@@ -686,7 +728,7 @@ Order5 =
 // multiplication and division: '*', '/'
 // evaluated from left to right.
 Order4 =
-  head:Order3 tails:(_0 $('*' / '/') _0 !(Word+ _0 '=') Order3)* {
+  head:Order3 tails:(_0 $('*' / '/') _0 Order3)* {
     return tails.reduce((accumulator: any, currentValue: any) => {
       return { type: 'BinaryExpression', op: currentValue[1], left: accumulator, right: currentValue[4], };
     }, head);
@@ -771,32 +813,20 @@ FuncParam 'function parameter' =
 
 Variable =
   object:(
-    heads:(@ArrayElement _0 '.' _0)+ tail:ArrayElement _0 {
+    heads:(@ArrayElement _0 '.' _0)+ tail:ArrayElement {
       return heads.reduce((accumulator: any, currentValue: any) => {
         return { type: 'MemberExpression', object: accumulator, property: currentValue, };
       }, tail);
     }
     /
-    @PathExpr _0
-  ) indexes:(
-    '[' _0 rangeOrIndex:(@ArrayElementAccessor _0)? ']'_0 {
-      if (rangeOrIndex) {
-        rangeOrIndex.scaled = false;
-      }
-      return rangeOrIndex;
-    }
-    /
-    '(' _0 rangeOrIndex:(@ArrayElementAccessor _0)? ')' _0 {
-      if (rangeOrIndex) {
-        rangeOrIndex.scaled = true;
-      }
-      return rangeOrIndex;
-    }
-    /
-    '#' _0 BaseExpr
-  )* {
+    PathExpr
+  ) indexes:(ArrayElementAccessor+ / '#' [0-9]+)? {
     if (indexes && indexes.length !== 0) {
-      return { type: 'ExArrayElementExpression', object, indexes, };
+      if (indexes[0] === '#') {
+        return { type: 'ExTraceNameExpression', object, index: indexes[1], };
+      } else {
+        return { type: 'ExArrayElementExpression', object, indexes, };
+      }
     } else {
       return object;
     }
@@ -871,27 +901,37 @@ For example: wave0[*], wave1(1.5), wave2[1, 7; 2], mystruct.mybytes[2]
   - used with braces only, not with parentheses
 */
 ArrayElementAccessor =
-  start:LabelOrIndex _0 extra:(
-    end:ArrayElemEnd inc:ArrayElemInc? { return { end, inc, }; }
-    /
-    inc:ArrayElemInc { return { end: null, inc, }; }
-  )? {
-    if (extra) {
-      checkWaveElemInc(extra.inc);
-      return { type: 'ExWaveSubrange', start, end: extra.end, inc: extra.inc, };
-    } else {
-    return { type: 'ExElementIndex', arg: start, };
+  _0 opener:('[' / '(') _0 rangeOrIndex:(
+    start:LabelOrIndex _0 extra:(
+      end:ArrayElemEnd inc:ArrayElemInc? { return { end, inc, }; }
+      /
+      inc:ArrayElemInc { return { end: null, inc, }; }
+    )? {
+      if (extra) {
+        checkWaveElemInc(extra.inc);
+        return { type: 'ExWaveSubrange', start, end: extra.end, inc: extra.inc, };
+      } else {
+      return { type: 'ExElementIndex', arg: start, };
+      }
     }
-  }
-  /
-  end:ArrayElemEnd inc:ArrayElemInc? {
-    checkWaveElemInc(inc);
-    return { type: 'ExWaveSubrange', start: null, end, inc, };
-  }
-  /
-  inc:ArrayElemInc {
-    checkWaveElemInc(inc);
-    return { type: 'ExWaveSubrange', start: null, end: null, inc, };
+    /
+    end:ArrayElemEnd inc:ArrayElemInc? {
+      checkWaveElemInc(inc);
+      return { type: 'ExWaveSubrange', start: null, end, inc, };
+    }
+    /
+    inc:ArrayElemInc {
+      checkWaveElemInc(inc);
+      return { type: 'ExWaveSubrange', start: null, end: null, inc, };
+    }
+  )? _0 closer:. &{
+    return (opener === '[') ? (closer === ']') : (closer === ')');
+  } {
+    if (rangeOrIndex) {
+      rangeOrIndex.scaled = opener === '(';
+      ;
+    }
+    return rangeOrIndex;
   }
 
 LabelOrIndex = 
@@ -958,10 +998,8 @@ NumericLiteral 'numeric literal' =
     return { type: 'Literal', value: Infinity, raw: text(), loc: location(), };
   }
 
-SignedNumericLiteral =
-  op:('+' /  '-')? _0 arg:NumericLiteral {
-    return op ? { type: 'UnaryExpression', op, arg, } : arg;
-  }
+// SignedNumericLiteral =
+//   op:('+' /  '-')? _0 arg:NumericLiteral { return op ? { type: 'UnaryExpression', op, arg, } : arg; }
 
 // exponential part in floating-point digit, e.g., E+3 in 1.2E+3)
 Exponent = [eE] [+-]? [0-9]+
@@ -985,8 +1023,27 @@ StringId 'string identifier' =
     return { type: 'Identifier', name: name, kind: 'string', loc: location(), };
   }
 
+/*
+ * Flag, option of operation starting with a slash (`/`).
+ * 
+ * E.g.,
+ * `/O` `/N=-1`, `/W=$myWinNameStr`, `/DF=root:myfolder`, `/TN=wave0#1`, 
+ * `B=(0x00, 0x88, 0xff)`, 
+ * `K={1,2,3}` (`CurveFit`),
+ * `/TL={len=auto,lineRGB=(0, 255, 255)}` (`Tag`),
+ * `/N=(64, 4)` (`Redimension`, `Make`, etc.),
+ * `/R=[][firstCol, lastCol][2, 3] (`WaveStats`, etc.),
+ */
 Flag 'operation flag' =
-  // '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / SignedNumericLiteral / StringLiteral / CallExpr / RefExpr / Variable))? {
-  '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / BaseExpr))? {
-    return { type: 'ExFlag', key, value, };
+  '/' key:$[a-zA-Z][a-zA-Z0-9]* value:(
+    '=' @(
+      BraceListExpr2 / ParenListExpr / BracketListExpr+
+      /
+      op:('+' /  '-')? arg:NumericLiteral { return op ? { type: 'UnaryExpression', op, arg, } : arg; }
+      / 
+      StringLiteral / CallExpr / RefExpr / Variable
+    )
+  )?
+  {
+      return { type: 'ExFlag', key, value, };
   }
