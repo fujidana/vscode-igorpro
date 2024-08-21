@@ -501,22 +501,29 @@ ContinueStmt 'continue statement' =
     return trailingCommentAddedNode(node, tComment);
   }
 
-//
 MultCmndStmt 'multiple commands statement' =
   !End node:(
-    statements:CmndStmt|1.., _0 ';' _0| {
-      if (statements.length == 1) {
-        return statements[0];
+    args:(
+      ';' { return { type: 'EmptyStatement', loc: location(), }; }
+      /
+      @(
+        ReturnStmt / DeclStmt / AssignStmt / OpStmt / @UpdateExpr _0 &(Eol / ';' / '//') / @CallExpr _0 &(Eol / ';' / '//')
+      ) (_0 ';')?
+    )|1.., _0| {
+      // return (args.length === 1) ? args[0] : { type: 'MultipleStatement', args, loc: location(), };
+      if (args.length === 1) {
+        if (args[0].type === 'EmptyStatement') { addProblem('Empty statement.', args[0].loc, DiagnosticSeverity.Information); }
+        return args[0];
       } else {
-        return { type: 'MultipleStatement', args:statements, loc: location(), };
+        args.forEach(arg => {
+          if (arg.type === 'EmptyStatement') { addProblem('Empty statement.', arg.loc, DiagnosticSeverity.Information); }
+        });
+        return { type: 'MultipleStatement', args, loc: location(), };
       }
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(node, tComment);
   }
-
-CmndStmt =
-  @(ReturnStmt / DeclStmt / AssignStmt / OpStmt / (@UpdateExpr _0 &(Eol / ';' / '//')) / (@CallExpr _0 &(Eol / ';' / '//')))
 
 // > DisplayHelpTopic "Multiple Return Syntax"
 ReturnStmt 'return statement' =
