@@ -448,9 +448,9 @@ DoWhileStmt 'do-while statement' =
 ForStmt 'for-loop' =
   node:(
     // TODOS: not strict rule
-    'for'i _0 '(' _0 init:CommaSepAssignUpdateExpr? _0 ';' _0 test:BaseExpr _0 ';' _0 update:CommaSepAssignUpdateExpr? _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    'for'i _0 '(' _0 init:CommaSepAssignUpdateExpr? _0 ';' _0 test:BaseExpr? _0 ';' _0 update:CommaSepAssignUpdateExpr? _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
-      return { type: 'ForStatement', init: init, test: test, update:update, body: body, interceptingComment: iComment, loc: location(), }; 
+      return { type: 'ForStatement', init, test, update, body, interceptingComment: iComment, loc: location(), }; 
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(node, tComment);
