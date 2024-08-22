@@ -226,8 +226,7 @@ StructDecl 'structure declaration' =
 
 MacroDecl 'macro declaration' =
   declNode:(
-    // TODOS: `params` is not strictly parsed.
-    kind:('Window'i / 'Macro'i / 'Proc'i) _1 id:StdId _0 '(' params:$(!EolWWOComment [^)])* ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    kind:('Window'i / 'Macro'i / 'Proc'i) _1 id:StdId _0 '(' _0 params:VariableList _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'end' && end[0].toLowerCase() !== 'endmacro') { error(`Expected "End" or "EndMacro" but "${end[0]}" found.`, end[1]); }
       return { type: 'MacroDeclaration', id: id, kind: kind.toLowerCase(), params: params, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
     }
