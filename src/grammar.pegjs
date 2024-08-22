@@ -240,7 +240,7 @@ FuncDecl 'function declaration' =
     // TODOS: `ret` is not parsed.
     ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i !Word flag:(_0 @Flag)* _0 multiReturn:(
       _0 '[' _0 @VariableList _0 ']' _0
-    )? id:StdId _0 '(' _0 reqParams:(@VariableList _0) optParams:(
+    )? id:StdId _0 '(' _0 reqParams:VariableList _0 optParams:(
       '[' _0 params:VariableList _0 ']' { return { params, loc: location(), }; }
     )? _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
@@ -286,7 +286,7 @@ FuncDecl 'function declaration' =
           }
         }
       }
-      return { type: 'FunctionDeclaration', id: id, threadsafe: !!ts, override: !!or, static: !!s0, reqParams, optParams: optParams?.params, return: multiReturn, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
+      return { type: 'FunctionDeclaration', id: id, threadsafe: !!ts, override: !!or, static: !!s0, params: reqParams, optParams: optParams?.params, return: multiReturn, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(declNode, tComment);
@@ -435,8 +435,7 @@ IfStmt 'if statement' =
 
 SwitchStmt 'switch statement' =
   node:(
-    kind:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment (_0 (Comment / Directive))*
-    cases:(
+    kind:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment stmtsBeforeCase:FuncStmt* cases:(
       _0 'case'i _1 test:(StringLiteral / SignedNumericLiteral / StdId) ':' _0 iCommentI:EolWWOComment consequent:FuncStmt* {
         return { type: 'SwitchCase', test, consequent, interceptingComment: iCommentI, loc: location(), };
       }
@@ -446,6 +445,9 @@ SwitchStmt 'switch statement' =
       }
     )* _0 end:End {
       if (end[0].toLowerCase() !== 'endswitch') { error(`Expected "endswitch" but "${end[0]}" found.`, end[1]); }
+      if (stmtsBeforeCase) {
+        stmtsBeforeCase.forEach(stmt => { if (stmt.type !== 'EmptyStatement') { addProblem('Statement not allowed here.', stmt.loc); } });
+      }
 
       const kind2 = kind.toLowerCase() === 'strswitch' ? 'string' : 'number';
       return { type: 'SwitchStatement', discriminant: discriminant, kind: kind2, cases, interceptingComment: iComment, loc: location(), };
