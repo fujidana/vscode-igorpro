@@ -226,8 +226,7 @@ StructDecl 'structure declaration' =
 
 MacroDecl 'macro declaration' =
   declNode:(
-    // TODOS: `params` is not strictly parsed.
-    kind:('Window'i / 'Macro'i / 'Proc'i) _1 id:StdId _0 '(' params:$(!EolWWOComment [^)])* ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    kind:('Window'i / 'Macro'i / 'Proc'i) _1 id:StdId _0 '(' _0 params:VariableList _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'end' && end[0].toLowerCase() !== 'endmacro') { error(`Expected "End" or "EndMacro" but "${end[0]}" found.`, end[1]); }
       return { type: 'MacroDeclaration', id: id, kind: kind.toLowerCase(), params: params, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
     }
@@ -239,26 +238,70 @@ FuncDecl 'function declaration' =
   // TODOS: parse parameters
   declNode:(
     // TODOS: `ret` is not parsed.
-    // TODOS: `params` is not strictly parsed.
-    ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i flag:(_0 @Flag)* _1 ret:(
-      _0 '[' _0 par:VariableWWOType|.., Comma| cm:CommaWithLoc? _0 ']' _0 { return { type: par, extraComma: cm, }; }
-    )? id:StdId _0 '(' _0 params:VariableWWOType|.., Comma| cm1:CommaWithLoc? _0 optParams:(
-      '[' _0 optParams2:VariableWWOType|.., Comma| cm3:CommaWithLoc? _0 ']' { return {main: optParams2, extraComma: cm3, loc: location(), }; }
-    )? cm2:CommaWithLoc?
-    _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
-      if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
-      if (ret && ret.extraComma) { addProblem('Trailing comma not allowed.', ret.extraComma); }
-      if (params && params.length > 0 && optParams) {
-        if (!cm1) {addProblem('Use a comma before optional parameters.', getStartLocation(optParams.loc, 1), DiagnosticSeverity.Warning); }
+    ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i !Word flag:(_0 @Flag)* _0 multiReturn:(
+      _0 '[' _0 @VariableList _0 ']' _0
+    )? id:StdId _0 '(' _0 reqParams:VariableList _0 optParams:(
+      '[' _0 params:VariableList _0 ']' { return { params, loc: location(), }; }
+    )? _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
+      // check 'end' appears or not.
+      // Unless I misread the official manual, `End` is the only closing word 
+      // of `Funciton` definition.
+      // However, Use of `EndMacro` for `Function` can be found in several IPF files
+      // WaveMetrics bundled with Igor Pro.
+      // I think it is mistaken usage.
+      // If `EndMacro` appears, the parser reports a warning-level problem but 
+      // do not stop parsing.
+      // 
+      // To the contrary, it is clearly written that a `Macro` definition 
+      // ends with either `End` or `EndMacro`).
+      if (end[0].toLowerCase() === 'endmacro') {
+        addProblem(`Expected "End" but "${end[0]}" found.`, end[1], DiagnosticSeverity.Warning);
+      } else if (end[0].toLowerCase() !== 'end') {
+        error(`Expected "End" but "${end[0]}" found.`, end[1]);
+      }
+
+      // Check multi-return syntax
+      if (multiReturn !== null) {
+        if (multiReturn.length === 0) {
+
+        } else {
+          multiReturn.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Return variable not defined.', param.loc); } });
+        }
+      }
+
+      // Check input parameters and their separators (comma).
+      if (reqParams.length === 0) {
+        // In case required parameters are not provided
+        if (optParams === null) {
+          // Do nothing if neither required parameters or optional parameters are provided
+        } else if (optParams.params.length === 0) {
+          // If bracket exists but nothing in it, report an erro.
+          addProblem('No optional parameters defined in brackets.', optParams.loc)
+        } else {
+          // Otherwise, report error if empty element exists.
+          optParams.params.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+        }
       } else {
-        if (cm1) { addProblem('Preceding comma not allowed.', cm1); }
+        // In cae one or more required parameters exist
+        if (optParams === null) {
+          // If no brackets exists, simply check an empty element and report it.
+          reqParams.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+        }  else if (optParams.params.length === 0) {
+          // If brackets exists but nothing in it, simply check an empty element and report it. The last comma outside the bracket is valid.
+          reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+          addProblem('No optional parameters defined in brackets.', optParams.loc)
+        } else {
+          // If both required parameters and optional parameters are provided, check the both.
+          reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+          optParams.params.forEach((param, i, params) => { if (i !== 0 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+          if (reqParams[reqParams.length - 1].type === 'EmptyExpression' && optParams.params[0].type === 'EmptyExpression') {
+            addProblem('Duplicated commas.', optParams.params[0].loc, DiagnosticSeverity.Warning);
+          } else if (reqParams[reqParams.length - 1].type !== 'EmptyExpression' && optParams.params[0].type !== 'EmptyExpression') {
+            addProblem('Missing comma between required parameters and optional parameters.', getStartLocation(optParams.loc, 1, 0), DiagnosticSeverity.Warning);
+          }
+        }
       }
-      if (cm2) { addProblem('Trailing comma not allowed.', cm2); }
-      if (optParams) {
-          if (optParams.main.length == 0) { addProblem('Empty parameter not allowed.', optParams.loc); }
-          if (optParams.extraComma) { addProblem('Trailing comma not allowed.', optParams.extraComma); }
-      }
-      return { type: 'FunctionDeclaration', id: id, threadsafe: !!ts, override: !!or, static: !!s0, params: params, return: ret, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
+      return { type: 'FunctionDeclaration', id: id, threadsafe: !!ts, override: !!or, static: !!s0, params: reqParams, optParams: optParams?.params, return: multiReturn, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(declNode, tComment);
@@ -405,8 +448,7 @@ IfStmt 'if statement' =
 
 SwitchStmt 'switch statement' =
   node:(
-    kind:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment (_0 (Comment / Directive))*
-    cases:(
+    kind:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment stmtsBeforeCase:FuncStmt* cases:(
       _0 'case'i _1 test:(
         StringLiteral
         /
@@ -422,6 +464,9 @@ SwitchStmt 'switch statement' =
       }
     )* _0 end:End {
       if (end[0].toLowerCase() !== 'endswitch') { error(`Expected "endswitch" but "${end[0]}" found.`, end[1]); }
+      if (stmtsBeforeCase) {
+        stmtsBeforeCase.forEach(stmt => { if (stmt.type !== 'EmptyStatement') { addProblem('Statement not allowed here.', stmt.loc); } });
+      }
 
       const kind2 = kind.toLowerCase() === 'strswitch' ? 'string' : 'number';
       return { type: 'SwitchStatement', discriminant: discriminant, kind: kind2, cases, interceptingComment: iComment, loc: location(), };
@@ -452,9 +497,9 @@ DoWhileStmt 'do-while statement' =
 ForStmt 'for-loop' =
   node:(
     // TODOS: not strict rule
-    'for'i _0 '(' _0 init:CommaSepAssignUpdateExpr? _0 ';' _0 test:BaseExpr _0 ';' _0 update:CommaSepAssignUpdateExpr? _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    'for'i _0 '(' _0 init:CommaSepAssignUpdateExpr? _0 ';' _0 test:BaseExpr? _0 ';' _0 update:CommaSepAssignUpdateExpr? _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
       if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
-      return { type: 'ForStatement', init: init, test: test, update:update, body: body, interceptingComment: iComment, loc: location(), }; 
+      return { type: 'ForStatement', init, test, update, body, interceptingComment: iComment, loc: location(), }; 
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(node, tComment);
@@ -485,11 +530,35 @@ VariableWWOType 'variable with or without type' =
     return { type: 'VariableDeclaration', kind: kind.toLowerCase(), declarations: [declarator] };
   }
   /
-  kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) option:(_0 '/' [a-zA-Z0-9]+)* _1 declarator:Declarator {
+  kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) option:(_0 '/' @$[a-zA-Z0-9]+)* _1 declarator:Declarator {
     return { type: 'VariableDeclaration', kind: kind.toLowerCase(), option, declarations: [declarator] };
   }
   /
   StdId
+
+/* 
+ * Comma-separated variables. The element may be empty.
+ * e.g., 
+ * '' : 0 element
+ * 'a': 1 element
+ * 'a,b': 2 elements
+ * ',': 2 empty elements
+ * 'a,b,`: 3 elements including 1 empty element
+ */
+VariableList =
+  heads:(VariableWWOType? CommaWithLoc)|..| tail:VariableWWOType? {
+    const nodesList = [];
+    for (let i = 0; i < heads.length; i++) {
+      const [node, commaLoc] = heads[i];
+      nodesList.push(node ?? { type: 'EmptyExpression', loc: commaLoc, });
+    }
+    if (tail) {
+      nodesList.push(tail);
+    } else if (heads.length > 0) {
+      nodesList.push({ type: 'EmptyExpression', loc: heads[heads.length - 1][1], });
+    }
+    return nodesList;
+  }
 
 BreakStmt 'braek statement' =
   node:(
@@ -505,22 +574,29 @@ ContinueStmt 'continue statement' =
     return trailingCommentAddedNode(node, tComment);
   }
 
-//
 MultCmndStmt 'multiple commands statement' =
   !End node:(
-    statements:CmndStmt|1.., _0 ';' _0| {
-      if (statements.length == 1) {
-        return statements[0];
+    args:(
+      ';' { return { type: 'EmptyStatement', loc: location(), }; }
+      /
+      @(
+        ReturnStmt / DeclStmt / AssignStmt / OpStmt / @UpdateExpr _0 &(Eol / ';' / '//') / @CallExpr _0 &(Eol / ';' / '//')
+      ) (_0 ';')?
+    )|1.., _0| {
+      // return (args.length === 1) ? args[0] : { type: 'MultipleStatement', args, loc: location(), };
+      if (args.length === 1) {
+        if (args[0].type === 'EmptyStatement') { addProblem('Empty statement.', args[0].loc, DiagnosticSeverity.Information); }
+        return args[0];
       } else {
-        return { type: 'MultipleStatement', args:statements, loc: location(), };
+        args.forEach(arg => {
+          if (arg.type === 'EmptyStatement') { addProblem('Empty statement.', arg.loc, DiagnosticSeverity.Information); }
+        });
+        return { type: 'MultipleStatement', args, loc: location(), };
       }
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(node, tComment);
   }
-
-CmndStmt =
-  @(ReturnStmt / DeclStmt / AssignStmt / OpStmt / (@UpdateExpr _0 &(Eol / ';' / '//')) / (@CallExpr _0 &(Eol / ';' / '//')))
 
 // > DisplayHelpTopic "Multiple Return Syntax"
 ReturnStmt 'return statement' =
