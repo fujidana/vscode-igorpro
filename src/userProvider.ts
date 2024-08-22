@@ -261,6 +261,37 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
                 location: node.id.loc
             };
         }
+        function makeSignatureForMacroAndFunc(node: tree.FunctionDeclaration | tree.MacroDeclaration): string {
+            let signature = node.id.name;
+
+            signature += '(' + node.params.map(param => {
+                if (param.type === 'Identifier') {
+                    return param.name;
+                } else if (param.type === 'VariableDeclaration') {
+                    return param.declarations.map(decl => decl.id).join(', ');
+                } else {
+                    return '';
+                }
+            }).join(', ');
+
+            if (node.type === 'FunctionDeclaration' && node.optParams) {
+                signature += '[' + node.optParams.map(param => {
+                    if (param.type === 'Identifier') {
+                        return param.name;
+                    } else if (param.type === 'VariableDeclaration') {
+                        return param.declarations.map(decl => decl.id).join(', ');
+                    } else {
+                        return '';
+                    }
+                }).join(', ') + ']';
+            }
+            signature += ')';
+
+            if (node.subtype) {
+                signature += ': ' + node.subtype;
+            }
+            return signature;
+        }
 
         for (const node of program.body) {
             if (node.type === 'ConstantDeclaration') {
@@ -279,12 +310,12 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
                 structureRefMap.set(node.id.name.toLowerCase(), refItem);
             } else if (node.type === 'MacroDeclaration') {
                 const refItem = makeRefItem(node);
-                refItem.signature += `(${node.params})`;
+                refItem.signature = makeSignatureForMacroAndFunc(node);
                 macroRefMap.set(node.id.name.toLowerCase(), refItem);
             } else if (node.type === 'FunctionDeclaration') {
                 const refItem = makeRefItem(node);
                 refItem.static = node.static;
-                refItem.signature += `(${node.params})`;
+                refItem.signature = makeSignatureForMacroAndFunc(node);
                 functionRefMap.set(node.id.name.toLowerCase(), refItem);
             }
         }

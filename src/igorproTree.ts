@@ -196,20 +196,19 @@ export interface StructureMemberDeclarator extends BaseStatement {
 
 export interface BaseFunction extends BaseBlock {
     id: StrictIdentifier;
-    params: string; // TODOS: It may be Identifier[].
+    params: (Identifier | VariableDeclaration | EmptyExpression)[]
     body: FunctionStatement[];
     subtype?: string;
 }
 
 export interface MacroDeclaration extends BaseFunction {
     type: 'MacroDeclaration';
-    id: StrictIdentifier;
     kind: 'macro' | 'window' | 'proc';
 }
 
 export interface FunctionDeclaration extends BaseFunction {
     type: 'FunctionDeclaration';
-    id: StrictIdentifier;
+    optParams?: (Identifier | VariableDeclaration | EmptyExpression)[]
     threadsafe: boolean;
     override: boolean;
     static: boolean;
@@ -320,6 +319,21 @@ interface Literal extends BaseExpression {
     raw: string;
 }
 
+interface EmptyExpression extends BaseExpression {
+    type: 'EmptyExpression';
+}
+
 interface VariableDeclaration extends BaseStatement {
-    
+    type: 'VariableDeclaration';
+    kind: string;
+    proto?: string;
+    option: string[];
+    declarations: VariableDeclarator[];
+}
+
+interface VariableDeclarator extends BaseStatement {
+    type: 'VariableDeclarator';
+    id: string;
+    init: any; // TODOS: type not yet given
+    pbr?: boolean; // pass-by-reference
 }
