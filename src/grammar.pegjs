@@ -243,7 +243,22 @@ FuncDecl 'function declaration' =
     )? id:StdId _0 '(' _0 reqParams:VariableList _0 optParams:(
       '[' _0 params:VariableList _0 ']' { return { params, loc: location(), }; }
     )? _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
-      if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
+      // check 'end' appears or not.
+      // Unless I misread the official manual, `End` is the only closing word 
+      // of `Funciton` definition.
+      // However, Use of `EndMacro` for `Function` can be found in several IPF files
+      // WaveMetrics bundled with Igor Pro.
+      // I think it is mistaken usage.
+      // If `EndMacro` appears, the parser reports a warning-level problem but 
+      // do not stop parsing.
+      // 
+      // To the contrary, it is clearly written that a `Macro` definition 
+      // ends with either `End` or `EndMacro`).
+      if (end[0].toLowerCase() === 'endmacro') {
+        addProblem(`Expected "End" but "${end[0]}" found.`, end[1], DiagnosticSeverity.Warning);
+      } else if (end[0].toLowerCase() !== 'end') {
+        error(`Expected "End" but "${end[0]}" found.`, end[1]);
+      }
 
       // Check multi-return syntax
       if (multiReturn !== null) {
@@ -511,7 +526,7 @@ VariableWWOType 'variable with or without type' =
     return { type: 'VariableDeclaration', kind: kind.toLowerCase(), declarations: [declarator] };
   }
   /
-  kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) option:(_0 '/' [a-zA-Z0-9]+)* _1 declarator:Declarator {
+  kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) option:(_0 '/' @$[a-zA-Z0-9]+)* _1 declarator:Declarator {
     return { type: 'VariableDeclaration', kind: kind.toLowerCase(), option, declarations: [declarator] };
   }
   /
