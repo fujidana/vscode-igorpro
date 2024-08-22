@@ -4,6 +4,13 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [1.4.2] -- 2024-08-22
+
+### Fixed
+
+- Improve the syntax parser, including fixes of problems reported in #25, #26, and #27.
+- Fix a bug that the parameters of a function are not correctly shown in code hint features such as hover and auto-completion. This bug was introduced in v1.4.0. #27
+
 ## [1.4.1] -- 2024-08-16
 
 ### Fixed
@@ -92,7 +99,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.2.0...v1.3.0
