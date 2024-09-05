@@ -5,5 +5,6 @@ node_modules
 .vscode-test-web/
 *.vsix
 .DS_Store
-syntaxes
+syntaxes/*
+!syntaxes/.gitkeep
 src/grammar.ts
