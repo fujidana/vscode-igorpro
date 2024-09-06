@@ -93,8 +93,10 @@ Program = body:TLStmt* {
 // whitespaces
 // _0 = $[ \t]*
 // _1 = $[ \t]+
-_0 = [ \t]* { return text(); }
-_1 = [ \t]+ { return text(); }
+
+// whitespace, horizontal tab and line-continuation
+_0 = ([ \t] / '\\' Eol)* { return text(); }
+_1 = ([ \t] / '\\' Eol)+ { return text(); }
 
 Comma = _0 ',' _0
 CommaWithLoc = _0 ',' _0 { return location(); }

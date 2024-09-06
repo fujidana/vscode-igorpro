@@ -4,6 +4,13 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [1.4.3] -- 2024-09-06
+
+### Fixed
+
+- Support the following syntax, which the extension author had missed to implement.
+  - Line continuation using a backslash. The implemented rule is mcuh more lenient than that of Igor Pro's compiler. #19
+
 ## [1.4.2] -- 2024-08-22
 
 ### Fixed
@@ -99,7 +106,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.2...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.3...HEAD
+[1.4.3]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.3.0...v1.4.0
