@@ -3,9 +3,9 @@
   "name": "vscode-igorpro",
   "displayName": "Igor Pro",
   "description": "Igor Pro support for VS Code",
-  "version": "1.4.3",
+  "version": "1.4.4-alpha.0",
   "engines": {
-    "vscode": "^1.91.0"
+    "vscode": "^1.98.0"
   },
   "categories": [
     "Programming Languages",
@@ -133,7 +133,7 @@
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
-    "lint": "eslint src --ext ts",
+    "lint": "eslint src",
     "test": "vscode-test",
     "js-yaml:snippets": "js-yaml ./src/igorpro.snippets.yaml > ./syntaxes/igorpro.snippets.json",
     "js-yaml:tmLanguage": "js-yaml ./src/igorpro.tmLanguage.yaml > ./syntaxes/igorpro.tmLanguage.json",
@@ -142,20 +142,21 @@
     "peggy": "peggy --cache --plugin ./node_modules/ts-pegjs/dist/tspegjs -c ./src/pegconfig.json -o ./src/grammar.ts ./src/grammar.pegjs"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.7",
+    "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
-    "@types/vscode": "^1.91.0",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.11.0",
-    "@vscode/test-cli": "^0.0.9",
-    "@vscode/test-electron": "^2.4.0",
-    "eslint": "^8.57.0",
+    "@types/vscode": "^1.98.0",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.23.0",
     "js-yaml": "^4.1.0",
     "peggy": "^3.0.2",
-    "ts-loader": "^9.5.1",
+    "ts-loader": "^9.5.2",
     "ts-pegjs": "^4.2.1",
-    "typescript": "^5.4.5",
-    "webpack": "^5.92.1",
-    "webpack-cli": "^5.1.4"
-  }
+    "typescript": "^5.8.2",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
+  },
+  "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af"
 }
