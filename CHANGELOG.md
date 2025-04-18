@@ -7,7 +7,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 ### Changed
 
 - Update Node.js packages.
-- Raise the minimum VS Code version to 1.98.0.
+- Raise the minimum VS Code version to 1.99.0.
 
 ## [1.4.3] -- 2024-09-06
 
