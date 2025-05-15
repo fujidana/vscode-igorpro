@@ -28,8 +28,6 @@ export function convertRange(range: FileRange): vscode.Range {
 }
 
 
-/* eslint-disable @typescript-eslint/naming-convention */
-
 export interface BaseNode {
     type: string;
     loc?: FileRange;

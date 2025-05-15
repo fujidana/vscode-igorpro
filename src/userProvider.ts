@@ -17,7 +17,6 @@ async function findFilesInWorkspaces() {
         for (const workspaceFolder of workspaceFolders) {
             // refer to `files.associations` configuration property
             const associations = Object.assign(
-                // eslint-disable-next-line @typescript-eslint/naming-convention
                 <Record<string, string>>{ '*.ipf': 'igorpro' },
                 vscode.workspace.getConfiguration('files', workspaceFolder).get<Record<string, string>>('associations')
             );

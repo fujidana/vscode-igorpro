@@ -278,7 +278,7 @@ FuncDecl 'function declaration' =
           // Do nothing if neither required parameters or optional parameters are provided
         } else if (optParams.params.length === 0) {
           // If bracket exists but nothing in it, report an erro.
-          addProblem('No optional parameters defined in brackets.', optParams.loc)
+          addProblem('No optional parameters defined in brackets.', optParams.loc);
         } else {
           // Otherwise, report error if empty element exists.
           optParams.params.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
@@ -291,7 +291,7 @@ FuncDecl 'function declaration' =
         }  else if (optParams.params.length === 0) {
           // If brackets exists but nothing in it, simply check an empty element and report it. The last comma outside the bracket is valid.
           reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-          addProblem('No optional parameters defined in brackets.', optParams.loc)
+          addProblem('No optional parameters defined in brackets.', optParams.loc);
         } else {
           // If both required parameters and optional parameters are provided, check the both.
           reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
@@ -642,7 +642,7 @@ DeclaratorWWOInit 'variable delarator with or without initialization' =
   '&' name:StdName { return { type: 'VariableDeclarator', id: name, init: null, pbr: true, }; }
   /
   name:PathExpr init:(_0 '=' _0 @BaseExpr)? {
-    return { type: 'VariableDeclarator', id: name, init, pbr: false, }
+    return { type: 'VariableDeclarator', id: name, init, pbr: false, };
   }
 
 AssignStmt 'assignment statement' =
@@ -728,7 +728,7 @@ Order7 =
       if (currentValue[2] === '%&' || currentValue[2] === '%|') {
         let loc = location();
         if ('loc' in currentValue[0]) {
-          loc = getStartLocation(loc, 2, currentValue[0].loc.end.offset - currentValue[0].loc.start.offset + currentValue[1].length)
+          loc = getStartLocation(loc, 2, currentValue[0].loc.end.offset - currentValue[0].loc.start.offset + currentValue[1].length);
         }
         addProblem('Obsolete bit-wise binary operator.', loc, DiagnosticSeverity.Information);
       }
@@ -776,7 +776,7 @@ Order4 =
 Order3 =
   heads:($('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)* tail:Order2 {
     return heads.reduceRight((accumulator: any, currentValue: any) => {
-      if (currentValue[0] == '%~') {
+      if (currentValue[0] === '%~') {
         addProblem('Obsolete bit-wise unary operator.', getStartLocation(undefined, 2, 0), DiagnosticSeverity.Information);
       }
       return { type: 'UnaryExpression', op: currentValue[0], arg: accumulator, };
@@ -797,7 +797,7 @@ Order2 =
     /
     _0 op:'^' _0 uos2:(@$('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)+ right2:Order1 {
       const right = uos2.reduceRight((accumulator: any, currentValue: any) => {
-        if (currentValue[0] == '%~') {
+        if (currentValue[0] === '%~') {
           addProblem('Obsolete bit-wise unary operator.', getStartLocation(undefined, 2, 0), DiagnosticSeverity.Information);
         }
         return { type: 'UnaryExpression', op: currentValue, arg: accumulator, };
