@@ -110,7 +110,7 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
             const storage = this.storageCollection.get(uri.with({ query: '' }).toString());
             if (storage) {
                 let mdText = '# Igor Pro Reference Manual\n\n';
-                mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) and command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';
+                mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) or command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';
 
                 for (const [itemKind, map] of storage.entries()) {
                     const itemKindLabel = lang.getReferenceItemKindMetadata(itemKind).label;

@@ -50,6 +50,11 @@ variables:
     signature: StartMSTimer
     description: |-
       creates a new microsecond timer and returns a timer reference number.
+
+      You can create up to ten different microsecond timers using `StartMSTimer`.
+      A valid timer reference number is a number between 0 and 9.
+      If `StartMSTimer` returns -1, there are no free timers available.
+      `StartMSTimer` works in conjunction with `StopMSTimer` as illustrated below.
   threadprocessorcount:
     signature: ThreadProcessorCount
     description: |-
@@ -59,6 +64,8 @@ variables:
     signature: ticks
     description: |-
       returns the number of ticks (approximately 1/60 second) elapsed since the operating system was initialized.
+
+      On the Macintosh, a tick is actually 1/60.15 seconds.
 
 functions:
   abs:
@@ -2355,44 +2362,119 @@ keywords:
   # Declarative operations
   string:
     signature: String [/G] strName0[/N=name0][=strExpr0][, strName1[/N=name1][=strExpr1]...]
+    description: |-
+      The `String` operation creates string variables and gives them the specified names.
+      ...
   variable:
     signature: Variable [flags] varName0[/N=name0][=numExpr0][, varName1[/N=name1][=numExpr1]...]
+    description: |-
+      The `Variable` operation creates real or complex variables and gives them the specified name.
+      ...
+
   # Declarative features categorized in "Programming"
   complex:
     signature: Complex localName
     minimumVersion: 7.00
+    description: |-
+      declares complex 64 bit double precision variables.
+      Another name for `Variable/C`.
   constant:
     signature: Constant[/C] kName = value
+    description: |-
+      defines the number `literalNumber` under the name `kName` for use by other code, such as in a switch construct.
+
+      The complex form, using the `/C` flag to create a complex constant, requires Igor Pro 7.00 or later.
     overloads:
       - signature: Constant kName = literalNumber
       - signature: Constant/C kName = (literalNumberReal, literalNumberImag)
   dfref:
     signature: DFREF localName1[=path_or_dfr1][, localName2[= path_or_dfr2]...]
+    description: |-
+      `DFREF` is used to define a local data folder reference variable or input parameter in a user-defined function.
+
+      `dfr` stands for "data folder reference".
+      The optional assignment part is used only in the body of a function, not in a parameter declaration.
+
+      Unlike the `WAVE` reference, a `DFREF` in the body without the assignment part does not do any lookup.
+      It simply creates a variable whose value is null.
+      ...
   double:
     signature: double localName
+    minimumVersion: 7.00
+    description: |-
+      declares 64 bit double precision variables.
+      Another name for `Variable`.
   funcref:
     signature: FUNCREF protoFunc func[=funcSpec]
+    description: |-
+      Within a user function, `FUNCREF` is a declaration that creates a local reference to a function or a variable containing a function reference.
+
+      When passing a function as an input parameter to a user function, the syntax is:
+      ```
+      FUNCREF protoFunc  func
+      ```
+      In this `FUNCREF` declaration, `protoFunc` is a function that specifies the format of the function that can be passed by the `FUNCREF`, and `func` is a function reference used as an input parameter.
+
+      When you declare a function reference variable within a user function, the syntax is:
+      ```
+      FUNCREF protoFunc  func  = funcSpec
+      ```
+      Here, the local `FUNCREF` variable, `func`, is assigned a `funcSpec`, which can be a literal function name, a `$` string expression that evaluates at runtime, or another `FUNCREF` variable.
   function:
     signature: Function [/C/D/S/DF/WAVE] functionName([parameter...])
+    description: |-
+      The `Function` keyword introduces a user-defined function in a procedure window.
+
+      The optional flags specify the return value type, if any, for the function.
+      ...
   int:
     signature: int localName
     minimumVersion: 7.00
+    description: |-
+      declares 32-bit integers in IGOR32, 64-bit integers in IGOR64.
   int64:
     signature: int64 localName
     minimumVersion: 7.00
+    description: |-
+      declares 64-bit integers in both IGOR32 and IGOR64.
   nvar:
     signature: NVAR [/C][/Z][/SDFR=dfr] localName1[=pathToVar1][, localName2[=pathToVar2]...]
+    description: |-
+      `NVAR` is a declaration that creates a local reference to a global numeric variable accessed in a user-defined function.
+      ...
   strconstant:
     signature: StrConstant ksName="literal string"
+    description: |-
+      The `StrConstant` declaration defines the string `literal string` under the name `ksName` for use by other code, such as in a switch construct.
   struct:
     signature: STRUCT structureName localName
+    description: |-
+      `STRUCT` is a declaration that creates a local reference to a `Structure` accessed in a user-defined function.
+      When a `Structure` is passed to a user function, it can only be passed by reference, so in the declaration within the function you must use `&localStructName` to define the function input parameter.
   svar:
     signature: SVAR [/Z][/SDFR=dfr] localName0[=pathToStr0][, localName1[=pathToStr1]...]
+    description: |-
+      `SVAR` is a declaration that creates a local reference to a global string variable accessed in a user-defined function.
+      ...
   uint64:
     signature: uint64 localName
     minimumVersion: 7.00
+    description: |-
+      declares unsigned 64-bit integers in both IGOR32 and IGOR64.
   wave:
     signature: WAVE [/C][/T][/WAVE][/DF][/Z][/ZZ][/SDFR=dfr] localName0[=pathToWave0][, localName1[=pathToWave1]...]
+    description: |-
+      `WAVE` is a declaration that tells Igor the nature of a user-defined function parameter or creates a local reference to a wave accessed in the body of a user-defined function.
+
+      The optional `/SDFR` flag and `pathToWave` parameter are used only in the body of a function, not in a parameter declaration.
+
+      The `WAVE` declaration is required when you use a wave in an assignment statement in a function.
+      At compile time, the `WAVE` statement tells Igor that the local name references a wave.
+      At runtime, Igor makes the connection between the local name and the actual wave.
+      For this connection to be made, the wave must exist when the `WAVE` statement is executed.
+
+      The `WAVE` declaration is also required if you use a wave name as a parameter to an operation or function if `rtGlobals=3` is in effect which is the usual case.
+      ...
 
   # flow control keyword
   break:
@@ -2416,11 +2498,11 @@ keywords:
   do:
     signature: do
     description: |-
-      a do-while loop keyword.
+      A `do-while` loop executes loop body until expression evaluates as FALSE (zero) or until a break statement is executed.
   while:
     signature: while
     description: |-
-      a do-while loop keyword.
+      A `do-while` loop executes loop body until expression evaluates as FALSE (zero) or until a break statement is executed.
   end:
     signature: End
     description: |-
@@ -2435,97 +2517,250 @@ keywords:
   endstructure:
     signature: EndStructure
     description: |-
-      marks the end of a Structure definition.
+      marks the end of a `Structure` definition.
   endtry:
     signature: endtry
     description: |-
-      marks the end of a try-catch-endtry flow control construct.
+      marks the end of a `try-catch-endtry` flow control construct.
   for:
     signature: for
-    description: |-
-      a for-endfor loop keyword.
+    overloads:
+      - signature: for(<initialization>; <continuation test>; <update>)
+        description: |-
+          A `for-endfor` loop executes the loop body code until the continuation test evaluates as false (zero) or until a break statement is executed in the body code.
+          When the loop starts, the initialization expressions are evaluated once.
+          For each iteration, the continuation test is evaluated at the beginning and the update expressions are evaluated at the end.
+      - signature: 'for(<type> varName : <wave>)'
+        description: |-
+          A range-based for loop iterates over each element of a wave.
+          The specified loop variable contains the value of the current wave element.
   endfor:
     signature: endfor
     description: |-
-      marks the end of a for-endfor flow control construct.
+      marks the end of a `for-endfor` flow control construct.
   if:
     signature: if
     description: |-
-      an if-elseif-else-endif conditional statement keyword.
+      an `if-elseif-endif` conditional statement keyword.
   else:
     signature: else
     description: |-
-      an if-elseif-else-endif conditional statement keyword.
+      an `if-elseif-endif` conditional statement keyword.
   elseif:
     signature: elseif
     description: |-
-      an if-elseif-else-endif conditional statement keyword
+      an `if-elseif-endif` conditional statement keyword
   endif:
     signature: endif
     description: |-
-      an if-elseif-else-endif conditional statement keyword
+      an `if-elseif-endif` conditional statement keyword
   return:
-    signature: return
+    signature: return [expression]
+    description: |-
+      immediately stops execution of the current procedure.
+      If called by another procedure, it returns `expression` and control to the calling procedure.
+
+      Functions can return only a single value directly to the calling procedure with a return statement.
+      The return value must be compatible with the function type.
+      Two values can be returned using a complex variable's real and imaginary parts.
+      A function may contain any number of return statements; only the first one encountered during procedure execution is evaluated.
+
+      A macro has no return value, so return simply quits the macro.
   strswitch:
     signature: strswitch
+    description: |-
+      A `strswitch-case-endswitch` statement evaluates a string expression and compares the result to the case labels using a case-insensitive comparison.
+      If a case label matches string expression, then execution proceeds with code following the matching case label.
+      When none of the cases match, execution will continue at the default label, if it is present, or otherwise the strswitch will be exited with no action taken.
+      Note that although the break statement is optional, in almost all case statements it will be required for the strswitch to work correctly.
   case:
     signature: case
   endswitch:
     signature: endswitch
   switch:
     signature: switch
+    description: |-
+      A `switch-case-endswitch` statement evaluates the numeric expression and rounds the result to the nearest integer.
+      If a case label matches the numerical expression, then execution proceeds with code following the matching case label.
+      When no cases match, execution continues at the default label, if present, or otherwise the switch exits with no action taken.
+      Although the break statement is optional, in almost all case statements it is required for the switch to work correctly.
+
+      Literal numbers used as case labels are required by the compiler to be integers.
+      Numeric constants used as case labels are rounded by the compiler to the nearest integers.
   try:
     signature: try
+    description: |-
+      A `try-catch-endtry` flow control statement provides a means for catching and responding to abort conditions in user functions.
+      A programmatic abort is generated when the code executes `Abort`, `AbortOnRTE` or `AbortOnValue`.
+      A user abort is generated when the user clicks the Abort button or presses the user abort key combination.
+
+      When code executes in the try-catch area, a programmatic abort immediately jumps to the code in the catch-endtry area rather than jumping to the end of the user function.
+      A user abort jumps to the catch-endtry area when a flow control keyword such as for or while executes or at the end of the try code.
+      Normal flow (no aborts) skips all code within the catch-endtry area.
+      ...
 
   # prefixes
   override:
     signature: Override
-    # Override constant objectName = newVal
-    # Override strconstant objectName = newVal
-    # Override Function funcName()
+    description: |-
+      redefines a constant, strconstant, or user function.
+      The `objectName` or `funcName` must be the same as the name of the original object or function that is being redefined.
+      The override must be defined before the target object appears in the compile sequence.
+    overloads:
+      - signature: Override constant objectName = newVal
+      - signature: Override strconstant objectName = newVal
+      - signature: Override Function funcName()
   static:
     signature: Static
-    # Static constant objectName = value
-    # Static strconstant objectName = value
-    # Static Function funcName()
-    # Static Structure structureName
-    # Static Picture pictName
+    description: |-
+      specifies that a constant, user-defined function, structure, or Proc Picture is local to the procedure file in which it appears.
+      Static objects can only be used by other functions; they cannot be accessed from macros; they cannot be accessed from other procedure files or from the command line.
+    overloads:
+      - signature: Static constant objectName = value
+      - signature: Static strconstant objectName = value
+      - signature: Static Function funcName()
+      - signature: Static Structure structureName
+      - signature: Static Picture pictName
   threadsafe:
-    signature: ThreadSafe
-    # ThreadSafe Function funcName()
+    signature: ThreadSafe Function funcName()
+    description: |-
+      specifies that a user function can be used for preemptive multitasking background tasks on multiprocessor computer systems.
+
+      A ThreadSafe function is one that can operate correctly during simultaneous execution by multiple threads.
+      Such functions are generally limited to numeric or utility functions.
+      Functions that access windows are not ThreadSafe.
+      To determine if an operation is ThreadSafe, use the Command Help tab of the Help Browser and choose ThreadSafe from the pop-up menu.
+
+      ThreadSafe functions can call other ThreadSafe functions but may not call non-ThreadSafe functions.
+      Non-ThreadSafe functions can call ThreadSafe functions.
 
   # block structures
   macro:
     signature: Macro macroName([parameters...]) [:macro type]
+    description: |-
+      The `Macro` keyword is used in a procedure window and introduces a procedure whose name you want to appear in the Macros menu.
+      For example:
+      ```
+      Macro TestMacro()
+      	Print "Hello, world!"
+      EndMacro
+      ```
+      For most purposes, it is better to use `Function` instead of `Macro`, because functions run faster and have other advantages.
   menu:
     signature: Menu menuNameStr[, hideable, dynamic, contextualmenu]
+    description: |-
+      The `Menu` keyword introduces a menu definition.
+      You can use this to create your own menu, or to add items to a built-in Igor menu.
+
+      Use the optional `hideable` keyword to make the menu hideable using `HideIgorMenus`.
+
+      Use the optional `dynamic` keyword to cause Igor to re-evaluate the menu definition when the menu is used. This is helpful when the menu item text is provided by a user-defined function.
+      See Dynamic Menu Items.
+
+      Use the optional `contextualmenu` keyword for menus invoked by `PopupContextualMenu/N`.
+
+      See User-defined Menus for further information.
   picture:
     signature: Picture pictureName
+    description: |-
+      The `Picture` keyword introduces an ASCII code picture definition of binary image data.
+      For example:
+      ```
+      // PNG: width= 56, height= 44
+      Picture myPictName
+        ASCII85Begin
+        M,6r;%14!\!!!!.8Ou6I!!!!Y!!!!M#Qau+!5G;q_uKc;&TgHDFAm*iFE_/6AH5;7DfQssEc39jTBQ
+        =U!7FG,5u`*!m?g0PK.mR"U!k63rtBW)]$T)Q*!=Sa1TCDV*V+l:Lh^NW!fu1>;(.<VU1bs4L8&@Q_
+        <4e(%"^F50:Jg6);j!CQdUA[dh6]%[OkHSC,ht+Q7ZO#.6U,IgfSZ!R1g':oO_iLF.GQ@RF[/*G98D
+        bjE.g?NCte(pX-($m^\_FhhfL`D9uO6Qi5c[r4849Fc7+*)*O[tY(6<rkm^)/KLIc]VdDEbF-n5&Am
+        2^hbTu:U#8ies_W<LGkp_LEU1bs4L8&?fqRJ[h#sVSSz8OZBBY!QNJ
+        ASCII85End
+      End
+      ```
   proc:
     signature: Proc macroName([parameters]) [:macro type]
+    description: |-
+      The `Proc` keyword is used in a procedure window and introduces a procedure whose name you do not want to appear in the Macros menu.
+      For example:
+      ```
+      Proc TestProc()
+      	Print "Hello, world!"
+      End
+      ```
+
+      A `Proc` is a type of macro.
+      For most purposes, it is better to use `Function` instead of `Proc`, because functions run faster and have other advantages.
   structure:
     signature: Structure
     description: |-
+      The `Structure` keyword introduces a structure definition in a user function.
+      Within the body of the structure you declare the member type (`memType`) and the corresponding member name(s) (`memName`).
+      Each `memName` may be declared with an optional array size.
+      Structure declarations have the format:
       ```
       Structure structureName
         memType memName1[arraySize1][, memName2[arraySize2], ...]
         ...
       EndStructure
       ```
+
+      ...
   submenu:
     signature: Submenu menuNameStr
+    description: |-
+      The `Submenu` keyword introduces a submenu definition.
+      It is used inside a `Menu` definition.
+      See User-defined Menus for further information.
   window:
     signature: Window macroName([parameters]) [:macro type]
+    description: |-
+      The `Window` keyword is used in a procedure window and introduces a window recreation procedure.
+      For example:
+      ```
+      Window Graph0() : Graph
+      	Display wave0
+      	ModifyGraph rgb(wave0)=(0,0,65535)
+      End
+      ```
+
+      A `Window` recreation procedure is a type of macro.
+      Igor automatically creates a window recreation macro when you close a graph, table, layout, control panel, or XOP target window.
+      The name of each window recreation macro appears in a submenu in the Windows menu, such as the Graph Macros submenu.
+
+      Except in rare circumstances, a programmer should not use the `Window` keyword, but should use `Macro`, `Proc`, or `Function` instead.
+      For most purposes, it is best to use `Function` because functions run faster and have other advantages.
 
   # others
   popup:
-    signature: popup
+    signature: popup menuList
+    description: |-
+      The `Popup` keyword is used with `Prompt` statements in Functions and Macros.
+      It indicates that you want a pop-up menu instead of the normal text entry item in a `DoPrompt` simple input dialog (or a Macro's missing parameter dialog (archaic)).
+      `menuList` is a string expression containing a list of items, separated by semicolons, that are to appear in the pop-up menu.
+
+      Pop-up menus accept both numeric and string parameters.
+      For numeric parameters, the number of the item selected is placed in a variable.
+      Numbering starts from one.
+      For string parameters, the selected item's text is placed in a string variable.
+
+      Pop-up menu items support all of the special characters available for user-defined menu definitions (see Special Characters in Menu Item Strings) with the exception that items in pop-up menus are limited to 50 bytes, keyboard shortcuts are not supported, and special characters must be enabled.
   galleryglobal:
-    signature: GalleryGlobal
+    signature: GalleryGlobal#pictureName
+    description: |-
+      The `GalleryGlobal` keyword is used in an independent module to reference a picture in the global picture gallery which you can view by choosing Misc->Pictures.
   procglobal:
-    signature: ProcGlobal
+    signature: ProcGlobal#procPictureName
+    description: |-
+      The `ProcGlobal` keyword is used with Proc Pictures to avoid possible naming conflicts with any other global pictures in the experiment.
+      When you add a picture to an experiment using the Pictures dialog, such a picture is global in scope and may potentially have the same name as a Proc Picture.
+      When a Proc Picture is global (and only then), you should use the `ProcGlobal` keyword to make sure that the Proc Picture is used with your code and to avoid confusion with pictures in the Pictures dialog.
   root:
-    signature: root
+    signature: root[:dataFolderName[:dataFolderName[:...]]][:objectName]
+    description: |-
+      Igor's data folder hierarchy starts with the root folder as its basis.
+      The root data folder always exists and it contains all other objects (waves, variables, strings, and data folders).
+      By default, the root data folder is the current data folder when Igor starts a new experiment.
+      In commands, root is used as part of a path specifying the location of a data object in the folder hierarchy.
 
 structures:
   hdf5datainfo:
