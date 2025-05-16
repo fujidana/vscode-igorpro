@@ -3,7 +3,6 @@ import * as lang from "./igorpro";
 import { Provider } from "./provider";
 import { PeggySyntaxError, parse } from './grammar';
 import * as tree from './igorproTree';
-import { TextDecoder, TextEncoder } from "util";
 
 /**
  * Get a set of the URIs of supported files from workspaces
@@ -228,8 +227,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             for (const newUriString of newUriStringSet) {
                 if (!documentUriStringSet.has(newUriString)) {
                     const newUri = vscode.Uri.parse(newUriString);
-                    const textDecoder = new TextDecoder();
-                    const contents = textDecoder.decode(await vscode.workspace.fs.readFile(newUri));
+                    const contents = await vscode.workspace.decode(await vscode.workspace.fs.readFile(newUri), { uri: newUri });
                     // const diagnoseInWorkspace = vscode.workspace.getConfiguration('igorpro.workspace', newUri).get<boolean>('diagnoseProblems', false);
                     // this.parseDocumentContents(contents, newUri, false, diagnoseInWorkspace);
                     this.parseDocumentContents(contents, newUri, false, false);
@@ -395,7 +393,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         for (const uriString of filesInWorkspaces) {
             if (!documentUriStringSet.has(uriString)) {
                 const uri = vscode.Uri.parse(uriString);
-                const contents = new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
+                const contents = await vscode.workspace.decode(await vscode.workspace.fs.readFile(uri), { uri });
                 // const diagnoseInWorkspace = vscode.workspace.getConfiguration('igorpro.workspace', uri).get<boolean>('diagnoseProblems', false);
                 // this.parseDocumentContents(contents, uri, false, diagnoseInWorkspace);
                 this.parseDocumentContents(contents, uri, false, false);

@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as lang from './igorpro';
 import { Provider } from "./provider";
-import { TextDecoder } from 'util';
 
 interface APIReference {
     constants: lang.ReferenceItem[];
@@ -27,22 +26,24 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
         // load the API reference file
         const apiReferenceUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.apiReference.json');
         vscode.workspace.fs.readFile(apiReferenceUri).then(uint8Array => {
-            // convert JSON-formatted file contents to a javascript object.
-            const apiReference: APIReference = JSON.parse(new TextDecoder('utf-8').decode(uint8Array));
+            vscode.workspace.decode(uint8Array, { encoding: 'utf8' }).then(decodedString => {
+                // convert JSON-formatted file contents to a javascript object.
+                const apiReference: APIReference = JSON.parse(decodedString);
 
-            // convert the object to ReferenceMap and register the set.
-            this.storageCollection.set(lang.BUILTIN_URI, new Map([
-                [lang.ReferenceItemKind.constant, new Map(Object.entries(apiReference.constants))],
-                [lang.ReferenceItemKind.variable, new Map(Object.entries(apiReference.variables))],
-                [lang.ReferenceItemKind.function, new Map(Object.entries(apiReference.functions))],
-                [lang.ReferenceItemKind.operation, new Map(Object.entries(apiReference.operations))],
-                [lang.ReferenceItemKind.keyword, new Map(Object.entries(apiReference.keywords))],
-                [lang.ReferenceItemKind.structure, new Map(Object.entries(apiReference.structures))],
-                [lang.ReferenceItemKind.subtype, new Map(Object.entries(apiReference.subtypes))],
-                [lang.ReferenceItemKind.pragma, new Map(Object.entries(apiReference.pragmas))],
-                [lang.ReferenceItemKind.hook, new Map(Object.entries(apiReference.hooks))],
-            ]));
-            this.updateCompletionItemsForUriString(lang.BUILTIN_URI);
+                // convert the object to ReferenceMap and register the set.
+                this.storageCollection.set(lang.BUILTIN_URI, new Map([
+                    [lang.ReferenceItemKind.constant, new Map(Object.entries(apiReference.constants))],
+                    [lang.ReferenceItemKind.variable, new Map(Object.entries(apiReference.variables))],
+                    [lang.ReferenceItemKind.function, new Map(Object.entries(apiReference.functions))],
+                    [lang.ReferenceItemKind.operation, new Map(Object.entries(apiReference.operations))],
+                    [lang.ReferenceItemKind.keyword, new Map(Object.entries(apiReference.keywords))],
+                    [lang.ReferenceItemKind.structure, new Map(Object.entries(apiReference.structures))],
+                    [lang.ReferenceItemKind.subtype, new Map(Object.entries(apiReference.subtypes))],
+                    [lang.ReferenceItemKind.pragma, new Map(Object.entries(apiReference.pragmas))],
+                    [lang.ReferenceItemKind.hook, new Map(Object.entries(apiReference.hooks))],
+                ]));
+                this.updateCompletionItemsForUriString(lang.BUILTIN_URI);
+            });
         });
 
         // register command to show reference manual as a virtual document
