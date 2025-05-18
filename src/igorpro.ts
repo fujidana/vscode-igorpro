@@ -1,9 +1,19 @@
 import * as vscode from 'vscode';
-import { FileRange } from "./grammar";
+import type { Location, LocationRange } from './grammar';
 
 export const SELECTOR = { language: 'igorpro' };
 // export const SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
 export const BUILTIN_URI = 'igorpro://system/built-in.md';
+
+
+export function convertPosition(position: Location): vscode.Position {
+    return new vscode.Position(position.line - 1, position.column - 1);
+}
+
+export function convertRange(range: LocationRange): vscode.Range {
+    return new vscode.Range(convertPosition(range.start), convertPosition(range.end));
+}
+
 
 export const enum ReferenceItemKind {
     undefined = 0,
@@ -137,7 +147,7 @@ export type ReferenceItem = {
     minimumVersion?: number;
     deprecatedMessage?: string;
     // snippet?: string;
-    location?: FileRange;
+    location?: LocationRange;
     static?: boolean;
     overloads?: {
         signature: string;

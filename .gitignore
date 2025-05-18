@@ -7,4 +7,5 @@ node_modules
 .DS_Store
 syntaxes/*
 !syntaxes/.gitkeep
-src/grammar.ts
+src/grammar.d.ts
+src/grammar.js

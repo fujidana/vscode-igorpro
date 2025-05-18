@@ -5,32 +5,69 @@
 // the definisions are quit different.
 
 
+/*
+{
+    "returnTypes": {
+}
+        "Program": "tree.Program",
+        "_0_": "string",
+        "_1_": "string",
+        "Eol": "void",
+        "Eof": "void",
+        "Comment": "tree.Comment",
+        "EolWWOComment": "tree.Comment | undefined",
+        "EosWWOComment": "tree.Comment | undefined",
+        "EosLA": "void",
+        "StringLiteral": "string",
+        "StringId": "tree.Identifier",
+        "ShortName": "string",
+        "ShortId": "tree.Identifier",
+        "LiberalName": "string",
+        "LiberalId": "tree.Identifier",
+        "TLStmt": "tree.TopLevelStatement",
+        "EmptyEolStmt": "tree.EmptyStatement",
+        "EmptyStmtWLComments": "tree.EmptyStatement",
+        "UnclassifiedEolStmt": "tree.UnclassifiedStatement",
+        "End": "[string, FileRange]",
+        "Directive": "tree.Directive",
+        "TLDecl": "tree.TopLevelDeclaration",
+        "ConstDecl": "tree.ConstantDeclaration",
+        "MenuDecl": "tree.MenuDeclaration",
+        "PictDecl": "tree.PictureDeclaration",
+        "StructDecl": "tree.StructureDeclaration",
+        "MacroDecl": "tree.MacroDeclaration",
+        "FuncDecl": "tree.FunctionDeclaration",
+        "MenuStmt": "tree.MenuStatement",
+        "PictStmt": "tree.PictureStatement",
+        "StructStmt": "tree.StructureStatement",
+        "FuncStmt": "tree.FunctionStatement",
+        "SubmenuDecl": "tree.SubmenuDeclaration",
+        "MenuItemStmt": "tree.MenuItemStatement",
+        "Ascii85Block": "tree.Ascii85Block",
+        "StructMemberDecl": "tree.StructureMemberDeclaration",
+        "StructMemberDeclr": "tree.StructureMemberDeclarator"
+
+*/
+
 import * as vscode from 'vscode';
+import type { Location, LocationRange } from './grammar';
 
-interface FilePosition {
-    offset: number;
-    line: number;
-    column: number;
-}
+// interface FilePosition {
+//     offset: number;
+//     line: number;
+//     column: number;
+// }
 
-interface FileRange {
-    start: FilePosition;
-    end: FilePosition;
-    source: string;
-}
-
-export function convertPosition(position: FilePosition): vscode.Position {
-    return new vscode.Position(position.line - 1, position.column - 1);
-}
-
-export function convertRange(range: FileRange): vscode.Range {
-    return new vscode.Range(convertPosition(range.start), convertPosition(range.end));
-}
+// interface FileRange {
+//     start: FilePosition;
+//     end: FilePosition;
+//     source: string;
+// }
 
 
 export interface BaseNode {
     type: string;
-    loc?: FileRange;
+    loc?: LocationRange;
 }
 
 export interface BaseStatement extends BaseNode {
@@ -46,7 +83,7 @@ export interface BaseBlock extends BaseStatement {
 export interface Problem {
     message: string;
     severity: vscode.DiagnosticSeverity;
-    loc: FileRange;
+    loc: LocationRange;
 }
 
 // export type Node = NodeMap[keyof NodeMap];

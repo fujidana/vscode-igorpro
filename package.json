@@ -139,7 +139,7 @@
     "js-yaml:tmLanguage": "js-yaml ./src/igorpro.tmLanguage.yaml > ./syntaxes/igorpro.tmLanguage.json",
     "js-yaml:apiReference": "js-yaml ./src/igorpro.apiReference.yaml > ./syntaxes/igorpro.apiReference.json",
     "js-yaml": "pnpm run js-yaml:snippets && pnpm run js-yaml:tmLanguage && pnpm run js-yaml:apiReference",
-    "peggy": "peggy --cache --plugin ./node_modules/ts-pegjs/dist/tspegjs -c ./src/pegconfig.json -o ./src/grammar.ts ./src/grammar.pegjs"
+    "peggy": "peggy -c ./src/pegconfig.json"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -151,9 +151,8 @@
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.25.1",
     "js-yaml": "^4.1.0",
-    "peggy": "^3.0.2",
+    "peggy": "^5.0.2",
     "ts-loader": "^9.5.2",
-    "ts-pegjs": "^4.2.1",
     "typescript": "^5.8.3",
     "webpack": "^5.99.7",
     "webpack-cli": "^6.0.1"

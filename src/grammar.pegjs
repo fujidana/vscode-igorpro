@@ -1,81 +1,119 @@
 {{
-  const operationRegExp = new RegExp(
-    '^('
-    + 'Abort|Add(?:FIFO(?:Data|VectData)|Movie(?:Audio|Frame)|WavesTo(?:BoxPlot|ViolinPlot))|AdoptFiles|APMath|Append(?:BoxPlot|Image|LayoutObject|MatrixContour|Text|To(?:Gizmo|Graph|Layout|Table)|ViolinPlot|XYZContour)?|AutoPositionWindow|'
-    + 'BackgroundInfo|Beep|BezierToPolygon|BoundingBall|BoxSmooth|BrowseURL|BuildMenu|Button|'
-    + 'cd|Chart|Check(?:Box|Displayed)|ChooseColor|Close(?:Help|Movie|Proc)?|Color(?:Scale|Tab2Wave)|Concatenate|Control(?:Bar|Info|Update)|ConvertGlobalStringTextEncoding|ConvexHull|Convolve|Copy(?:DimLabels|File|Folder|Scales)|Correlate|Create(?:AliasShortcut|Browser)|Cross|Ctrl(?:Background|FIFO|NamedBackground)|Cursor|CurveFit|CustomControl|CWT|'
-    + 'Debugger(?:Options)?|Default(?:Font|Gui(?:Controls|Font)|TextEncoding)|DefineGuide|DelayUpdate|Delete(?:Annotations|File|Folder|Points)|Differentiate|dir|Display(?:HelpTopic|Procedure)?|Do(?:Alert|IgorMenu|Update|Window|XOPIdle)|DPSS|Draw(?:Action|Arc|Bezier|Line|Oval|PICT|Poly|Rect|RRect|Text|UserShape)|DSP(?:Detrend|Periodogram)|Duplicate(?:DataFolder)?|DWT|'
-    + 'EdgeStats|Edit|ErrorBars|EstimatePeakSizes|Execute(?:ScriptText)?|Experiment(?:Info|Modified)|ExportGizmo|Extract|'
-    + 'Fast(?:GaussTransform|Op)|FBin(?:Read|Write)|FFT|FGetPos|FIFO(?:2Wave|Status)|Filter(?:FIR|IIR)|Find(?:APeak|Contour|Duplicates|Levels?|Peak|PointsInPoly|Roots|Sequence|Value)|FMaxFlat|FPClustering|fprintf|FReadLine|FSetPos|FStatus|FTP(?:CreateDirectory|Delete|Download|Upload)|FuncFit(?:MD)?|'
-    + 'GBLoadWave|Get(?:Axis|Camera|FileFolderInfo|Gizmo|LastUserMenuInfo|Marquee|Mouse|Selection|Window)|Graph(?:Normal|Wave(?:Draw|Edit))|Grep|GroupBox|'
-    + 'Hanning|HCluster|HDF5(?:Close(?:File|Group)|Control|Create(?:File|Group|Link)|DimensionScale|Dump(?:Errors)?|FlushFile|List(?:Attributes|Group)|Load(?:Data|Group|Image)|Open(?:File|Group)|Save(?:Data|Group|Image)|UnlinkObject)|Hide(?:IgorMenus|Info|Procedures|Tools)|HilbertTransform|Histogram|'
-    + 'ICA|IFFT|Image(?:AnalyzeParticles|Blend|BoundaryToMask|Composite|EdgeDetection|FileInfo|Filter|Focus|FromXYZ|GenerateROIMask|GLCM|HistModification|Histogram|Interpolate|LineProfile|Load|Morphology|Registration|RemoveBackground|Restore|Rotate|Save|SeedFill|Skeleton3d|Snake|Stats|Threshold|Transform|UnwrapPhase|Window)|IndexSort|InsertPoints|InstantFrequency|Integrate(?:2D|ODE)?|Interp3DPath|Interpolate(?:2|3D)|'
-    + 'JCAMPLoadWave|JointHistogram|'
-    + 'Kill(?:Background|Control|DataFolder|FIFO|FreeAxis|Path|PICTs|Strings|Variables|Waves|Window)|KMeans|'
-    + 'Label|Layout(?:PageAction|SlideShow)?|Legend|LinearFeedbackShiftRegister|ListBox|Load(?:Data|PackagePreferences|PICT|Wave)|Loess|LombPeriodogram|'
-    + 'Make(?:Index)?|MarkPerfTestTime|Matrix(?:Balance|Convolve|Corr|EigenV|Factor|Filter|GaussJ|GLM|Inverse|LinearSolve(?:TD)?|LLS|LUBkSub|LUD(?:TD)?|Multiply(?:Add)?|OP|ReverseBalance|Schur|Solve|Sparse|SVBkSub|SVD|Transpose)|MeasureStyledText|MLLoadWave|Modify(?:BoxPlot|Browser|Camera|Contour|Control(?:List)?|FreeAxis|Gizmo|Graph|Image|Layout|Panel|Procedure|Table|ViolinPlot|Waterfall)?|Move(?:DataFolder|File|Folder|String|Subwindow|Variable|Wave|Window)|MultiTaperPSD|MultiThreadingControl|'
-    + 'NeuralNetwork(?:Run|Train)|New(?:Camera|DataFolder|FIFO(?:Chan)?|FreeAxis|Gizmo|Image|Layout|Movie|Notebook|Panel|Path|Waterfall)|Note(?:book(?:Action)?)?|'
-    + 'Open(?:Help|Notebook)?|Optimize|'
-    + 'ParseOperationTemplate|PathInfo|Pause(?:ForUser|Update)|PCA|Play(?:Movie(?:Action)?|Sound)|PolygonOp|Popup(?:ContextualMenu|Menu)|Preferences|PrimeFactors|Print(?:f|Graphs|Layout|Notebook|Settings|Table)?|Project|PulseStats|PutScrapText|pwd|'
-    + 'Quit|'
-    + 'RatioFromNumber|Redimension|Remez|Remove(?:Contour|From(?:Gizmo|Graph|Layout|Table)|Image|LayoutObjects|Path)?|Rename(?:DataFolder|Path|PICT|Window)?|Reorder(?:Images|Traces)|Replace(?:Text|Wave)|Resample|ResumeUpdate|Reverse|Rotate|'
-    + 'Save(?:Data|Experiment|GizmoCopy|GraphCopy|Notebook|PackagePreferences|PICT|TableCopy)?|Set(?:ActiveSubwindow|Axis|Background|DashPattern|DataFolder|DimLabel|Draw(?:Env|Layer)|FileFolderInfo|Formula|IdlePeriod|Igor(?:Hook|MenuMode|Option)|Marquee|ProcessSleep|RandomSeed|Scale|Variable|Wave(?:Lock|TextEncoding)|Window)|Show(?:IgorMenus|Info|Tools)|Silent|Sleep|Slider|Smooth(?:Custom)?|Sort(?:Columns)?|Sound(?:In(?:Record|Set|StartChart|Status|StopChart)|LoadWave|SaveWave)|Spherical(?:Interpolate|Triangulate)|Split(?:String|Wave)|sprintf|sscanf|Stack(?:Windows)?|Stats(?:AngularDistanceTest|ANOVA(?:1|2(?:NR|RM)?)Test|ChiTest|Circular(?:CorrelationTest|Means|Moments|TwoSampleTest)|CochranTest|ContingencyTable|DIPTest|DunnettTest|FriedmanTest|FTest|HodgesAjneTest|JBTest|KDE|KendallTauTest|KSTest|KWTest|Linear(?:CorrelationTest|Regression)|MultiCorrelationTest|NP(?:MCTest|NominalSRTest)|Quantiles|RankCorrelationTest|Resample|Sample|ScheffeTest|ShapiroWilkTest|SignTest|SRTest|TTest|TukeyTest|VariancesTest|Watson(?:USquaredTest|WilliamsTest)|WheelerWatsonTest|WilcoxonRankTest|WRCorrelationTest)|STFT|String|Struct(?:Fill|Get|Put)|Sum(?:Dimension|Series)|'
-    + 'TabControl|Tag|Text(?:2Bezier|Box|Histogram)|Thread(?:GroupPutDF|Start)|TickWavesFromAxis|Tile(?:Windows)?|TitleBox|ToCommandLine|ToolsGrid|Triangulate3d|'
-    + 'Unwrap|UnzipFile|URLRequest|'
-    + 'ValDisplay|Variable|'
-    + 'Wave(?:MeanStdv|Stats|Tracking|Transform)|wfprintf|WignerTransform|WindowFunction|'
-    + 'XLLoadWave|'
-    + 'AbortOn(?:Value|RTE)|DoPrompt|Prompt|WaveClear|'
-    + 'complex|double|int(?:64)?|uint64|Variable|String|WAVE|NVAR|SVAR|DFREF|'
-    + 'STRUCT|FUNCREF)$', 'i'
-  );
-  // MultiThread|return
+// The author does not know how to import constants from other TypeScript files.
+// So, the author defines them here.
+
+// import { DiagnosticSeverity } from 'vscode';
+// import * as tree from './igorproTree';
+const DiagnosticSeverity = {
+  Error: 0,
+  Warning: 1,
+  Information: 2,
+  Hint: 3,
+};
+
+const operationRegExp = new RegExp(
+  '^('
+  + 'Abort|Add(?:FIFO(?:Data|VectData)|Movie(?:Audio|Frame)|WavesTo(?:BoxPlot|ViolinPlot))|AdoptFiles|APMath|Append(?:BoxPlot|Image|LayoutObject|MatrixContour|Text|To(?:Gizmo|Graph|Layout|Table)|ViolinPlot|XYZContour)?|AutoPositionWindow|'
+  + 'BackgroundInfo|Beep|BezierToPolygon|BoundingBall|BoxSmooth|BrowseURL|BuildMenu|Button|'
+  + 'cd|Chart|Check(?:Box|Displayed)|ChooseColor|Close(?:Help|Movie|Proc)?|Color(?:Scale|Tab2Wave)|Concatenate|Control(?:Bar|Info|Update)|ConvertGlobalStringTextEncoding|ConvexHull|Convolve|Copy(?:DimLabels|File|Folder|Scales)|Correlate|Create(?:AliasShortcut|Browser)|Cross|Ctrl(?:Background|FIFO|NamedBackground)|Cursor|CurveFit|CustomControl|CWT|'
+  + 'Debugger(?:Options)?|Default(?:Font|Gui(?:Controls|Font)|TextEncoding)|DefineGuide|DelayUpdate|Delete(?:Annotations|File|Folder|Points)|Differentiate|dir|Display(?:HelpTopic|Procedure)?|Do(?:Alert|IgorMenu|Update|Window|XOPIdle)|DPSS|Draw(?:Action|Arc|Bezier|Line|Oval|PICT|Poly|Rect|RRect|Text|UserShape)|DSP(?:Detrend|Periodogram)|Duplicate(?:DataFolder)?|DWT|'
+  + 'EdgeStats|Edit|ErrorBars|EstimatePeakSizes|Execute(?:ScriptText)?|Experiment(?:Info|Modified)|ExportGizmo|Extract|'
+  + 'Fast(?:GaussTransform|Op)|FBin(?:Read|Write)|FFT|FGetPos|FIFO(?:2Wave|Status)|Filter(?:FIR|IIR)|Find(?:APeak|Contour|Duplicates|Levels?|Peak|PointsInPoly|Roots|Sequence|Value)|FMaxFlat|FPClustering|fprintf|FReadLine|FSetPos|FStatus|FTP(?:CreateDirectory|Delete|Download|Upload)|FuncFit(?:MD)?|'
+  + 'GBLoadWave|Get(?:Axis|Camera|FileFolderInfo|Gizmo|LastUserMenuInfo|Marquee|Mouse|Selection|Window)|Graph(?:Normal|Wave(?:Draw|Edit))|Grep|GroupBox|'
+  + 'Hanning|HCluster|HDF5(?:Close(?:File|Group)|Control|Create(?:File|Group|Link)|DimensionScale|Dump(?:Errors)?|FlushFile|List(?:Attributes|Group)|Load(?:Data|Group|Image)|Open(?:File|Group)|Save(?:Data|Group|Image)|UnlinkObject)|Hide(?:IgorMenus|Info|Procedures|Tools)|HilbertTransform|Histogram|'
+  + 'ICA|IFFT|Image(?:AnalyzeParticles|Blend|BoundaryToMask|Composite|EdgeDetection|FileInfo|Filter|Focus|FromXYZ|GenerateROIMask|GLCM|HistModification|Histogram|Interpolate|LineProfile|Load|Morphology|Registration|RemoveBackground|Restore|Rotate|Save|SeedFill|Skeleton3d|Snake|Stats|Threshold|Transform|UnwrapPhase|Window)|IndexSort|InsertPoints|InstantFrequency|Integrate(?:2D|ODE)?|Interp3DPath|Interpolate(?:2|3D)|'
+  + 'JCAMPLoadWave|JointHistogram|'
+  + 'Kill(?:Background|Control|DataFolder|FIFO|FreeAxis|Path|PICTs|Strings|Variables|Waves|Window)|KMeans|'
+  + 'Label|Layout(?:PageAction|SlideShow)?|Legend|LinearFeedbackShiftRegister|ListBox|Load(?:Data|PackagePreferences|PICT|Wave)|Loess|LombPeriodogram|'
+  + 'Make(?:Index)?|MarkPerfTestTime|Matrix(?:Balance|Convolve|Corr|EigenV|Factor|Filter|GaussJ|GLM|Inverse|LinearSolve(?:TD)?|LLS|LUBkSub|LUD(?:TD)?|Multiply(?:Add)?|OP|ReverseBalance|Schur|Solve|Sparse|SVBkSub|SVD|Transpose)|MeasureStyledText|MLLoadWave|Modify(?:BoxPlot|Browser|Camera|Contour|Control(?:List)?|FreeAxis|Gizmo|Graph|Image|Layout|Panel|Procedure|Table|ViolinPlot|Waterfall)?|Move(?:DataFolder|File|Folder|String|Subwindow|Variable|Wave|Window)|MultiTaperPSD|MultiThreadingControl|'
+  + 'NeuralNetwork(?:Run|Train)|New(?:Camera|DataFolder|FIFO(?:Chan)?|FreeAxis|Gizmo|Image|Layout|Movie|Notebook|Panel|Path|Waterfall)|Note(?:book(?:Action)?)?|'
+  + 'Open(?:Help|Notebook)?|Optimize|'
+  + 'ParseOperationTemplate|PathInfo|Pause(?:ForUser|Update)|PCA|Play(?:Movie(?:Action)?|Sound)|PolygonOp|Popup(?:ContextualMenu|Menu)|Preferences|PrimeFactors|Print(?:f|Graphs|Layout|Notebook|Settings|Table)?|Project|PulseStats|PutScrapText|pwd|'
+  + 'Quit|'
+  + 'RatioFromNumber|Redimension|Remez|Remove(?:Contour|From(?:Gizmo|Graph|Layout|Table)|Image|LayoutObjects|Path)?|Rename(?:DataFolder|Path|PICT|Window)?|Reorder(?:Images|Traces)|Replace(?:Text|Wave)|Resample|ResumeUpdate|Reverse|Rotate|'
+  + 'Save(?:Data|Experiment|GizmoCopy|GraphCopy|Notebook|PackagePreferences|PICT|TableCopy)?|Set(?:ActiveSubwindow|Axis|Background|DashPattern|DataFolder|DimLabel|Draw(?:Env|Layer)|FileFolderInfo|Formula|IdlePeriod|Igor(?:Hook|MenuMode|Option)|Marquee|ProcessSleep|RandomSeed|Scale|Variable|Wave(?:Lock|TextEncoding)|Window)|Show(?:IgorMenus|Info|Tools)|Silent|Sleep|Slider|Smooth(?:Custom)?|Sort(?:Columns)?|Sound(?:In(?:Record|Set|StartChart|Status|StopChart)|LoadWave|SaveWave)|Spherical(?:Interpolate|Triangulate)|Split(?:String|Wave)|sprintf|sscanf|Stack(?:Windows)?|Stats(?:AngularDistanceTest|ANOVA(?:1|2(?:NR|RM)?)Test|ChiTest|Circular(?:CorrelationTest|Means|Moments|TwoSampleTest)|CochranTest|ContingencyTable|DIPTest|DunnettTest|FriedmanTest|FTest|HodgesAjneTest|JBTest|KDE|KendallTauTest|KSTest|KWTest|Linear(?:CorrelationTest|Regression)|MultiCorrelationTest|NP(?:MCTest|NominalSRTest)|Quantiles|RankCorrelationTest|Resample|Sample|ScheffeTest|ShapiroWilkTest|SignTest|SRTest|TTest|TukeyTest|VariancesTest|Watson(?:USquaredTest|WilliamsTest)|WheelerWatsonTest|WilcoxonRankTest|WRCorrelationTest)|STFT|String|Struct(?:Fill|Get|Put)|Sum(?:Dimension|Series)|'
+  + 'TabControl|Tag|Text(?:2Bezier|Box|Histogram)|Thread(?:GroupPutDF|Start)|TickWavesFromAxis|Tile(?:Windows)?|TitleBox|ToCommandLine|ToolsGrid|Triangulate3d|'
+  + 'Unwrap|UnzipFile|URLRequest|'
+  + 'ValDisplay|Variable|'
+  + 'Wave(?:MeanStdv|Stats|Tracking|Transform)|wfprintf|WignerTransform|WindowFunction|'
+  + 'XLLoadWave|'
+  + 'AbortOn(?:Value|RTE)|DoPrompt|Prompt|WaveClear|'
+  + 'complex|double|int(?:64)?|uint64|Variable|String|WAVE|NVAR|SVAR|DFREF|'
+  + 'STRUCT|FUNCREF)$', 'i'
+);
+// MultiThread|return
 }}
 
 {
-  // TypeScript code
-  const problems: tree.Problem[] = [];
+  const problems = [];
 
-  function leadingCommentsAddedNode(node: tree.BaseStatement, comments: tree.Comment[] | null | undefined) {
+  /**
+   * Add leading comments to a node, it they exist.
+   * @param {BaseStatement} node - The node to which the comments are added.
+   * @param {Comment[] | null | undefined} comments - The comments to be added.
+   * @returns {BaseStatement} - The node with the added comments.
+   */
+  function leadingCommentsAddedNode(node, comments) {
       if (comments && comments.length !== 0) {
       node.leadingComments = comments;
     }
     return node;
   }
 
-  function trailingCommentAddedNode(node: tree.BaseStatement, comment: tree.Comment | null | undefined) {
+  /**
+   * Add a trailing comment to a node, it it exists.
+   * @param {BaseStatement} node - The node to which the comments are added.
+   * @param {Comment | null | undefined} comment - The comments to be added.
+   * @returns {BaseStatement} - The node with the added comment.
+   */
+  function trailingCommentAddedNode(node, comment) {
     if (comment) {
       node.trailingComment = comment;
     }
     return node;
   }
 
-  function addProblem(message: string, loc: FileRange, severity = DiagnosticSeverity.Error) {
+  /**
+   * Add a problem to the problems array.
+   * @param {string} message - The error message.
+   * @param {LocationRange} loc - The location of the error.
+   * @param {number} severity - The severity of the error (default: DiagnosticSeverity.Error).
+   */
+  function addProblem(message, loc, severity = DiagnosticSeverity.Error) {
     problems.push({ message, loc, severity });
   }
 
 
   /**
    * Return a new range object whose 'end' is moved to the 'start' location.
+   * @param {LocationRange} locRange - The location range to be modified.
+   * @param {number} length - The length of the range (default: 0).
+   * @param {number} offset - The offset to be added to the start location (default: 0).
+   * @returns {LocationRange} - The modified location range.
    */
-  function getStartLocation(loc?: FileRange, length: number = 0, offset: number = 0) {
-    const loc2 = loc === undefined ? location() : { ...loc };
+  function getShortenedRange(locRange = location(), length = 0, offset = 0) {
+    const range2 =  { ...locRange };
     if (offset !== 0) {
-      loc2.start = { ...loc2.start };
-      loc2.start.offset += offset;
-      loc2.start.column += offset;
+      range2.start = { ...range2.start };
+      range2.start.offset += offset;
+      range2.start.column += offset;
     }
     if (length === 0) {
-      loc2.end = loc2.start;
+      range2.end = range2.start;
     } else {
-      loc2.end = { ...loc2.start };
-      loc2.end.offset += length;
-      loc2.end.column += length;
+      range2.end = { ...range2.start };
+      range2.end.offset += length;
+      range2.end.column += length;
     }
-    return loc2;
+    return range2;
   }
 
-  function checkWaveElemInc(inc: any) {
+  /**
+   * Add a problem if the increment is empty or '*'.
+   * @param {any} inc - The node to check.
+   * @returns {void}
+   */
+  function checkWaveElemInc(inc) {
     if (inc && inc.type === 'Literal') {
       if (inc.raw === '') {
         addProblem('Empty value not allowed at increment of wave subrange.', inc.loc);
@@ -200,10 +238,7 @@ PictDecl 'picture declaration' =
   declNode:(
     s0:('Static'i _1)? 'Picture'i _1 id:StdId _0 iComment:EolWWOComment body:PictStmt* _0 end:End {
       if (body) {
-        // // JavaScript code;
-        // body = body.filter((stmt) => stmt.type === 'Ascii85Block');
-        // TypeScript code:
-        body = body.filter((stmt: tree.PictureStatement) => stmt.type === 'Ascii85Block');
+        body = body.filter((stmt) => stmt.type === 'Ascii85Block');
       }
       if (!body || body.length === 0) { error('Expected ASCII85 block but not found.'); }
       else if (body.length > 1) { error('Expected only one ASCII85 block but found more.'); }
@@ -299,7 +334,7 @@ FuncDecl 'function declaration' =
           if (reqParams[reqParams.length - 1].type === 'EmptyExpression' && optParams.params[0].type === 'EmptyExpression') {
             addProblem('Duplicated commas.', optParams.params[0].loc, DiagnosticSeverity.Warning);
           } else if (reqParams[reqParams.length - 1].type !== 'EmptyExpression' && optParams.params[0].type !== 'EmptyExpression') {
-            addProblem('Missing comma between required parameters and optional parameters.', getStartLocation(optParams.loc, 1, 0), DiagnosticSeverity.Warning);
+            addProblem('Missing comma between required parameters and optional parameters.', getShortenedRange(optParams.loc, 1, 0), DiagnosticSeverity.Warning);
           }
         }
       }
@@ -711,7 +746,7 @@ BaseExpr =
 // Unlike C and other several languages, AND and OR have the same priority.
 Order8 =
   head:Order7 tails:(_0 ('&&' / '||') _0 Order7 / _0 '?' _0 Order7 _0 ':' _0 Order7)* {
-    return tails.reduce((accumulator: any, currentValue: any) => {
+    return tails.reduce((accumulator, currentValue) => {
       if (currentValue[1] === '&&' || currentValue[1] === '||') {
         return { type: 'BinaryExpression', op: currentValue[1], left: accumulator, right: currentValue[3], };
       } else {
@@ -724,11 +759,11 @@ Order8 =
 // evaluated from right to left; e.g, `1 | 3 & 2` returns 3, not 2.
 Order7 =
   heads:(Order6 _0 $('&' !'&' / '|' !'|' / '%^' / '%&' / '%|') _0)* tail:Order6 {
-    return heads.reduceRight((accumulator: any, currentValue: any) => {
+    return heads.reduceRight((accumulator, currentValue) => {
       if (currentValue[2] === '%&' || currentValue[2] === '%|') {
         let loc = location();
         if ('loc' in currentValue[0]) {
-          loc = getStartLocation(loc, 2, currentValue[0].loc.end.offset - currentValue[0].loc.start.offset + currentValue[1].length);
+          loc = getShortenedRange(loc, 2, currentValue[0].loc.end.offset - currentValue[0].loc.start.offset + currentValue[1].length);
         }
         addProblem('Obsolete bit-wise binary operator.', loc, DiagnosticSeverity.Information);
       }
@@ -747,7 +782,7 @@ ObsoleteBitwiseBinary =
 // evaluated from right to left; e.g, `2==1>= 0` returns 0, not 1.
 Order6 =
   heads:(Order5 _0 $('==' / '!=' / '>' !'>' '='? / '<' !'<' '='?) _0)* tail:Order5 {
-    return heads.reduceRight((accumulator: any, currentValue: any) => {
+    return heads.reduceRight((accumulator, currentValue) => {
       return { type: 'BinaryExpression', op: currentValue[2], left: currentValue[0], right: accumulator, };
     }, tail);
   }
@@ -756,7 +791,7 @@ Order6 =
 // evaluated from left to right.
 Order5 =
   head:Order4 tails:(_0 $('+' / '-') _0 Order4)* {
-    return tails.reduce((accumulator: any, currentValue: any) => {
+    return tails.reduce((accumulator, currentValue) => {
       return { type: 'BinaryExpression', op: currentValue[1], left: accumulator, right: currentValue[3], };
     }, head);
   }
@@ -765,7 +800,7 @@ Order5 =
 // evaluated from left to right.
 Order4 =
   head:Order3 tails:(_0 $('*' / '/') _0 !(Word+ _0 '=') Order3)* {
-    return tails.reduce((accumulator: any, currentValue: any) => {
+    return tails.reduce((accumulator, currentValue) => {
       return { type: 'BinaryExpression', op: currentValue[1], left: accumulator, right: currentValue[4], };
     }, head);
   }
@@ -775,9 +810,9 @@ Order4 =
 // The extension author adds '+' (without preceding parameter) in this order.
 Order3 =
   heads:($('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)* tail:Order2 {
-    return heads.reduceRight((accumulator: any, currentValue: any) => {
+    return heads.reduceRight((accumulator, currentValue) => {
       if (currentValue[0] === '%~') {
-        addProblem('Obsolete bit-wise unary operator.', getStartLocation(undefined, 2, 0), DiagnosticSeverity.Information);
+        addProblem('Obsolete bit-wise unary operator.', getShortenedRange(location(), 2, 0), DiagnosticSeverity.Information);
       }
       return { type: 'UnaryExpression', op: currentValue[0], arg: accumulator, };
     }, tail);
@@ -796,16 +831,16 @@ Order2 =
     }
     /
     _0 op:'^' _0 uos2:(@$('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)+ right2:Order1 {
-      const right = uos2.reduceRight((accumulator: any, currentValue: any) => {
+      const right = uos2.reduceRight((accumulator, currentValue) => {
         if (currentValue[0] === '%~') {
-          addProblem('Obsolete bit-wise unary operator.', getStartLocation(undefined, 2, 0), DiagnosticSeverity.Information);
+          addProblem('Obsolete bit-wise unary operator.', getShortenedRange(location(), 2, 0), DiagnosticSeverity.Information);
         }
         return { type: 'UnaryExpression', op: currentValue, arg: accumulator, };
       }, right2);
       return { op, right, } ; 
     }
   )* {
-    return tails.reduce((accumulator: any, currentValue: any) => {
+    return tails.reduce((accumulator, currentValue) => {
       return { type: 'BinaryExpression', op: currentValue.op, left: accumulator, right: currentValue.right, };
     }, head);
   }
@@ -850,7 +885,7 @@ FuncParam 'function parameter' =
 Variable =
   object:(
     heads:(@ArrayElement _0 '.' _0)+ tail:ArrayElement _0 {
-      return heads.reduce((accumulator: any, currentValue: any) => {
+      return heads.reduce((accumulator, currentValue) => {
         return { type: 'MemberExpression', object: accumulator, property: currentValue, };
       }, tail);
     }
@@ -985,11 +1020,11 @@ LabelOrIndex =
 
 ArrayElemEnd =
   ',' _0 end:(@LabelOrIndex _0)? {
-    return end ?? { type: 'Literal', value: '', raw: '', loc: getStartLocation(undefined, 0, 1), };
+    return end ?? { type: 'Literal', value: '', raw: '', loc: getShortenedRange(location(), 0, 1), };
   }
 
 ArrayElemInc = ';' _0 inc:(@LabelOrIndex _0)? {
-    return inc ?? { type: 'Literal', value: '', raw: '', loc: getStartLocation(undefined, 0, 1), };
+    return inc ?? { type: 'Literal', value: '', raw: '', loc: getShortenedRange(location(), 0, 1), };
   }
 
 StdName 'standard name' =

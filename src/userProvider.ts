@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import * as lang from "./igorpro";
 import { Provider } from "./provider";
-import { PeggySyntaxError, parse } from './grammar';
-import * as tree from './igorproTree';
+import { SyntaxError, parse } from './grammar';
+import type * as tree from './igorproTree';
 
 /**
  * Get a set of the URIs of supported files from workspaces
@@ -333,9 +333,9 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         try {
             program = parse(contents);
         } catch (error) {
-            if (error instanceof PeggySyntaxError) {
+            if (error instanceof SyntaxError) {
                 if (diagnoseProblems) {
-                    const diagnostic = new vscode.Diagnostic(tree.convertRange(error.location), error.message, vscode.DiagnosticSeverity.Error);
+                    const diagnostic = new vscode.Diagnostic(lang.convertRange(error.location), error.message, vscode.DiagnosticSeverity.Error);
                     this.diagnosticCollection.set(uri, [diagnostic]);
                     // this.updateCompletionItemsForUriString(uriString);
                 }
@@ -354,7 +354,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         this.diagnosticCollection.delete(uri);
         if (diagnoseProblems) {
             this.diagnosticCollection.set(uri, program.problems.map(
-                problem => new vscode.Diagnostic(tree.convertRange(problem.loc), problem.message, problem.severity))
+                problem => new vscode.Diagnostic(lang.convertRange(problem.loc), problem.message, problem.severity))
             );
         }
 
@@ -422,7 +422,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             for (const map of storage.values()) {
                 const item = map.get(selectorName);
                 if (item && item.location) {
-                    locations.push(new vscode.Location(uri, tree.convertRange(item.location)));
+                    locations.push(new vscode.Location(uri, lang.convertRange(item.location)));
                 }
             }
         }
@@ -452,7 +452,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
 
         function getDocumentSymbol(node: tree.TopLevelDeclaration | tree.SubmenuDeclaration, kind: vscode.SymbolKind) {
             if (node.loc && node.id.loc) {
-                return new vscode.DocumentSymbol(node.id.name, '', kind, tree.convertRange(node.loc), tree.convertRange(node.id.loc));
+                return new vscode.DocumentSymbol(node.id.name, '', kind, lang.convertRange(node.loc), lang.convertRange(node.id.loc));
             }
         }
 
@@ -535,7 +535,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
                     if (query.length === 0 || regExp.test(identifier)) {
                         if (refItem.location) {
                             const name = (itemKind === lang.ReferenceItemKind.function) ? identifier + '()' : identifier;
-                            const location = new vscode.Location(uri, tree.convertRange(refItem.location));
+                            const location = new vscode.Location(uri, lang.convertRange(refItem.location));
                             symbols.push(new vscode.SymbolInformation(name, symbolKind, '', location));
                         }
                     }
