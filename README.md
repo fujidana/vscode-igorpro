@@ -2,10 +2,10 @@
 
 The extension helps you editing Igor procedure files (`*.ipf`).
 
-The author of this extension is just a Igor Pro user and has no special relation with Wavemetrics, Inc., which develops Igor Pro itself.
+The author of this extension is just a Igor Pro user and has no more relation with Wavemetrics, Inc., which develops Igor Pro itself.
 Use [GitHub issues](https://github.com/fujidana/vscode-igorpro/issues) for bug reports and feature requests about this extension.
 
-The textual contents of the IntelliSens code hints are cited from [the official manual](https://www.wavemetrics.com/products/igorpro/manual) (manual revision: June 24, 2022 (9.01)) and command helps (application version: 9.01 (Build 39200)) in the in-app help browser.
+The textual contents of the IntelliSens code hints are cited from [the official manual](https://www.wavemetrics.com/products/igorpro/manual) (manual revision: June 24, 2022 (9.01)) and the in-app command helps (application version: 9.01 (Build 39200)).
 
 ## Features
 
@@ -20,7 +20,7 @@ The textual contents of the IntelliSens code hints are cited from [the official 
 - __Code navigation__
   - __Symbol navigation inside a document__ - available from _Go to Symbol in Editor_ (Ctrl+Shift+O) menubar item and the navigation bar at the top the editor pane (aka breadcrumbs)
 
-Currently IntelliSense features support user-defined constants, structure, macros, and functions, in addition to  built-in keywords, functions and operations; it does not cover local parameters (variables, strings, wave references, etc.) inside user-defined functions.
+Currently IntelliSense features support user-defined constants, structure, macros, and functions, in addition to built-in keywords, functions and operations; it does not cover local parameters (variables, strings, wave references, etc.) inside user-defined functions.
 
 ## Known Issues
 

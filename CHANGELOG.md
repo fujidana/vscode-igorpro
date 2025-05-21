@@ -4,6 +4,12 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [1.4.4] -- 2025-05-21
+
+### Added
+
+- Add description for built-in keywords.
+
 ### Changed
 
 - Update Node.js packages.
@@ -112,7 +118,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.3...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.4...HEAD
+[1.4.4]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.3...v1.4.4
 [1.4.3]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.0...v1.4.1

@@ -6,7 +6,7 @@ The extention author welcomes bug reports and pull requests.
 Setup for extension authoring
 ----
 
-One can set up the extension authoring environtment by the follwing proceduere.
+One can set up the extension authoring environtment by the follwing procedure.
 
 **Note**: Keyboard shotcuts in this section are for macOS.
 
@@ -26,3 +26,13 @@ Once YAML files and a Peggy file are converted, then the extension is really rea
 Push a play button in "Run" View (Cmd+Shift+D) or select the menu bar item "Run / Start Debugging" (F5).
 
 To create a `.vsix` file for local distribution, run the following: `vsce package --no-dependencies` .
+
+Update for extension authoring
+----
+
+One can pull the latest changes from the remote repository by the following procedure:
+
+1. Open the cloned `vscode-igorpro` folder with VS Code.
+2. To pull the latest changes in the remote repository, run `git pull` in the terminal or select "Git: Pull" in the Command Palette (Cmd+Shift+P).
+3. Resolve conflicts if any.
+4. Install any new dependencies or updates by running `pnpm install` in the terminal.
