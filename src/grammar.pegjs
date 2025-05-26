@@ -1,15 +1,31 @@
 {{
-// The author does not know how to import constants from other TypeScript files.
-// So, the author defines them here.
+// A JavaScript file is type-checked when the following line is
+// at the first line of the file.
+// @ts-check
+
+/**
+ * JSDoc-style type definitions.
+ * @typedef { import('./grammar').LocationRange } LocationRange
+ * @typedef { import('./grammar').Location } Location
+ * @typedef { import('./grammar').GrammarSource } GrammarSource
+
+ * @typedef { import('./igorproTree').BaseStatement } BaseStatement
+ * @typedef { import('./igorproTree').Comment } Comment
+ */
+
+// The author is not sure whether the following is a proper way to 
+// import `DiagnosticSeverity` from `vscode` in JavaScript.
 
 // import { DiagnosticSeverity } from 'vscode';
-// import * as tree from './igorproTree';
-const DiagnosticSeverity = {
-  Error: 0,
-  Warning: 1,
-  Information: 2,
-  Hint: 3,
-};
+const DiagnosticSeverity = require('vscode').DiagnosticSeverity;
+
+// /** @enum {number} */
+// const DiagnosticSeverity = {
+//   Error: 0,
+//   Warning: 1,
+//   Information: 2,
+//   Hint: 3,
+// };
 
 const operationRegExp = new RegExp(
   '^('
@@ -85,27 +101,17 @@ const operationRegExp = new RegExp(
 
 
   /**
-   * Return a new range object whose 'end' is moved to the 'start' location.
-   * @param {LocationRange} locRange - The location range to be modified.
+   * Return a new range object.
+   * @param {GrammarSource} source - The source of the grammar.
+   * @param {Location} baseLoc - The base location to be referenced.
    * @param {number} length - The length of the range (default: 0).
-   * @param {number} offset - The offset to be added to the start location (default: 0).
+   * @param {number} offset - The offset to be added to the base location (default: 0).
    * @returns {LocationRange} - The modified location range.
    */
-  function getShortenedRange(locRange = location(), length = 0, offset = 0) {
-    const range2 =  { ...locRange };
-    if (offset !== 0) {
-      range2.start = { ...range2.start };
-      range2.start.offset += offset;
-      range2.start.column += offset;
-    }
-    if (length === 0) {
-      range2.end = range2.start;
-    } else {
-      range2.end = { ...range2.start };
-      range2.end.offset += length;
-      range2.end.column += length;
-    }
-    return range2;
+  function getRange(source, baseLoc, length = 0, offset = 0) {
+    const start = { line: baseLoc.line, column: baseLoc.column + offset, offset: baseLoc.offset + offset };
+    const end = { line: start.line, column: start.column + length, offset: start.offset + offset };
+    return { source, start, end };
   }
 
   /**
@@ -334,7 +340,7 @@ FuncDecl 'function declaration' =
           if (reqParams[reqParams.length - 1].type === 'EmptyExpression' && optParams.params[0].type === 'EmptyExpression') {
             addProblem('Duplicated commas.', optParams.params[0].loc, DiagnosticSeverity.Warning);
           } else if (reqParams[reqParams.length - 1].type !== 'EmptyExpression' && optParams.params[0].type !== 'EmptyExpression') {
-            addProblem('Missing comma between required parameters and optional parameters.', getShortenedRange(optParams.loc, 1, 0), DiagnosticSeverity.Warning);
+            addProblem('Missing comma between required parameters and optional parameters.', getRange(optParams.loc.source, optParams.loc.start, 1, 0), DiagnosticSeverity.Warning);
           }
         }
       }
@@ -763,7 +769,7 @@ Order7 =
       if (currentValue[2] === '%&' || currentValue[2] === '%|') {
         let loc = location();
         if ('loc' in currentValue[0]) {
-          loc = getShortenedRange(loc, 2, currentValue[0].loc.end.offset - currentValue[0].loc.start.offset + currentValue[1].length);
+          loc = getRange(loc.source, loc.start, 2, currentValue[0].loc.end.offset - currentValue[0].loc.start.offset + currentValue[1].length);
         }
         addProblem('Obsolete bit-wise binary operator.', loc, DiagnosticSeverity.Information);
       }
@@ -771,11 +777,11 @@ Order7 =
     }, tail);
   }
 
-ObsoleteBitwiseBinary =
-  a: $('%&' / '%|') {
-    addProblem('Obsolete bit-wise binary operator.', location(), DiagnosticSeverity.Information);
-    return a;
-  }
+// ObsoleteBitwiseBinary =
+//   a: $('%&' / '%|') {
+//     addProblem('Obsolete bit-wise binary operator.', location(), DiagnosticSeverity.Information);
+//     return a;
+//   }
 
 
 // comparison: '==', '!=', '>', '<', '>=', '<='
@@ -812,7 +818,8 @@ Order3 =
   heads:($('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)* tail:Order2 {
     return heads.reduceRight((accumulator, currentValue) => {
       if (currentValue[0] === '%~') {
-        addProblem('Obsolete bit-wise unary operator.', getShortenedRange(location(), 2, 0), DiagnosticSeverity.Information);
+        const loc = location();
+        addProblem('Obsolete bit-wise unary operator.', getRange(loc.source, loc.start, 2, 0), DiagnosticSeverity.Information);
       }
       return { type: 'UnaryExpression', op: currentValue[0], arg: accumulator, };
     }, tail);
@@ -833,7 +840,8 @@ Order2 =
     _0 op:'^' _0 uos2:(@$('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)+ right2:Order1 {
       const right = uos2.reduceRight((accumulator, currentValue) => {
         if (currentValue[0] === '%~') {
-          addProblem('Obsolete bit-wise unary operator.', getShortenedRange(location(), 2, 0), DiagnosticSeverity.Information);
+          const loc = location();
+          addProblem('Obsolete bit-wise unary operator.', getRange(loc.source, loc.start, 2, 0), DiagnosticSeverity.Information);
         }
         return { type: 'UnaryExpression', op: currentValue, arg: accumulator, };
       }, right2);
@@ -1020,11 +1028,13 @@ LabelOrIndex =
 
 ArrayElemEnd =
   ',' _0 end:(@LabelOrIndex _0)? {
-    return end ?? { type: 'Literal', value: '', raw: '', loc: getShortenedRange(location(), 0, 1), };
+    const loc = location();
+    return end ?? { type: 'Literal', value: '', raw: '', loc: getRange(loc.source, loc.start, 0, 1), };
   }
 
 ArrayElemInc = ';' _0 inc:(@LabelOrIndex _0)? {
-    return inc ?? { type: 'Literal', value: '', raw: '', loc: getShortenedRange(location(), 0, 1), };
+  const loc = location();
+    return inc ?? { type: 'Literal', value: '', raw: '', loc: getRange(loc.source, loc.start, 0, 1), };
   }
 
 StdName 'standard name' =
