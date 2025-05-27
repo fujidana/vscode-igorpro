@@ -25,7 +25,11 @@
   },
   "homepage": "https://github.com/fujidana/vscode-igorpro#readme",
   "activationEvents": [],
-  "main": "./dist/extension.js",
+  "main": "./dist/node/extension.js",
+  "browser": "./dist/web/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
   "contributes": {
     "languages": [
       {
@@ -135,9 +139,12 @@
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "pretest-web": "pnpm run compile",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
+    "test-web": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/extensionTests.js",
+    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. .",
     "js-yaml": "npm-run-all js-yaml:*",
     "js-yaml:snippets": "js-yaml ./src/igorpro.snippets.yaml > ./syntaxes/igorpro.snippets.json",
     "js-yaml:tmLanguage": "js-yaml ./src/igorpro.tmLanguage.yaml > ./syntaxes/igorpro.tmLanguage.json",
@@ -145,6 +152,8 @@
     "peggy": "peggy -c ./src/pegconfig.json"
   },
   "devDependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@types/assert": "^1.5.11",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.100.0",
@@ -152,9 +161,13 @@
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-web": "^0.0.69",
+    "assert": "^2.1.0",
     "esbuild": "^0.25.3",
     "eslint": "^9.25.1",
+    "glob": "^11.0.2",
     "js-yaml": "^4.1.0",
+    "mocha": "^11.1.0",
     "npm-run-all": "^4.1.5",
     "peggy": "^5.0.2",
     "typescript": "^5.8.3"

@@ -4,6 +4,10 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Added
+
+- Enable the extension to run in _VS Code for the Web_ (vscode.dev, github.dev).
+
 ## [1.4.4] -- 2025-05-21
 
 ### Added
