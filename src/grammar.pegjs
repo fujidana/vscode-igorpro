@@ -196,12 +196,6 @@ InvalidTLStmt =
     return stmt;
   }
 
-// empty statement with at one ore more leadingcomments.
-// Intended to consume comment lines just before a block or file ends.
-EmptyStmtWLComments 'empty statement with comments' =
-  lComments:(_0 @Comment)+ {
-    const loc = location(); loc.start = loc.end; return { type: 'EmptyStatement', leadingComments: lComments, loc: loc, };
-  }
 
 // end of block
 End =

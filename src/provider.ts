@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as lang from './igorpro';
 
-/* eslint-disable @typescript-eslint/naming-convention */
 interface SuppressMessagesConfig {
     'completionItem.label.detail'?: boolean
     'completionItem.label.description'?: boolean
@@ -9,7 +8,6 @@ interface SuppressMessagesConfig {
     'signatureHelp.signatures.documentation'?: boolean
     'hover.contents'?: boolean
 }
-/* eslint-enable @typescript-eslint/naming-convention */
 
 function getStringOfSignatureAndComment(item: lang.ReferenceItem, itemKind: lang.ReferenceItemKind) {
     let symbolLabel: string;
