@@ -130,15 +130,17 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "pnpm run peggy && pnpm run js-yaml && pnpm run package",
-    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+    "vscode:prepublish": "pnpm run js-yaml && pnpm run package",
+    "compile": "pnpm run compile:peggy && pnpm run check-types && pnpm run lint && node esbuild.js",
+    "compile:peggy": "peggy -c ./src/pegconfig.json",
     "watch": "npm-run-all -p watch:*",
+    "watch:peggy": "peggy -w -c ./src/pegconfig.json",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+    "package": "pnpm run compile:peggy && pnpm run check-types && pnpm run lint && node esbuild.js --production",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "pretest": "pnpm run compile && pnpm run compile-tests",
     "pretest-web": "pnpm run compile",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
@@ -148,8 +150,7 @@
     "js-yaml": "npm-run-all js-yaml:*",
     "js-yaml:snippets": "js-yaml ./src/igorpro.snippets.yaml > ./syntaxes/igorpro.snippets.json",
     "js-yaml:tmLanguage": "js-yaml ./src/igorpro.tmLanguage.yaml > ./syntaxes/igorpro.tmLanguage.json",
-    "js-yaml:apiReference": "js-yaml ./src/igorpro.apiReference.yaml > ./syntaxes/igorpro.apiReference.json",
-    "peggy": "peggy -c ./src/pegconfig.json"
+    "js-yaml:apiReference": "js-yaml ./src/igorpro.apiReference.yaml > ./syntaxes/igorpro.apiReference.json"
   },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
@@ -169,7 +170,7 @@
     "js-yaml": "^4.1.0",
     "mocha": "^11.1.0",
     "npm-run-all": "^4.1.5",
-    "peggy": "^5.0.2",
+    "peggy": "^5.0.3",
     "typescript": "^5.8.3"
   },
   "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af"

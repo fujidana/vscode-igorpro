@@ -1,11 +1,12 @@
 // See https://go.microsoft.com/fwlink/?LinkId=733558
 // for the documentation about the tasks.json format
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
+    "version": "2.0.0",
+    "tasks": [
+        {
             "label": "watch",
             "dependsOn": [
+                "npm: watch:peggy",
                 "npm: watch:tsc",
                 "npm: watch:esbuild"
             ],
@@ -15,6 +16,43 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
+            }
+        },
+        {
+            "type": "npm",
+            "script": "watch:peggy",
+            "group": "build",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "vscode-igorpro",
+                "fileLocation": "autoDetect",
+                "source": "peggy",
+                "pattern": [
+                    {
+                        "regexp": "^(Error|error|warning|info)\\S*: (.*)$",
+                        "severity": 1,
+                        "message": 2
+                    },
+                    {
+                        "regexp": "^ --> ([^:]+):(\\d+):(\\d+)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3
+                    }
+                ],
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": {
+                        "regexp": "^\"(.+)\" changed...$",
+                        "file": 1
+                    },
+                    "endsPattern": "^(Wrote|Failed writing): (\".+\")$"
+                }
+            },
+            "label": "npm: watch:peggy",
+            "presentation": {
+                "group": "watch",
+                "reveal": "never"
             }
         },
         {
@@ -29,7 +67,7 @@
                 "reveal": "never"
             }
         },
-		{
+        {
             "type": "npm",
             "script": "watch:tsc",
             "group": "build",
@@ -41,24 +79,24 @@
                 "reveal": "never"
             }
         },
-		{
-			"type": "npm",
-			"script": "watch-tests",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never",
-				"group": "watchers"
-			},
-			"group": "build"
-		},
-		{
-			"label": "tasks: watch-tests",
-			"dependsOn": [
-				"npm: watch",
-				"npm: watch-tests"
-			],
-			"problemMatcher": []
-		}
-	]
+        {
+            "type": "npm",
+            "script": "watch-tests",
+            "problemMatcher": "$tsc-watch",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "never",
+                "group": "watchers"
+            },
+            "group": "build"
+        },
+        {
+            "label": "tasks: watch-tests",
+            "dependsOn": [
+                "npm: watch",
+                "npm: watch-tests"
+            ],
+            "problemMatcher": []
+        }
+    ]
 }
