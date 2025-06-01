@@ -8,6 +8,10 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 - Enable the extension to run in _VS Code for the Web_ (vscode.dev, github.dev).
 
+### Fixed
+
+- Improve auto-indentation behavior when letter case of built-in keywords is mixed (e.g., `FUnction` is unnatural but valid in Igor Pro since the syntax is case-insensitive). See Issue #32.
+
 ## [1.4.4] -- 2025-05-21
 
 ### Added
