@@ -15,3 +15,5 @@ vsc-extension-quickstart.md
 **/.gitkeep
 .vscode-test-web/**
 dist/**/test/**
+pnpm-lock.yaml
+**/pegconfig.json

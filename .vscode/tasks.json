@@ -24,9 +24,10 @@
             "group": "build",
             "isBackground": true,
             "problemMatcher": {
-                "owner": "vscode-igorpro",
+                "owner": "peggy-language",
                 "fileLocation": "autoDetect",
-                "source": "peggy",
+                "source": "peggy-language",
+                "applyTo": "closedDocuments",
                 "pattern": [
                     {
                         "regexp": "^(Error|error|warning|info)\\S*: (.*)$",
@@ -41,7 +42,7 @@
                     }
                 ],
                 "background": {
-                    "activeOnStart": true,
+                    "activeOnStart": false,
                     "beginsPattern": {
                         "regexp": "^\"(.+)\" changed...$",
                         "file": 1
@@ -51,7 +52,7 @@
             },
             "label": "npm: watch:peggy",
             "presentation": {
-                "group": "watch",
+                "group": "watchers",
                 "reveal": "never"
             }
         },
@@ -63,7 +64,7 @@
             "isBackground": true,
             "label": "npm: watch:esbuild",
             "presentation": {
-                "group": "watch",
+                "group": "watchers",
                 "reveal": "never"
             }
         },
@@ -75,7 +76,7 @@
             "isBackground": true,
             "label": "npm: watch:tsc",
             "presentation": {
-                "group": "watch",
+                "group": "watchers",
                 "reveal": "never"
             }
         },
