@@ -148,9 +148,9 @@
     "test-web": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/extensionTests.js",
     "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. .",
     "js-yaml": "npm-run-all js-yaml:*",
-    "js-yaml:snippets": "js-yaml ./src/igorpro.snippets.yaml > ./syntaxes/igorpro.snippets.json",
-    "js-yaml:tmLanguage": "js-yaml ./src/igorpro.tmLanguage.yaml > ./syntaxes/igorpro.tmLanguage.json",
-    "js-yaml:apiReference": "js-yaml ./src/igorpro.apiReference.yaml > ./syntaxes/igorpro.apiReference.json"
+    "js-yaml:snippets": "js-yaml syntaxes/igorpro.snippets.yaml > syntaxes/igorpro.snippets.json",
+    "js-yaml:tmLanguage": "js-yaml syntaxes/igorpro.tmLanguage.yaml > syntaxes/igorpro.tmLanguage.json",
+    "js-yaml:apiReference": "js-yaml syntaxes/igorpro.apiReference.yaml > syntaxes/igorpro.apiReference.json"
   },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",

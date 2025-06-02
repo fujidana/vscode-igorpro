@@ -12,7 +12,7 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
-**/.gitkeep
+syntaxes/*.yaml
 .vscode-test-web/**
 dist/**/test/**
 pnpm-lock.yaml
