@@ -24,17 +24,12 @@ Currently IntelliSense features support user-defined constants, structure, macro
 
 ## Known Issues
 
+See also [GitHub issues](https://github.com/fujidana/vscode-igorpro/issues).
+
 ### Code Helps not complete
 
 Code hinting database currently lacks descriptive messages of most symbols (See Issue #1).
 Contribution to the point is very welcome.
-
-### Restricted Behaviors of Indentation Adjustment
-
-While Igor Pro procedure is case-insensitive, the indentation adjustment feature of VS Code works based on a case-insensitive pattern matching.
-Also, it does not work perfectly on `switch` and `strswitch` flow controls.
-They are due to the limitation of the indentation adjustment feature of VS Code.
-See [Language Configuration Guide / Indentation Rules](https://code.visualstudio.com/api/language-extensions/language-configuration-guide#indentation-rules).
 
 ### Limitations of Syntax Highlighting
 

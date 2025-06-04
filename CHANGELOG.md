@@ -4,6 +4,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [1.5.0] -- 2025-06-04
+
 ### Added
 
 - Enable the extension to run in _VS Code for the Web_ (vscode.dev, github.dev).
@@ -126,7 +128,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.4...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.4...v1.5.0
 [1.4.4]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.3...v1.4.4
 [1.4.3]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.1...v1.4.2
