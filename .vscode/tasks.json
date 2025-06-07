@@ -4,7 +4,26 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "compile",
+            "detail": "Run peggy, tsc, eslint, and esbuild",
+            "icon": {
+                "id": "tools"
+            },
+            "type": "npm",
+            "script": "compile",
+            "problemMatcher": [
+                "$peggy",
+                "$tsc",
+                "$eslint-stylish",
+                "$esbuild"
+            ]
+        },
+        {
             "label": "watch",
+            "detail": "Watch peggy, tsc, and esbuild",
+            "icon": {
+                "id": "tools"
+            },
             "dependsOn": [
                 "npm: watch:peggy",
                 "npm: watch:tsc",
@@ -19,62 +38,36 @@
             }
         },
         {
+            "label": "npm: watch:peggy",
             "type": "npm",
             "script": "watch:peggy",
             "group": "build",
+            "problemMatcher": "$peggy-watch",
             "isBackground": true,
-            "problemMatcher": {
-                "owner": "peggy-language",
-                "fileLocation": "autoDetect",
-                "source": "peggy-language",
-                "applyTo": "closedDocuments",
-                "pattern": [
-                    {
-                        "regexp": "^(Error|error|warning|info)\\S*: (.*)$",
-                        "severity": 1,
-                        "message": 2
-                    },
-                    {
-                        "regexp": "^ --> ([^:]+):(\\d+):(\\d+)$",
-                        "file": 1,
-                        "line": 2,
-                        "column": 3
-                    }
-                ],
-                "background": {
-                    "activeOnStart": false,
-                    "beginsPattern": {
-                        "regexp": "^\"(.+)\" changed...$",
-                        "file": 1
-                    },
-                    "endsPattern": "^(Wrote|Failed writing): (\".+\")$"
-                }
-            },
-            "label": "npm: watch:peggy",
             "presentation": {
                 "group": "watchers",
                 "reveal": "never"
             }
         },
         {
+            "label": "npm: watch:esbuild",
             "type": "npm",
             "script": "watch:esbuild",
             "group": "build",
             "problemMatcher": "$esbuild-watch",
             "isBackground": true,
-            "label": "npm: watch:esbuild",
             "presentation": {
                 "group": "watchers",
                 "reveal": "never"
             }
         },
         {
+            "label": "npm: watch:tsc",
             "type": "npm",
             "script": "watch:tsc",
             "group": "build",
             "problemMatcher": "$tsc-watch",
             "isBackground": true,
-            "label": "npm: watch:tsc",
             "presentation": {
                 "group": "watchers",
                 "reveal": "never"
