@@ -83,6 +83,13 @@
       {
         "title": "Igor Pro",
         "properties": {
+          "igorpro.igorVersion": {
+            "type": "string",
+            "default": "9.01",
+            "markdownDescription": "Specifies the target version of Igor Pro. This affects code completion.",
+            "pattern": "^(0|[1-9]\\d*)\\.(\\d)(\\d)(?!\\d)",
+            "patternErrorMessage": "The value must start with a number with two decimal places, such as `7.38` and `9.01`."
+          },
           "igorpro.showReferenceManualInPreview": {
             "type": "boolean",
             "default": true,
@@ -154,11 +161,15 @@
     "js-yaml:tmLanguage": "js-yaml syntaxes/igorpro.tmLanguage.yaml > syntaxes/igorpro.tmLanguage.json",
     "js-yaml:apiReference": "js-yaml syntaxes/igorpro.apiReference.yaml > syntaxes/igorpro.apiReference.json"
   },
+  "dependencies": {
+    "semver": "^7.7.2"
+  },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@types/assert": "^1.5.11",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/semver": "^7.7.0",
     "@types/vscode": "^1.100.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",

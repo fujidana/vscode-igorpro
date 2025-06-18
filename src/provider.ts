@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as lang from './igorpro';
+import { SemVer, satisfies } from 'semver';
 
 interface SuppressMessagesConfig {
     'completionItem.label.detail'?: boolean
@@ -29,7 +30,7 @@ const enum TruncationLevel {
     line
 }
 
-function truncateString(level: TruncationLevel, item: { description?: string, deprecatedMessage?: string, minimumVersion?: number }): string | undefined {
+function truncateString(level: TruncationLevel, item: { description?: string, deprecated?: lang.VersionRange, available?: lang.VersionRange }): string | undefined {
     let truncatedString;
     if (item.description) {
         if (level === TruncationLevel.full) {
@@ -44,13 +45,13 @@ function truncateString(level: TruncationLevel, item: { description?: string, de
     }
 
     if (level !== TruncationLevel.line) {
-        if (item.minimumVersion) {
-            const tmpStr = `It was added in Igor Pro ${item.minimumVersion.toFixed(2)}.`;
+        if (item.available) {
+            const tmpStr = lang.getVersionRangeDescription(item.available, 'available');
             truncatedString = truncatedString ? truncatedString + '\n\n' + tmpStr : tmpStr;
         }
 
-        if (item.deprecatedMessage) {
-            const tmpStr = '__deprecated:__ ' + item.deprecatedMessage;
+        if (item.deprecated) {
+            const tmpStr = lang.getVersionRangeDescription(item.deprecated, 'deprecated');
             truncatedString = truncatedString ? truncatedString + '\n\n' + tmpStr : tmpStr;
         }
     }
@@ -97,6 +98,17 @@ function parseSignatureInEditing(line: string, position: number) {
     return prevMatch ? { 'signature': prevMatch[2].toLowerCase(), 'argumentIndex': substr.split(',').length - 1 } : undefined;
 }
 
+
+/***
+ * Get an Igor Pro-style version string (like `7.38` and `9.02`) from the settings 
+ * and convert it to a SemVer object.
+ */
+export function getIgorVersion(): SemVer {
+    const igorVersionStr = vscode.workspace.getConfiguration('igorpro').get<string>('igorVersion', '9.01');
+    const matches = igorVersionStr.match(/^(0|[1-9]\d*)\.(\d)(\d)(?!\d)/);
+    return new SemVer(matches ? `${matches[1]}.${matches[2]}.${matches[3]}` : '0.0.0');
+}
+
 const enum WordType {
     unclassified = 0,
     firstWord,
@@ -126,10 +138,19 @@ export class Provider implements vscode.CompletionItemProvider<lang.CompletionIt
 
     protected readonly storageCollection = new Map<string, lang.ReferenceStorage>();
     protected readonly completionItemCollection = new Map<string, lang.CompletionItem[]>();
+    protected igorVersion: SemVer;
 
     constructor(context: vscode.ExtensionContext) {
+        this.igorVersion = getIgorVersion();
+
         const configurationChangeListener = (event: vscode.ConfigurationChangeEvent) => {
             if (event.affectsConfiguration('igorpro.suggest.suppressMessages')) {
+                for (const uriString of this.storageCollection.keys()) {
+                    this.updateCompletionItemsForUriString(uriString);
+                }
+            }
+            if (event.affectsConfiguration('igorpro.igorVersion')) {
+                this.igorVersion = getIgorVersion();
                 for (const uriString of this.storageCollection.keys()) {
                     this.updateCompletionItemsForUriString(uriString);
                 }
@@ -153,8 +174,8 @@ export class Provider implements vscode.CompletionItemProvider<lang.CompletionIt
         const storage = this.storageCollection.get(uriString);
         if (storage) {
             const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
-            const suppressDetail = config !== undefined && 'completionItem.label.detail' in config && config['completionItem.label.detail'] === true;
-            const suppressDescription = config !== undefined && 'completionItem.label.description' in config && config['completionItem.label.description'] === true;
+            const suppressDetail = config?.['completionItem.label.detail'] ?? false;
+            const suppressDescription = config?.['completionItem.label.description'] ?? false;
             let description: string | undefined;
 
             if (!suppressDescription) {
@@ -175,8 +196,8 @@ export class Provider implements vscode.CompletionItemProvider<lang.CompletionIt
                 }
 
                 for (const [identifier, item] of map.entries()) {
-                    if (item.deprecatedMessage) {
-                        // do not include deprecated items from the completion list.
+                    if (item.available && !satisfies(this.igorVersion, item.available.range)) {
+                        // do not add unsupported items to the completion list.
                         continue;
                     }
 
@@ -190,6 +211,10 @@ export class Provider implements vscode.CompletionItemProvider<lang.CompletionIt
                     const completionItem = new lang.CompletionItem(
                         { label, detail, description }, uriString, refItemKind, !!item.static
                     );
+                    if (item.deprecated && satisfies(this.igorVersion, item.deprecated.range)) {
+                        // add deprecated tag to the completion item.
+                        completionItem.tags = [vscode.CompletionItemTag.Deprecated];
+                    }
                     completionItems.push(completionItem);
                 }
             }
