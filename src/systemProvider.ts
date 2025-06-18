@@ -92,8 +92,8 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
             return mdText;
         };
 
-        if (uri.scheme === 'igorpro' && uri.authority === 'system') {
-            const storage = this.storageCollection.get(uri.with({ query: '' }).toString());
+        if (lang.BUILTIN_URI === uri.with({ query: '' }).toString()) {
+            const storage = this.storageCollection.get(lang.BUILTIN_URI);
             if (storage) {
                 let mdText = '# Igor Pro Reference Manual\n\n';
                 mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) or command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';

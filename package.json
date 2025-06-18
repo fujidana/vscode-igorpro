@@ -24,7 +24,9 @@
     "url": "https://github.com/fujidana/vscode-igorpro.git"
   },
   "homepage": "https://github.com/fujidana/vscode-igorpro#readme",
-  "activationEvents": [],
+  "activationEvents": [
+    "onFileSystem:igorpro"
+  ],
   "main": "./dist/node/extension.js",
   "browser": "./dist/web/extension.js",
   "extensionKind": [
