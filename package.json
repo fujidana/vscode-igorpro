@@ -83,19 +83,19 @@
       {
         "title": "Igor Pro",
         "properties": {
-          "igorpro.igorVersion": {
+          "vscode-igorpro.igorVersion": {
             "type": "string",
             "default": "9.01",
             "markdownDescription": "Specifies the target version of Igor Pro. This affects code completion.",
             "pattern": "^(0|[1-9]\\d*)\\.(\\d)(\\d)(?!\\d)",
             "patternErrorMessage": "The value must start with a number with two decimal places, such as `7.38` and `9.01`."
           },
-          "igorpro.showReferenceManualInPreview": {
+          "vscode-igorpro.showReferenceManualInPreview": {
             "type": "boolean",
             "default": true,
             "markdownDescription": "Shows a preview (Webview created by built-in Markdown extension) in addition to a markdown source after [Open Reference Manual](command:igorpro.openReferenceManual) command is invoked."
           },
-          "igorpro.suggest.suppressMessages": {
+          "vscode-igorpro.suggest.suppressMessages": {
             "type": "object",
             "markdownDescription": "Suppresses messages shown in code completion.",
             "default": {

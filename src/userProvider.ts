@@ -87,7 +87,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
                 if (filesInWorkspaces.has(documentUriString)) {
                     // if file also exists in a workspace folder...
                     // clear diagnostics if setting for workspace.diagnoseProblem is false. 
-                    // const diagnoseInWorkspace = vscode.workspace.getConfiguration('igorpro.workspace', document).get<boolean>('diagnoseProblems', false);
+                    // const diagnoseInWorkspace = vscode.workspace.getConfiguration('vscode-igorpro.workspace', document).get<boolean>('diagnoseProblems', false);
                     // if (!diagnoseInWorkspace) {
                     this.diagnosticCollection.delete(document.uri);
                     // }
@@ -228,7 +228,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
                 if (!documentUriStringSet.has(newUriString)) {
                     const newUri = vscode.Uri.parse(newUriString);
                     const contents = await vscode.workspace.decode(await vscode.workspace.fs.readFile(newUri), { uri: newUri });
-                    // const diagnoseInWorkspace = vscode.workspace.getConfiguration('igorpro.workspace', newUri).get<boolean>('diagnoseProblems', false);
+                    // const diagnoseInWorkspace = vscode.workspace.getConfiguration('vscode-igorpro.workspace', newUri).get<boolean>('diagnoseProblems', false);
                     // this.parseDocumentContents(contents, newUri, false, diagnoseInWorkspace);
                     this.parseDocumentContents(contents, newUri, false, false);
                 }
@@ -394,7 +394,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             if (!documentUriStringSet.has(uriString)) {
                 const uri = vscode.Uri.parse(uriString);
                 const contents = await vscode.workspace.decode(await vscode.workspace.fs.readFile(uri), { uri });
-                // const diagnoseInWorkspace = vscode.workspace.getConfiguration('igorpro.workspace', uri).get<boolean>('diagnoseProblems', false);
+                // const diagnoseInWorkspace = vscode.workspace.getConfiguration('vscode-igorpro.workspace', uri).get<boolean>('diagnoseProblems', false);
                 // this.parseDocumentContents(contents, uri, false, diagnoseInWorkspace);
                 this.parseDocumentContents(contents, uri, false, false);
             }

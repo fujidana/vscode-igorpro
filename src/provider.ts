@@ -104,7 +104,7 @@ function parseSignatureInEditing(line: string, position: number) {
  * and convert it to a SemVer object.
  */
 export function getIgorVersion(): SemVer {
-    const igorVersionStr = vscode.workspace.getConfiguration('igorpro').get<string>('igorVersion', '9.01');
+    const igorVersionStr = vscode.workspace.getConfiguration('vscode-igorpro').get<string>('igorVersion', '9.01');
     const matches = igorVersionStr.match(/^(0|[1-9]\d*)\.(\d)(\d)(?!\d)/);
     return new SemVer(matches ? `${matches[1]}.${matches[2]}.${matches[3]}` : '0.0.0');
 }
@@ -144,12 +144,12 @@ export class Provider implements vscode.CompletionItemProvider<lang.CompletionIt
         this.igorVersion = getIgorVersion();
 
         const configurationChangeListener = (event: vscode.ConfigurationChangeEvent) => {
-            if (event.affectsConfiguration('igorpro.suggest.suppressMessages')) {
+            if (event.affectsConfiguration('vscode-igorpro.suggest.suppressMessages')) {
                 for (const uriString of this.storageCollection.keys()) {
                     this.updateCompletionItemsForUriString(uriString);
                 }
             }
-            if (event.affectsConfiguration('igorpro.igorVersion')) {
+            if (event.affectsConfiguration('vscode-igorpro.igorVersion')) {
                 this.igorVersion = getIgorVersion();
                 for (const uriString of this.storageCollection.keys()) {
                     this.updateCompletionItemsForUriString(uriString);
@@ -173,7 +173,7 @@ export class Provider implements vscode.CompletionItemProvider<lang.CompletionIt
     protected updateCompletionItemsForUriString(uriString: string): vscode.CompletionItem[] | undefined {
         const storage = this.storageCollection.get(uriString);
         if (storage) {
-            const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
+            const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
             const suppressDetail = config?.['completionItem.label.detail'] ?? false;
             const suppressDescription = config?.['completionItem.label.description'] ?? false;
             let description: string | undefined;
@@ -275,7 +275,7 @@ export class Provider implements vscode.CompletionItemProvider<lang.CompletionIt
         const refItemKind = completionItem.refItemKind;
         const refUriString = completionItem.uriString;
 
-        const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
+        const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
         const truncationlevel = (config !== undefined && 'completionItem.documentation' in config && config['completionItem.documentation'] === true) ? TruncationLevel.line : TruncationLevel.paragraph;
 
         // find the symbol information about the symbol.
@@ -316,7 +316,7 @@ export class Provider implements vscode.CompletionItemProvider<lang.CompletionIt
     public provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
         if (token.isCancellationRequested) { return; }
 
-        const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
+        const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
         const truncationLevel = (config !== undefined && 'hover.contents' in config && config['hover.contents'] === true) ? TruncationLevel.paragraph : TruncationLevel.full;
 
         const range = document.getWordRangeAtPosition(position);
@@ -389,7 +389,7 @@ export class Provider implements vscode.CompletionItemProvider<lang.CompletionIt
         const signatureHint = parseSignatureInEditing(document.lineAt(position.line).text, position.character);
         if (signatureHint === undefined) { return; }
 
-        const config = vscode.workspace.getConfiguration('igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
+        const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages');
         const truncationLevel = (config !== undefined && 'signatureHelp.signatures.documentation' in config && config['signatureHelp.signatures.documentation'] === true) ? TruncationLevel.paragraph : TruncationLevel.full;
 
         for (const [uriString, storage] of this.storageCollection.entries()) {

@@ -4,15 +4,31 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Added
+
+- Add `vscode-igorpro.igorVersion` setting. It affects the scope of auto-completion (in short, hides unsupported APIs from the auto-completion list). issue [#39](https://github.com/fujidana/vscode-igorpro/issues/39).
+
+### Changed
+
+- Change the prefix of the identifiers of the settings from `igorpro` to `vscode-igorpro`.
+
+### Fixed
+
+- Fix a problem where restoration of a reference manual document is failed after VS Code is relaunched. issue [#37](https://github.com/fujidana/vscode-igorpro/issues/37).
+
 ## [1.5.0] -- 2025-06-04
 
 ### Added
 
 - Enable the extension to run in _VS Code for the Web_ (vscode.dev, github.dev).
 
+### Changed
+
+- Migrate the bundler from `webpack` to `esbuild`.
+
 ### Fixed
 
-- Improve auto-indentation behavior when letter case of built-in keywords is mixed (e.g., `FUnction` is unnatural but valid in Igor Pro since the syntax is case-insensitive). See Issue #32.
+- Improve auto-indentation behavior when letter case of built-in keywords is mixed. issue [#32](https://github.com/fujidana/vscode-igorpro/issues/32).
 
 ## [1.4.4] -- 2025-05-21
 
