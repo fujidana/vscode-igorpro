@@ -32,7 +32,8 @@ constants:
     signature: gammaEuler
     description: |-
       returns the the Euler-Mascheroni constant 0.5772156649015328606065.
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
 
 variables:
   datetime:
@@ -108,17 +109,20 @@ functions:
     signature: AxisInfo(graphNameStr, axisNameStr)
   axislabel:
     signature: AxisLabel(graphNameStr, axisNameStr[, escapeBackslashes])
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   axislist:
     signature: AxisList(graphNameStr)
   axisvalfrompixel:
     signature: AxisValFromPixel(graphNameStr, axNameStr, pixel)
   base64decode:
     signature: Base64Decode(inputStr)
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   base64encode:
     signature: Base64Encode(inputStr)
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   besseli:
     signature: Besseli(n, z)
   besselj:
@@ -129,16 +133,24 @@ functions:
     signature: Bessely(n, z)
   bessi:
     signature: BessI(n, x[, algorithm[, accuracy]])
-    deprecatedMessage: Obsolete. Use `Besseli`.
+    deprecated:
+      range: '>=0.0.0'
+      description: Obsolete. Use `Besseli`.
   bessj:
     signature: BessJ(n, x[, algorithm[, accuracy]])
-    deprecatedMessage: Obsolete. Use `Besselj`.
+    deprecated:
+      range: '>=0.0.0'
+      description: Obsolete. Use `Besselj`.
   bessk:
     signature: bessK(n, x[, algorithm[, accuracy]])
-    deprecatedMessage: Obsolete. Use `Besselk`.
+    deprecated:
+      range: '>=0.0.0'
+      description: Obsolete. Use `Besselk`.
   bessy:
     signature: bessY(n, x[, algorithm[, accuracy]])
-    deprecatedMessage: Obsolete. Use `Bessely`.
+    deprecated:
+      range: '>=0.0.0'
+      description: Obsolete. Use `Bessely`.
   beta:
     signature: beta(a, b)
   betai:
@@ -163,10 +175,12 @@ functions:
     signature: ceil(num)
   centerofmass:
     signature: centerOfMass(srcWave[, x1, x2])
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   centerofmassxy:
     signature: centerOfMassXY(waveX, waveY)
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   cequal:
     signature: cequal(z1, z2)
   char2num:
@@ -199,14 +213,16 @@ functions:
     signature: ControlNameList(winNameStr[, listSepStr[, matchStr]])
   converttextencoding:
     signature: ConvertTextEncoding(sourceTextStr, sourceTextEncoding, destTextEncoding, mapErrorMode, options)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   cos:
     signature: cos(angle)
   cosh:
     signature: cosh(num)
   cosintegral:
     signature: CosIntegral(z)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   cot:
     signature: cot(angle)
   coth:
@@ -217,10 +233,13 @@ functions:
     signature: CountObjectsDFR(dfr, objectType)
   cpowi:
     signature: cpowi(num, ipow)
-    deprecatedMessage: It is obsolete as the exponentiation operator `^` handles complex expressions with any combination of real, integer and complex arguments.
+    deprecated:
+      range: '>=0.0.0'
+      description: It is obsolete as the exponentiation operator `^` handles complex expressions with any combination of real, integer and complex arguments.
   createdataobjectname:
     signature: CreateDataObjectName(dfr, nameInStr, objectType, suffixNum, options)
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   creationdate:
     signature: CreationDate(waveName)
   csc:
@@ -245,10 +264,12 @@ functions:
     signature: DataFolderExists(dataFolderNameStr)
   datafolderlist:
     signature: DataFolderList(matchStr, separatorStr[, dfr])
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   datafolderrefchanges:
     signature: DataFolderRefChanges(dfr, changeType)
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   datafolderrefsequal:
     signature: DataFolderRefsEqual(dfr1 , dfr2)
   datafolderrefstatus:
@@ -270,7 +291,8 @@ functions:
     signature: digamma(x)
   dilogarithm:
     signature: Dilogarithm(z)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   dimdelta:
     signature: DimDelta(waveName, dimNumber)
   dimoffset:
@@ -304,14 +326,16 @@ functions:
     signature: expInt(n, x)
   expintegrale1:
     signature: ExpIntegralE1(z)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   expnoise:
     signature: expNoise(b)
   factorial:
     signature: factorial(n)
   faddeeva:
     signature: Faddeeva(z)
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   fakedata:
     signature: FakeData(waveName)
   faverage:
@@ -387,7 +411,8 @@ functions:
     signature: GetDimLabel(waveName, dimNumber, dimIndex)
   getenvironmentvariable:
     signature: GetEnvironmentVariable(varName)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   geterrmessage:
     signature: GetErrMessage(errorCode[, substitutionOption])
   getformula:
@@ -420,12 +445,14 @@ functions:
     signature: GetWavesDataFolderDFR(waveName)
   getwindowbrowserselection:
     signature: GetWindowBrowserSelection(mode)
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   gizmoinfo:
     signature: GizmoInfo(nameStr, key)
   gizmoscale:
     signature: GizmoScale(dataValue, dimNumber[, gizmoNameStr])
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   gnoise:
     signature: gnoise(num[, RNG])
   greplist:
@@ -448,7 +475,8 @@ functions:
     signature: HDF5LibraryInfo(options)
   hdf5linkinfo:
     signature: HDF5LinkInfo(locationID, pathStr, options, li)
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   hdf5typeinfo:
     signature: HDF5TypeInfo(locationID, datasetOrGroupNameStr, attributeNameStr, memberName, options, dti)
   hermite:
@@ -487,7 +515,8 @@ functions:
     signature: IndexedFile(pathName, index, fileTypeOrExtStr[, creatorStr, separatorStr])
   indextoscale:
     signature: IndexToScale(wave, index, dim)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   # Inf
   integrate1d:
     signature: Integrate1D(UserFunctionName, min_x, max_x[, options [, count[, pWave]]])
@@ -506,10 +535,12 @@ functions:
   # j
   jacobicn:
     signature: JacobiCn(x, k)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   jacobisn:
     signature: JacobiSn(x, k )
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   # jlim
   juliantodate:
     signature: JulianToDate(julianDay, format)
@@ -521,7 +552,8 @@ functions:
     signature: laguerreGauss(p, m, r)
   lambertw:
     signature: LambertW(z, branch)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   layoutinfo:
     signature: LayoutInfo(winNameStr, itemNameStr)
   leftx:
@@ -534,10 +566,12 @@ functions:
     signature: ListMatch(listStr, matchStr[, listSepStr])
   listtotextwave:
     signature: ListToTextWave(listStr, separatorStr)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   listtowaverefwave:
     signature: ListToWaveRefWave(stringList[, options])
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   ln:
     signature: ln(num)
   log:
@@ -550,12 +584,14 @@ functions:
     signature: LowerStr(str)
   macroinfo:
     signature: MacroInfo(macroNameStr)
-    minimumVersion: 9.01
+    available:
+      range: '>=9.0.1'
   macrolist:
     signature: MacroList(matchStr, separatorStr, optionsStr)
   macropath:
     signature: MacroPath(macroNameStr)
-    minimumVersion: 9.01
+    available:
+      range: '>=9.0.1'
   magsqr:
     signature: magsqr(z)
   mandelbrotpoint:
@@ -564,7 +600,8 @@ functions:
     signature: MarcumQ(m, a, b)
   matrixcondition:
     signature: MatrixCondition(wave2D, mode)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   matrixdet:
     signature: MatrixDet(dataMatrix)
   matrixdot:
@@ -579,7 +616,8 @@ functions:
     signature: mean(waveName[, x1, x2])
   median:
     signature: median(waveName[, x1, x2])
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   min:
     signature: min(num1, num2[, num3...num200])
   mod:
@@ -607,7 +645,8 @@ functions:
     signature: norm(srcWave)
   normalizeunicode:
     signature: NormalizeUnicode(sourceTextStr, normalizationForm[, options])
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   note:
     signature: note(waveName)
   num2char:
@@ -635,7 +674,8 @@ functions:
     signature: PadString(str, finalLength, padValue)
   panelresolution:
     signature: PanelResolution(wName)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   paramisdefault:
     signature: ParamIsDefault(pName)
   parsefilepath:
@@ -667,7 +707,8 @@ functions:
     signature: ProcedureText(macroOrFunctionNameStr[, linesOfContext[, procedureWinTitleStr]])
   procedureversion:
     signature: ProcedureVersion(macroOrFunctionNameStr[, procedureWinTitleStr])
-    minimumVersion: 9.01
+    available:
+      range: '>=9.0.1'
   # q
   qcsr:
     signature: qcsr(cursorName[, graphNameStr])
@@ -692,7 +733,8 @@ functions:
     signature: ReplaceStringByKey(keyStr, kwListStr, newTextStr[, keySepStr[, listSepStr[, matchCase]]])
   replicatestring:
     signature: ReplicateString(str, totalNumCopies)
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   rightx:
     signature: rightx(waveName)
   round:
@@ -702,7 +744,8 @@ functions:
     signature: sawtooth(num)
   scaletoindex:
     signature: ScaleToIndex(waveName, coordValue, dim)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   # ScreenResolution
   sec:
     signature: sec(angle)
@@ -718,7 +761,8 @@ functions:
     signature: SelectString(whichOne, str1, str2[, str3])
   setenvironmentvariable:
     signature: SetEnvironmentVariable(varName, varValue)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   sign:
     signature: sign(num)
   sin:
@@ -729,7 +773,8 @@ functions:
     signature: sinh(num)
   sinintegral:
     signature: SinIntegral(z)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   sortlist:
     signature: SortList(listStr[, listSepStr[, options])
   specialcharacterinfo:
@@ -995,7 +1040,8 @@ functions:
     signature: StringMatch(string, matchStr)
   stringtounsignedbytewave:
     signature: StringToUnsignedByteWave(str)
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   strlen:
     signature: strlen(str)
   strsearch:
@@ -1004,10 +1050,14 @@ functions:
     signature: StrVarOrDefault(pathStr, defStrVal)
   studenta:
     signature: StudentA(t, DegFree)
-    deprecatedMessage: It is deprecated. New code should use the more accurate `StatsStudentCDF`.
+    deprecated:
+      range: '>=0.0.0'
+      description: It is deprecated. New code should use the more accurate `StatsStudentCDF`.
   studentt:
     signature: StudentT(Prob, DegFree)
-    deprecatedMessage: It is deprecated. New code should use the more accurate `StatsInvStudentCDF`.
+    deprecated:
+      range: '>=0.0.0'
+      description: It is deprecated. New code should use the more accurate `StatsInvStudentCDF`.
   sum:
     signature: sum(waveName[, x1, x2])
   svar_exists:
@@ -1025,17 +1075,21 @@ functions:
     signature: tanh(num)
   textencodingcode:
     signature: TextEncodingCode(textEncodingNameStr)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   textencodingname:
     signature: TextEncodingName(textEncoding , index)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   textfile:
     signature: TextFile(pathName, index[, creatorStr])
   threadgroupcreate:
     signature: ThreadGroupCreate(nt)
   threadgroupgetdf:
     signature: ThreadGroupGetDF(tgID, waitms)
-    deprecatedMessage: "`ThreadGroupGetDFR` should be used instead of `ThreadGroupGetDF` which causes memory leaks."
+    deprecated:
+      range: '>=0.0.0'
+      description: "`ThreadGroupGetDFR` should be used instead of `ThreadGroupGetDF` which causes memory leaks."
   threadgroupgetdfr:
     signature: ThreadGroupGetDFR(tgID, waitms)
   threadgrouprelease:
@@ -1058,7 +1112,8 @@ functions:
     signature: TraceNameToWaveRef(graphNameStr, traceNameStr)
   trimstring:
     signature: TrimString(str[, simplifyInternalSpaces])
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   trunc:
     signature: trunc(num)
   uniquename:
@@ -1067,7 +1122,8 @@ functions:
     signature: UnPadString(str, padValue)
   unsetenvironmentvariable:
     signature: UnsetEnvironmentVariable(varName)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   upperstr:
     signature: UpperStr(str)
   urldecode:
@@ -1082,15 +1138,18 @@ functions:
     signature: vcsr(cursorName[, graphNameStr])
   voigtfunc:
     signature: VoigtFunc(X, Y)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   voigtpeak:
     signature: VoigtPeak(w, x)
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   wavecrc:
     signature: WaveCRC(inCRC, waveName[, checkHeader])
   wavedatatostring:
     signature: WaveDataToString(wave)
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   wavedims:
     signature: WaveDims(wave)
   waveexists:
@@ -1107,10 +1166,12 @@ functions:
     signature: WaveMin(waveName[, x1, x2])
   waveminandmax:
     signature: WaveMinAndMax(wave[, x1, x2])
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   wavemodcount:
     signature: WaveModCount(wave)
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   wavename:
     signature: WaveName(windowNameStr, index, type)
   waverefindexed:
@@ -1121,10 +1182,12 @@ functions:
     signature: WaveRefsEqual(w1 , w2)
   waverefwavetolist:
     signature: WaveRefWaveToList(waveRefWave, option)
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   wavetextencoding:
     signature: WaveTextEncoding(wave, element, getEffectiveTextEncoding)
-    minimumVersion: 6.30
+    available:
+      range: '>=6.3.0'
   wavetype:
     signature: WaveType(waveName[, selector])
   waveunits:
@@ -1158,11 +1221,13 @@ functions:
     signature: ZernikeR(n, m, r)
   zeta:
     signature: zeta(a, b[, terms])
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   # function-like features categorized in "Programming"
   hdf5savedatahook:
     signature: HDF5SaveDataHook(s)
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
 
 operations:
   abort:
@@ -1177,10 +1242,12 @@ operations:
     signature: AddMovieFrame [/PICT=pictName]
   addwavestoboxplot:
     signature: AddWavesToBoxPlot [/W=winName/T=traceName/INST=traceInstance] wave1[, wave2...]
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   addwavestoviolinplot:
     signature: AddWavesToViolinPlot [/W=winName/T=traceName/INST=traceInstance] wave1[, wave2...]
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   adoptfiles:
     signature: AdoptFiles [flags]
   apmath:
@@ -1189,7 +1256,8 @@ operations:
     signature: Append ...
   appendboxplot:
     signature: AppendBoxPlot [flags] wave1[, wave2...] [vs xWave]
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   appendimage:
     signature: AppendImage [/G=g/W=winName][axisFlags] matrix [vs {xWaveName, yWaveName}]
   appendlayoutobject:
@@ -1208,7 +1276,8 @@ operations:
     signature: AppendToTable [/W=winName] columnSpec1[, columnSpec2...]
   appendviolinplot:
     signature: AppendViolinPlot [flags] wave1[, wave2...] [vs xWave]
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   appendxyzcontour:
     signature: AppendXYZContour [/W=winName/F=formatStr][axisFlags] zWave [vs {xWave, yWave}]
   autopositionwindow:
@@ -1219,7 +1288,8 @@ operations:
     signature: Beep
   beziertopolygon:
     signature: BezierToPolygon [flags] bezXWave, bezYWave
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   boundingball:
     signature: BoundingBall [/F/Z] scatterWave
   boxsmooth:
@@ -1244,7 +1314,8 @@ operations:
     signature: Close [/A] [fileRefNum]
   closehelp:
     signature: CloseHelp [/ALL/FILE=fileNameStr/NAME=helpNameStr/P=pathName]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   closemovie:
     signature: CloseMovie [/Z]
   closeproc:
@@ -1270,7 +1341,8 @@ operations:
     signature: ControlUpdate [/A/W=winName][controlName]
   convertglobalstringtextencoding:
     signature: ConvertGlobalStringTextEncoding [flags] originalTextEncoding, newTextEncoding[, string1, string2...]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   convexhull:
     signature: convexHull ...
     overloads:
@@ -1280,7 +1352,8 @@ operations:
     signature: Convolve [/A/C] srcWaveName, destWaveName1[, destWaveName2...]
   copydimlabels:
     signature: CopyDimLabels [flags] srcWave, destWave1[, destWave2...]
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   copyfile:
     signature: CopyFile [flags][srcFileStr] [as destFileOrFolderStr]
   copyfolder:
@@ -1327,14 +1400,16 @@ operations:
     signature: DefaultGUIFont [/W=winName/Mac/Win] group1={fNameStr1,fSize1,fStyle1}[, group2={fNameStr2,fSize2,fStyle2}...]
   defaulttextencoding:
     signature: DefaultTextEncoding [encoding=textEncoding, overrideDefault=override]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   defineguide:
     signature: DefineGuide [/W=winName] newGuideName={[guideName1, val[, guideName2]]} [,...]
   delayupdate:
     signature: DelayUpdate
   deleteannotations:
     signature: DeleteAnnotations [flags] [tagOffscreen, tagTraceHidden, invisible, offsetOffscreen, tooSmall[=size]]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   deletefile:
     signature: DeleteFile [flags] [fileNameStr]
   deletefolder:
@@ -1368,7 +1443,8 @@ operations:
     signature: DoXOPIdle
   dpss:
     signature: DPSS [flags] numPoints, numWindows
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   drawaction:
     signature: DrawAction [/L=layerName/W=winName] keyword1=value1[, keyword2=value2...]
   drawarc:
@@ -1399,7 +1475,8 @@ operations:
     signature: DrawText [/W=winName] x0, y0, textStr
   drawusershape:
     signature: DrawUserShape [/W=winName /MO=options] x0, y0, x1, y1, userFuncName, textString, privateString
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   dspdetrend:
     signature: DSPDetrend [flags] srcWave
   dspperiodogram:
@@ -1427,7 +1504,8 @@ operations:
     signature: ExecuteScriptText [flags] textStr
   experimentinfo:
     signature: ExperimentInfo [/Q[=quiet]] [keyword1=value1[, keyword2=value2...]]
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   experimentmodified:
     signature: ExperimentModified [newModifiedState]
   exportgizmo:
@@ -1450,7 +1528,8 @@ operations:
     signature: FFT [flags] srcWave
   fgetpos:
     signature: FGetPos refNum
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   fifo2wave:
     signature: FIFO2Wave [/R/S] FIFOName, channelName, waveName
   fifostatus:
@@ -1459,15 +1538,18 @@ operations:
     signature: FilterFIR [flags] waveName1[, waveName2...]
   filteriir:
     signature: FilterIIR [flags] [waveName1, ...]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   findapeak:
     signature: FindAPeak [/B=baseWaveName] minamp, pol, box, peakWave, [(startX, endX)]
   findcontour:
     signature: FindContour [flags] matrixWave, level
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   findduplicates:
     signature: FindDuplicates [flags] srcWave
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   findlevel:
     signature: FindLevel [flags] waveName, level
   findlevels:
@@ -1546,14 +1628,16 @@ operations:
     signature: Hanning waveName1[, waveName2...]
   hcluster:
     signature: HCluster [flags] sourceWave
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   hdf5closefile:
     signature: HDF5CloseFile [/A/Z] fileID
   hdf5closegroup:
     signature: HDF5CloseGroup [/Z] groupID
   hdf5control:
     signature: HDF5Control [keyword1=value1[, keyword2=value2]]
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   hdf5createfile:
     signature: HDF5CreateFile [/I /O /P=pathName /Z] fileID as fileNameStr
   hdf5creategroup:
@@ -1562,7 +1646,8 @@ operations:
     signature: HDF5CreateLink [/EXT={pathName,filePath} /HARD=makeHardLink /Q /Z] targetLocationID, targetName, linkLocationID, linkName
   hdf5dimensionscale:
     signature: HDF5DimensionScale [flags] [keyword1=value1[, keyword2=value2]]
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   hdf5dump:
     signature: HDF5Dump [flags] fileNameStr
   hdf5dumperrors:
@@ -1605,7 +1690,8 @@ operations:
     signature: Histogram [flags] srcWaveName, destWaveName
   ica:
     signature: ICA [flags] srcWave
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   ifft:
     signature: IFFT [flags] srcWave
   imageanalyzeparticles:
@@ -1616,12 +1702,15 @@ operations:
     signature: ImageBoundaryToMask width=w, height=h, xwave=xwavename, ywave=ywavename[, scalingWave=scalingWaveName[, seedX=xVal, seedY=yVal]]
   imagecomposite:
     signature: ImageComposite [/Z/FREE/DEST=destWave] srcImageA, srcImageB
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   imageedgedetection:
     signature: ImageEdgeDetection [flags] Method imageMatrix
   imagefileinfo:
     signature: ImageFileInfo [/P=pathName] fileNameStr
-    deprecatedMessage: It is obsolete because it used QuickTime to obtain graphics file information and Apple is phasing out QuickTime.
+    deprecated:
+      range: '>=0.0.0'
+      description: It is obsolete because it used QuickTime to obtain graphics file information and Apple is phasing out QuickTime.
   imagefilter:
     signature: ImageFilter [flags] Method dataMatrix
   imagefocus:
@@ -1635,7 +1724,8 @@ operations:
     signature: ImageGenerateROIMask [/W=winName/E=e/I=i] imageInstance
   imageglcm:
     signature: ImageGLCM [flags] srcWave
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   imagehistmodification:
     signature: ImageHistModification [flags] imageMatrix
   imagehistogram:
@@ -1662,7 +1752,8 @@ operations:
     signature: ImageSeedFill [flags] [keyword,] seedX=xLoc, seedY=yLoc, target=setValue, srcWave=srcImage
   imageskeleton3d:
     signature: ImageSkeleton3D [/DEST=destWave /METH=method /Z] srcWave
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   imagesnake:
     signature: ImageSnake [flags] srcWave
   imagestats:
@@ -1681,12 +1772,14 @@ operations:
     signature: InsertPoints [/M=dim /V=value] beforePoint, numPoints, waveName1[, waveName2...]
   instantfrequency:
     signature: InstantFrequency [flags] srcWave [(startX,endX)]
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   integrate:
     signature: Integrate [type_flags][flags] yWaveA [/X=xWaveA][/D=destWaveA][, yWaveB[/X=xWaveB][/D=destWaveB]...]
   integrate2d:
     signature: Integrate2D [flags] [keyword1=value1[, keyword2=value2...]]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   integrateode:
     signature: IntegrateODE [flags] derivFunc, cwaveName, ywaveSpec
   interp3dpath:
@@ -1699,7 +1792,8 @@ operations:
     signature: JCAMPLoadWave [flags] [fileNameStr]
   jointhistogram:
     signature: JointHistogram [flags] wave1, wave2[, wave3, wave4]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   killbackground:
     signature: KillBackground
   killcontrol:
@@ -1730,10 +1824,12 @@ operations:
     signature: Layout [flags] [objectSpec1[, objectSpec2...] [as titleStr]
   layoutpageaction:
     signature: LayoutPageAction [/W=winName] [keyword1=value1[, keyword2=value2...]]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   layoutslideshow:
     signature: LayoutSlideShow [/W=winName] [keyword1=value1[, keyword2=value2...]]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   legend:
     signature: Legend [flags] [legendStr]
   linearfeedbackshiftregister:
@@ -1760,7 +1856,8 @@ operations:
     signature: MarkPerfTestTime idval
   matrixbalance:
     signature: MatrixBalance [flags] srcWave
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   matrixconvolve:
     signature: MatrixConvolve [/R=roiWave] coefMatrix, dataMatrix
   matrixcorr:
@@ -1769,7 +1866,8 @@ operations:
     signature: MatrixEigenV [flags] matrixA[, matrixB]
   matrixfactor:
     signature: MatrixFactor [flags] srcWave
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   matrixfilter:
     signature: MatrixFilter [flags] Method dataMatrix
   matrixgaussj:
@@ -1794,19 +1892,22 @@ operations:
     signature: MatrixMultiply matrixA [/T], matrixB [/T][, additional_matrices]
   matrixmultiplyadd:
     signature: MatrixMultiplyAdd [/ZC or /DC] [/A=alpha] [/B=beta] matA[/T], matB[/T] matC
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   matrixop:
     signature: MatrixOp [/C/FREE/NTHR=n/O/S] destwave = expression
   matrixreversebalance:
     signature: MatrixReverseBalance [flags] scaleWave, eigenvectorsWave
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   matrixschur:
     signature: MatrixSchur [/Z] srcMatrix
   matrixsolve:
     signature: MatrixSolve method, matrixA, vectorB
   matrixsparse:
     signature: MatrixSparse [flags] keyword=value
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   matrixsvbksub:
     signature: MatrixSVBkSub matrixU, vectorW, matrixV, vectorB
   matrixsvd:
@@ -1821,7 +1922,8 @@ operations:
     signature: Modify ...
   modifyboxplot:
     signature: ModifyBoxPlot [/W=winName] [keyword1=value1, keyword2=value2...]
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   modifybrowser:
     signature: ModifyBrowser [/M] [keyword1=value1[, keyword2=value2...]]
   modifycamera:
@@ -1851,12 +1953,14 @@ operations:
     signature: ModifyPanel [/W=winName] keyword1=value1[, keyword2=value2...]
   modifyprocedure:
     signature: ModifyProcedure [/A[=all]/W=procWinTitleListStr]/Z[=z] [procedure=functionOrMacroNameStr, hide=h, lock=ro, writeProtect=wp, userCanOverride=ovr]
-    minimumVersion: 8.03
+    available:
+      range: '>=8.0.3'
   modifytable:
     signature: ModifyTable [/W=winName/Z] key1[(columnSpec1)]=value1[, key2[(columnSpec2)]=value2...]
   modifyviolinplot:
     signature: ModifyViolinPlot [/W=winName] [keyword1=value1, keyword2=value2...]
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   modifywaterfall:
     signature: ModifyWaterfall [/W=winName] keyword1=value1[, keyword2=value2...]
   movedatafolder:
@@ -1877,17 +1981,20 @@ operations:
     signature: MoveWindow [flags] left, top, right, bottom
   multitaperpsd:
     signature: MultiTaperPSD [flags] srcWave
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   multithreadingcontrol:
     signature: MultiThreadingControl keyword[=value]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   neuralnetworkrun:
     signature: NeuralNetworkRun [/Q/Z] Input=testWave, WeightsWave1=w1, WeightsWave2=w2
   neuralnetworktrain:
     signature: NeuralNetworkTrain [/Q/Z] [keyword1=value1, ...]
   newcamera:
     signature: NewCamera [flags] [keywords]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   newdatafolder:
     signature: NewDataFolder [/O/S] dataFolderSpec
   newfifo:
@@ -1922,7 +2029,8 @@ operations:
     signature: Open [flags] refNum [as fileNameStr]
   openhelp:
     signature: OpenHelp [flags] fileNameStr
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   opennotebook:
     signature: OpenNotebook [flags] [fileNameStr]
   openproc:
@@ -1945,7 +2053,9 @@ operations:
     signature: PlayMovieAction [/A/Z] keyword1[=value1][, keyword2[=value2]...]
   playsnd:
     signature: PlaySnd [flags] fileNameStr
-    deprecatedMessage: It is obsolete. Use `PlaySound` instead.
+    deprecated:
+      range: '>=0.0.0'
+      description: It is obsolete. Use `PlaySound` instead.
   playsound:
     signature: PlaySound ...
     overloads:
@@ -1953,7 +2063,8 @@ operations:
       - signature: PlaySound /A[=a]/BITS=bits {soundWave1, soundWave2[, soundWaveN, ...]}
   polygonop:
     signature: PolygonOp [flags] [keyword=value]
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   popupcontextualmenu:
     signature: PopupContextualMenu [/C=(xpix, ypix)/N/ASYN[=func]] popupStr
   popupmenu:
@@ -1990,7 +2101,9 @@ operations:
     signature: RatioFromNumber [flags] num
   readvariables:
     signature: ReadVariables
-    deprecatedMessage: It is used automatically when you open an experiment. You need not invoke it.
+    deprecated:
+      range: '>=0.0.0'
+      description: It is used automatically when you open an experiment. You need not invoke it.
   redimension:
     signature: Redimension [flags] waveName1[, waveName2...]
   remez:
@@ -2005,7 +2118,9 @@ operations:
     signature: RemoveFromGraph [/W=winName/Z] traceName1[, traceName2...]
   removefromlayout:
     signature: RemoveFromLayout objectSpec1[, objectSpec2...]
-    deprecatedMessage: use `RemoveLayoutObjects`.
+    deprecated:
+      range: '>=0.0.0'
+      description: Use `RemoveLayoutObjects`.
   removefromtable:
     signature: RemoveFromTable [/W=winName] columnSpec1[, columnSpec2...]
   removeimage:
@@ -2053,7 +2168,8 @@ operations:
     signature: SaveExperiment [flags] [as fileName]
   savegizmocopy:
     signature: SaveGizmoCopy [flags][as fileNameStr]
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   savegraphcopy:
     signature: SaveGraphCopy [flags][as fileNameStr]
   savenotebook:
@@ -2089,7 +2205,8 @@ operations:
     #   - signature: SetFormula variableName, expressionStr
   setidleperiod:
     signature: SetIdlePeriod period
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   setigorhook:
     signature: SetIgorHook [/K/L] [hookType[=procName]]
   setigormenumode:
@@ -2103,7 +2220,9 @@ operations:
     signature: SetMarquee [/HAX=hAxisName/VAX=vAxisName/W=winName] left, top, right, bottom
   setprocesssleep:
     signature: SetProcessSleep sleepTicks
-    deprecatedMessage: It is obsolete and does nothing as of Igor Pro 7.00. It is documented here in case you come across it in old Igor procedure code. Do not use it in new code.
+    deprecated:
+      range: '>=0.0.0'
+      description: It is obsolete and does nothing as of Igor Pro 7.00. It is documented here in case you come across it in old Igor procedure code. Do not use it in new code.
   setrandomseed:
     signature: SetRandomSeed seed
   setscale:
@@ -2133,17 +2252,22 @@ operations:
     signature: Slider [/Z] controlName [keyword1=value1[, keyword2=value2...]]
   slow:
     signature: Slow ticks
-    deprecatedMessage: It is obsolete. Prior to Igor Pro 7 it slowed down execution of macros for debugging purposes. It now does nothing.
+    deprecated:
+      range: '>=0.0.0'
+      description: It is obsolete. Prior to Igor Pro 7 it slowed down execution of macros for debugging purposes. It now does nothing.
   smooth:
     signature: Smooth [flags] num, wave1[, wave2...]
   smoothcustom:
     signature: SmoothCustom [/E=endEffect] coefsWaveName, waveName1[, waveName2...]
-    deprecatedMessage: It is obsolete. Use the `FilterFIR` operation instead. For multidimensional data use the `MatrixConvolve` or `MatrixFilter` operations.
+    deprecated:
+      range: '>=0.0.0'
+      description: It is obsolete. Use the `FilterFIR` operation instead. For multidimensional data use the `MatrixConvolve` or `MatrixFilter` operations.
   sort:
     signature: Sort [/A/DIML/C/R] sortKeyWaves, sortedWaveName1[, sortedWaveName2...]
   sortcolumns:
     signature: SortColumns [flags] keyWaves={waveList}, sortWaves={waveList}
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   soundinrecord:
     signature: SoundInRecord [/BITS=bits/Z] waveName
   soundinset:
@@ -2156,10 +2280,12 @@ operations:
     signature: SoundInStopChart [/Z]
   soundloadwave:
     signature: SoundLoadWave [flags] waveName[, fileNameStr]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   soundsavewave:
     signature: SoundSaveWave [flags] typeStr, waveName[, fileNameStr]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   sphericalinterpolate:
     signature: SphericalInterpolate triangulationDataWave, dataPointsWave, newLocationsWave
   sphericaltriangulate:
@@ -2214,7 +2340,8 @@ operations:
     signature: StatsJBTest [flags] srcWave
   statskde:
     signature: StatsKDE [flags] srcWave
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   statskendalltautest:
     signature: StatsKendallTauTest [flags] wave1[, wave2]
   statskstest:
@@ -2265,11 +2392,13 @@ operations:
     signature: StatsWRCorrelationTest [flags] waveA, waveB
   stft:
     signature: STFT [flags] srcWave
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   # String
   structfill:
     signature: StructFill [/AC=createFlags/SDFR=dfr] structVar
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   structget:
     signature: StructGet ...
     overloads:
@@ -2282,10 +2411,12 @@ operations:
       - signature: StructPut /S[/B=b] structVar, strStruct
   sumdimension:
     signature: SumDimension [flags] srcWave
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   sumseries:
     signature: SumSeries [flags] keyword=value
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   tabcontrol:
     signature: TabControl [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
   tag:
@@ -2296,14 +2427,16 @@ operations:
     signature: TextBox [flags] [textStr]
   texthistogram:
     signature: TextHistogram [flags] srcTextWave
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   threadgroupputdf:
     signature: ThreadGroupPutDF tgID, datafolder
   threadstart:
     signature: ThreadStart tgID, index, WorkerFunc(param1, param2...)
   tickwavesfromaxis:
     signature: TickWavesFromAxis [/W=graphName/DEST={textWaveName, numericWaveName}/O/AUTO=mode] axisName
-    minimumVersion: 8.00
+    available:
+      range: '>=8.0.0'
   tile:
     signature: Tile [flags] [objectName1[, objectName2...]]
   tilewindows:
@@ -2320,10 +2453,12 @@ operations:
     signature: Unwrap modulus, waveName1[, waveName2...]
   unzipfile:
     signature: UnzipFile [/O[=mode]/PASS=passwordStr/PIN=inputPathName/POUT=outputPathName/Z[=z]] inputFileStr, outputFolderStr
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   urlrequest:
     signature: URLRequest [flags] url=urlStr [method=methodName, headers=headersStr]
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   valdisplay:
     signature: ValDisplay [/Z] ctrlName [keyword1=value1[, keyword2=value2...]]
   # Variable
@@ -2333,7 +2468,8 @@ operations:
     signature: WaveStats [flags] waveName
   wavetracking:
     signature: WaveTracking [/FREE/GLBL/LOCL] keyword
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   wavetransform:
     signature: WaveTransform [flags] keyword srcWave
   wfprintf:
@@ -2374,7 +2510,8 @@ keywords:
   # Declarative features categorized in "Programming"
   complex:
     signature: Complex localName
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
     description: |-
       declares complex 64 bit double precision variables.
       Another name for `Variable/C`.
@@ -2400,7 +2537,8 @@ keywords:
       ...
   double:
     signature: double localName
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
     description: |-
       declares 64 bit double precision variables.
       Another name for `Variable`.
@@ -2429,12 +2567,14 @@ keywords:
       ...
   int:
     signature: int localName
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
     description: |-
       declares 32-bit integers in IGOR32, 64-bit integers in IGOR64.
   int64:
     signature: int64 localName
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
     description: |-
       declares 64-bit integers in both IGOR32 and IGOR64.
   nvar:
@@ -2458,7 +2598,8 @@ keywords:
       ...
   uint64:
     signature: uint64 localName
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
     description: |-
       declares unsigned 64-bit integers in both IGOR32 and IGOR64.
   wave:
@@ -2769,7 +2910,8 @@ structures:
     signature: HDF5DatatypeInfo
   hdf5linkinfostruct:
     signature: HDF5LinkInfoStruct
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   hdf5savedatahookstruct:
     signature: HDF5SaveDataHookStruct
   point:
@@ -2866,7 +3008,8 @@ subtypes:
 pragmas:
   defaulttab:
     signature: DefaultTab
-    minimumVersion: 9.00
+    available:
+      range: '>=9.0.0'
   hide:
     signature: hide
   igorversion:
@@ -2879,7 +3022,8 @@ pragmas:
     signature: rtGlobals
   textencoding:
     signature: TextEncoding
-    minimumVersion: 7.00
+    available:
+      range: '>=7.0.0'
   version:
     signature: version
 
