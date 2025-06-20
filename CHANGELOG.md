@@ -6,7 +6,11 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Added
 
-- Add `igorpro.igorVersion` setting. It affects the scope of auto-completion (in short, hides unsupported APIs from the auto-completion list). issue [#39](https://github.com/fujidana/vscode-igorpro/issues/39).
+- Add `vscode-igorpro.igorVersion` setting. It affects the scope of auto-completion (in short, hides unsupported APIs from the auto-completion list). issue [#39](https://github.com/fujidana/vscode-igorpro/issues/39).
+
+### Changed
+
+- Change the prefix of the identifiers of the settings from `igorpro` to `vscode-igorpro`.
 
 ### Fixed
 

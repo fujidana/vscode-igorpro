@@ -61,7 +61,7 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
             if (quickPickItem) {
                 const uri = vscode.Uri.parse(lang.BUILTIN_URI).with({ query: quickPickItem.key });
                 const editor = await vscode.window.showTextDocument(uri, { preview: false });
-                const flag = vscode.workspace.getConfiguration('igorpro').get<boolean>('showReferenceManualInPreview');
+                const flag = vscode.workspace.getConfiguration('vscode-igorpro').get<boolean>('showReferenceManualInPreview');
                 if (flag) {
                     await vscode.commands.executeCommand('markdown.showPreview');
                     // await vscode.window.showTextDocument(editor.document);
