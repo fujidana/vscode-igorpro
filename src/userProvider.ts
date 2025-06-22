@@ -51,6 +51,25 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('igorpro');
         // this.treeCollection = new Map();
 
+        const inspectSyntaxTreeCommandHandler = async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (editor && editor.document.languageId === 'igorpro') {
+                try {
+                    const tree = parse(editor.document.getText());
+                    // const content = JSON.stringify(tree, null, 2);
+                    const content = JSON.stringify(tree, (key, value) =>  key === 'loc' ? undefined : value , 2);
+                    const document = await vscode.workspace.openTextDocument({ language: 'json', content: content });
+                    vscode.window.showTextDocument(document);
+                } catch (error) {
+                    if (error instanceof SyntaxError) {
+                        vscode.window.showErrorMessage('Failed in parsing the current editor contents.');
+                    } else {
+                        vscode.window.showErrorMessage('Unknown error.');
+                    }
+                }
+            }
+        };
+
         // a hander invoked when the document is changed
         const textDocumentDidChangeListener = (event: vscode.TextDocumentChangeEvent) => {
             const document = event.document;
@@ -166,6 +185,9 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         };
 
         context.subscriptions.push(
+            // register command handlers
+            vscode.commands.registerCommand('igorpro.inspectSyntaxTree', inspectSyntaxTreeCommandHandler),
+
             // register document-event listeners
             vscode.workspace.onDidChangeTextDocument(textDocumentDidChangeListener),
             vscode.workspace.onDidOpenTextDocument(textDocumentDidOpenListener),
