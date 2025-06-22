@@ -65,12 +65,22 @@
         "title": "Open Reference Manual",
         "category": "Igor Pro",
         "icon": "$(references)"
+      },
+      {
+        "command": "igorpro.inspectSyntaxTree",
+        "title": "Inspect Syntax Tree (Developer)",
+        "category": "Igor Pro",
+        "icon": "$(json)"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "igorpro.openReferenceManual"
+        },
+        {
+          "command": "igorpro.inspectSyntaxTree",
+          "when": "editorLangId == igorpro"
         }
       ]
     },
