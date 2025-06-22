@@ -48,8 +48,8 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
             return storage;
         });
 
-        // register command to show reference manual as a virtual document
-        const openReferenceManualCallback = async () => {
+        // callback function that shows reference manual as a virtual document
+        const openReferenceManualCommandHandler = async () => {
             const storage = await promisedStorage;
 
             const quickPickItems = [{ key: 'all', label: '$(references) all' }];
@@ -72,7 +72,7 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
 
         context.subscriptions.push(
             // register command handlers
-            vscode.commands.registerCommand('igorpro.openReferenceManual', openReferenceManualCallback),
+            vscode.commands.registerCommand('igorpro.openReferenceManual', openReferenceManualCommandHandler),
             // register providers
             vscode.workspace.registerTextDocumentContentProvider('igorpro', this),
         );
@@ -115,7 +115,15 @@ export class SystemProvider extends Provider implements vscode.TextDocumentConte
 
                     // add each item
                     for (const [key, item] of map.entries()) {
-                        mdText += `### ${key}\n\n`;
+                        // Keys in the database are lowercased for the sake of easy searching.
+                        // If the case-insensitive match of the key with its signature is succeeded,
+                        // use the value in the signature field.
+                        if (item.signature && item.signature.substring(0, key.length).toLowerCase() === key) {
+                            mdText += `### ${item.signature.substring(0, key.length)}\n\n`;
+                        } else {
+                            console.log('Mismatch between key and signature:', key, item.signature);
+                            mdText += `### ${key}\n\n`;
+                        }
                         mdText += getFormattedStringForItem(item);
                         if (item.overloads) {
                             for (const overload of item.overloads) {
