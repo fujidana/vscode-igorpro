@@ -4,6 +4,7 @@ import type { Location, LocationRange } from './grammar';
 export const SELECTOR = { language: 'igorpro' };
 // export const SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
 export const BUILTIN_URI = 'igorpro://system/built-in.md';
+export const AST_URI = 'igorpro://user/ast.json';
 
 
 export function convertPosition(position: Location): vscode.Position {

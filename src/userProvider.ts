@@ -41,7 +41,7 @@ async function findFilesInWorkspaces() {
  * Provider class for user's documents.
  * This class manages documents opened in editors and other documents in the current workspaces.
  */
-export class UserProvider extends Provider implements vscode.DefinitionProvider, vscode.DocumentSymbolProvider, vscode.WorkspaceSymbolProvider, vscode.DocumentDropEditProvider {
+export class UserProvider extends Provider implements vscode.DefinitionProvider, vscode.DocumentSymbolProvider, vscode.WorkspaceSymbolProvider, vscode.DocumentDropEditProvider, vscode.TextDocumentContentProvider {
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     // private readonly treeCollection: Map<string, tree.Program>;
 
@@ -54,19 +54,8 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         const inspectSyntaxTreeCommandHandler = async () => {
             const editor = vscode.window.activeTextEditor;
             if (editor && editor.document.languageId === 'igorpro') {
-                try {
-                    const tree = parse(editor.document.getText());
-                    // const content = JSON.stringify(tree, null, 2);
-                    const content = JSON.stringify(tree, (key, value) =>  key === 'loc' ? undefined : value , 2);
-                    const document = await vscode.workspace.openTextDocument({ language: 'json', content: content });
-                    vscode.window.showTextDocument(document);
-                } catch (error) {
-                    if (error instanceof SyntaxError) {
-                        vscode.window.showErrorMessage('Failed in parsing the current editor contents.');
-                    } else {
-                        vscode.window.showErrorMessage('Unknown error.');
-                    }
-                }
+                const uri = vscode.Uri.parse(lang.AST_URI).with({ query: editor.document.uri.toString() });
+                vscode.window.showTextDocument(uri, { preview: false });
             }
         };
 
@@ -209,6 +198,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             vscode.languages.registerDocumentSymbolProvider(lang.SELECTOR, this),
             vscode.languages.registerWorkspaceSymbolProvider(this),
             vscode.languages.registerDocumentDropEditProvider(lang.SELECTOR, this),
+            vscode.workspace.registerTextDocumentContentProvider('igorpro', this),
 
             // register diagnostic collection
             this.diagnosticCollection,
@@ -593,5 +583,30 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             }
         }
         return undefined;
+    }
+
+    /**
+     * required implementation of vscode.TextDocumentContentProvider
+     */
+    public provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
+        if (token.isCancellationRequested) { return; }
+
+        if (lang.AST_URI === uri.with({ query: '' }).toString()) {
+            const docUri = vscode.Uri.parse(uri.query);
+            const editor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === docUri.toString());
+            if (editor) {
+                try {
+                    const tree = parse(editor.document.getText());
+                    // const content = JSON.stringify(tree, null, 2);
+                    return JSON.stringify(tree, (key, value) => { return key === 'loc' ? undefined : value; }, 2);
+                } catch (error) {
+                    if (error instanceof SyntaxError) {
+                        vscode.window.showErrorMessage('Failed in parsing the editor contents.');
+                    } else {
+                        vscode.window.showErrorMessage('Unknown error.');
+                    }
+                }
+            }
+        }
     }
 }
