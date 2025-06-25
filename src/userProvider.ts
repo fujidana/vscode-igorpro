@@ -263,7 +263,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         const functionRefMap: lang.ReferenceMap = new Map();
 
         // const nestedNodes: string[] = [];
-        function makeRefItem(node: tree.TopLevelDeclaration): lang.ReferenceItem {
+        function makeRefItem(node: tree.ParentDeclaration): lang.ReferenceItem {
             return {
                 signature: node.id.name,
                 description: node.leadingComments ? node.leadingComments.map(comment => comment.value).join('\n') : undefined,
@@ -307,8 +307,8 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
                 const refItem = makeRefItem(node);
                 refItem.static = node.static;
                 constantRefMap.set(node.id.name.toLowerCase(), refItem);
-                // } else if (node.type === 'MenuDeclaration') {
-                //     menuRefMap.set(node.id.name.toLowerCase(), makeRefItem(node));
+            // } else if (node.type === 'MenuDeclaration') {
+            //     menuRefMap.set(node.id.name.toLowerCase(), makeRefItem(node));
             } else if (node.type === 'PictureDeclaration') {
                 const refItem = makeRefItem(node);
                 refItem.static = node.static;
@@ -462,7 +462,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         //     console.log(JSON.stringify(program.body));
         // }
 
-        function getDocumentSymbol(node: tree.TopLevelDeclaration | tree.SubmenuDeclaration, kind: vscode.SymbolKind) {
+        function getDocumentSymbol(node: tree.ParentDeclaration | tree.SubmenuDeclaration, kind: vscode.SymbolKind) {
             if (node.loc && node.id.loc) {
                 return new vscode.DocumentSymbol(node.id.name, '', kind, lang.convertRange(node.loc), lang.convertRange(node.id.loc));
             }
@@ -575,7 +575,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
                         } else if (pathComponents.includes('User Procedures')) {
                             return `#include "${lastPathComponent.substring(0, lastPathComponent.length - 4)}"\n`;
                         } else {
-                            // TODOS: This should return a full path. Currently only a file name.
+                            // TODO: This should return a full path. Currently only a file name.
                             return `#include "${lastPathComponent.substring(0, lastPathComponent.length - 4)}"\n`;
                         }
                     }

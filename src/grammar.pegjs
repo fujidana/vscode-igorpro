@@ -130,7 +130,7 @@ const operationRegExp = new RegExp(
   }
 }
 
-Program = body:TLStmt* {
+Program = body:ParentStmt* {
   return { type: 'Program', body, problems, };
 }
 
@@ -139,58 +139,57 @@ Program = body:TLStmt* {
 // _1 = $[ \t]+
 
 // whitespace, horizontal tab and line-continuation
-_0 = ([ \t] / '\\' Eol)* { return text(); }
-_1 = ([ \t] / '\\' Eol)+ { return text(); }
+_0 = ([ \t] / '\\' _Eol)* { return text(); }
+_1 = ([ \t] / '\\' _Eol)+ { return text(); }
 
-Comma = _0 ',' _0
-CommaWithLoc = _0 ',' _0 { return location(); }
+_Comma = _0 ',' _0
+_CommaWLoc = _0 ',' _0 { return location(); }
 
-// Eol: end of line.
-// Eof: enf of file.
+// _Eol: end of line.
+// _Eof: end of file.
 
-Eol = ('\n' / '\r\n' / '\r') {}
-Eof = !. {}
+_Eol = ('\n' / '\r\n' / '\r') {}
+_Eof = !. {}
 
 Comment 'line comment' =
   @(
-    '//' p:$(!Eol .)* { return { type: 'Line', value: p, loc: location(), }; }
-  ) (Eol / Eof)
+    '//' p:$(!_Eol .)* { return { type: 'Line', value: p, loc: location(), }; }
+  ) (_Eol / _Eof)
 
 // EolWWOComment: end of line with or without a trailing line comment.
 // EosWWOComment: end of statement with an optional trailing line comment.
 // EosLA: end of statement used in lookahead ('&' and '!').
-EolWWOComment = (';' _0)? p:(Comment / Eol / Eof) { return p ? p : undefined; }
+EolWWOComment = (';' _0)? p:(Comment / _Eol / _Eof) { return p ? p : undefined; }
 EosWWOComment = EolWWOComment / ';' { return undefined; }
-EosLA = Eol / Eof / Comment / ';' {}
+EosLA = _Eol / _Eof / Comment / ';' {}
 
 // commonly used statements
 
 // empty statement that ends with EOL. 
 EmptyEolStmt 'empty statement that ends with EOL' =
-  Eol { const loc = location(); loc.end = loc.start; return { type: 'EmptyStatement', loc, }; }
+  _Eol { const loc = location(); loc.end = loc.start; return { type: 'EmptyStatement', loc, }; }
 
 EmptyEofStmt 'empty statement that ends with EOF' =
-  Eof { return { type: 'EmptyStatement', loc: location(), }; }
+  _Eof { return { type: 'EmptyStatement', loc: location(), }; }
 
 EmptyAboveEndStmt 'empty statement above the end' =
-  &End { return { type: 'EmptyStatement', loc: location(), }; }
+  &_End { return { type: 'EmptyStatement', loc: location(), }; }
 
 // non-empty statement
 UnclassifiedEolStmt =
-  !End value:$(!EolWWOComment .)+ tComment:EolWWOComment {
+  !_End value:$(!EolWWOComment .)+ tComment:EolWWOComment {
     return { type: 'UnclassifiedStatement', value, loc: location(), trailingComment: tComment ?? undefined, };
   }
 
 // top-level statements
-
-TLStmt 'top-level statement' =
-  lComments:(_0 @Comment)+ tlStmt:(_0 @(TLDecl / EmptyEolStmt / EmptyEofStmt)) {
-    return leadingCommentsAddedNode(tlStmt, lComments);
+ParentStmt 'top-level statement' =
+  lComments:(_0 @Comment)+ parentStmt:(_0 @(DirectiveStmt / ParentDecl / EmptyEolStmt / EmptyEofStmt)) {
+    return leadingCommentsAddedNode(parentStmt, lComments);
   }
-  / _0 @(TLDecl / EmptyEolStmt) / _1 @EmptyEofStmt
+  / _0 @(DirectiveStmt / ParentDecl / EmptyEolStmt) / _1 @EmptyEofStmt
 
 // non-empty statement
-InvalidTLStmt =
+InvalidParentStmt =
   stmt:UnclassifiedEolStmt {
     addProblem('Invalid as a top-level statement.', stmt.loc, DiagnosticSeverity.Warning);
     return stmt;
@@ -198,37 +197,78 @@ InvalidTLStmt =
 
 
 // end of block
-End =
+_End =
   // p:$('End'i ('Macro'i / 'Structure'i)?) _0 &EosLA { return [p, location()]; }
   p:$('End'i ('Macro'i / 'Structure'i / 'if'i / 'switch'i / 'try'i / 'for'i)?/ 'elseif'i _0 '(' (!EosLA .)*  / 'else'i / 'case'i _1 (!EosLA .)*) _0 &EosLA { return [p, location()]; } / 'default'i / 'catch'i / 'while'i _0 '(' (!EosLA .)*
   // p:$("End"i [a-zA-Z0-9_]*) _0 &EosLA { return [p, location()]; }  
 
 // EndStmt =
-//   p:End {
+//   p:_End {
 //     return { type: 'UnclassifiedStatement', value: p, };
 //   }
 
-Directive 'directive' =
-  // TODOS: parse values
-  '#' id:StdId remain:$(!EolWWOComment .)* tComment:EolWWOComment {
-    return { type: 'Directive', id: id, trailingComment: tComment, };
+DirectiveStmt 'directive' =
+  // TODO: parse values
+  '#' directive:_StdName _0 expression:$(!EolWWOComment .)* trailingComment:EolWWOComment {
+    return { type: 'DirectiveStatement', directive, expression, trailingComment, };
   }
 
-// top-level declarations and compiler derivatives
-TLDecl 'top-level declaration' =
-  ConstDecl / MenuDecl / PictDecl / StructDecl / MacroDecl / FuncDecl / Directive / InvalidTLStmt
+// top-level declarations. This does not include compiler derivatives.
+ParentDecl 'top-level declaration' =
+  ConstDecl / MenuDecl / PictDecl / StructDecl / MacroDecl / FuncDecl / InvalidParentStmt
 
 ConstDecl 'constant declaration' =
-  // TODOS: parse a value
-  or:('Override'i _1)? s0:('Static'i _1)? kind:$('Str'i ? 'Constant'i) flag:(_0 '/C'i)? _1 id:StdId _0 '=' _0 value:$(!EolWWOComment .)+ tComment:EolWWOComment {
-    return { type: 'ConstantDeclaration', id: id, override: !!or, static: !!s0, kind: kind.toLowerCase() === 'constant' ? 'number' : 'string', value: value, trailingComment: tComment, loc: location(), };
+  // TODO: parse a value
+  or:('Override'i _1)? s0:('Static'i _1)? kind:$('Str'i ? 'Constant'i) flag:(_0 @FlagWOValue)? _1 id:StdId _0 '=' _0 rValue:_ConstDeclValue trailingComment:EolWWOComment {
+    let kindInDecl;
+    if (kind.toLowerCase() === 'strconstant') {
+      if (flag) {
+        addProblem('Flag not allowed in StrConstant declaration.', location());
+      }
+      kindInDecl = 'string';
+    } else {
+      if (flag) {
+        if (flag.key.toUpperCase() === 'C') {
+          kindInDecl = 'complex';
+        } else {
+          addProblem(`Unknown flag "/${flag.key}" in Constant declaration.`, flag.loc);
+          kindInDecl = 'number';
+        }
+      } else {
+        kindInDecl = 'number';
+      }
+    }
+    if (rValue.kind !== kindInDecl) {
+      addProblem(`Invalid value format: declared as ${kindInDecl} but assigned ${rValue.kind}.`, rValue.loc);
+    }
+    return { type: 'ConstantDeclaration', id, override: !!or, static: !!s0, kind: kindInDecl, value: rValue.value, raw: rValue.raw, trailingComment, loc: location() };
   }
+
+_ConstDeclValue =
+  s:_StrRaw _0 &EolWWOComment { return { kind: 'string', value: s, raw: text(), loc: location() }; } /
+  n:_SignedNumLiteralRaw _0 &EolWWOComment { return { kind: 'number', value: n, raw: text(), loc: location() }; } /
+  '(' _0 n1:_SignedNumLiteralRaw _0 ',' _0 n2:_SignedNumLiteralRaw _0 ')' _0 &EolWWOComment {
+    return { kind: 'complex', value: [n1, n2], raw: text(), loc: location() };
+  } /
+  $(!EolWWOComment .)+ { return { kind: 'unknown', value: null, raw: text(), loc: location() }; }
 
 MenuDecl 'menu declaration' =
   declNode:(
-    'Menu'i _1 id:StringId _0 options:(',' _0 p:StdName _0 { return p; } )* iComment:EolWWOComment body:MenuStmt* _0 end:End {
+    'Menu'i _1 id:StrId _0 options:(',' _0 @StdId _0 )* iComment:EolWWOComment body:InMenuStmt* _0 end:_End {
       if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
-      return { type: 'MenuDeclaration', id, options, body, loc: location(), interceptingComment: iComment, };
+      const node = { type: 'MenuDeclaration', id, body, interceptingComment: iComment, loc: location(), };
+      options.forEach((option) => {
+        if (option.name.toLowerCase() === 'dynamic') {
+          node.dynamic = true;
+        } else if (option.name.toLowerCase() === 'hideable') {
+          node.hideable = true;
+        } else if (option.name.toLowerCase() === 'contextualmenu') {
+          node.contextualMenu = true;
+        } else {
+          addProblem(`Unknown menu option "${option.name}".`, option.loc);
+        }
+      });
+      return node;
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(declNode, tComment);
@@ -236,7 +276,7 @@ MenuDecl 'menu declaration' =
 
 PictDecl 'picture declaration' =
   declNode:(
-    s0:('Static'i _1)? 'Picture'i _1 id:StdId _0 iComment:EolWWOComment body:PictStmt* _0 end:End {
+    s0:('Static'i _1)? 'Picture'i _1 id:StdId _0 iComment:EolWWOComment body:InPictStmt* _0 end:_End {
       if (body) {
         body = body.filter((stmt) => stmt.type === 'Ascii85Block');
       }
@@ -245,7 +285,7 @@ PictDecl 'picture declaration' =
 
       if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
 
-      return { type: 'PictureDeclaration', id: id, static: !!s0, body: body, loc: location(), interceptingComment: iComment, };
+      return { type: 'PictureDeclaration', id, static: !!s0, body, interceptingComment: iComment, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(declNode, tComment);
@@ -253,9 +293,9 @@ PictDecl 'picture declaration' =
  
 StructDecl 'structure declaration' =
   declNode:(
-    s0:('Static'i _1)? "Structure"i _1 id:StdId _0 iComment:EolWWOComment body:StructStmt* _0 end:End {
+    s0:('Static'i _1)? 'Structure'i _1 id:StdId _0 iComment:EolWWOComment body:InStructStmt* _0 end:_End {
       if (end[0].toLowerCase() !== 'endstructure') { error(`Expected "EndStructure" but "${end[0]}" found.`, end[1]); }
-      return { type: 'StructureDeclaration', id: id, static: !!s0, body: body, loc: location(), interceptingComment: iComment, };
+      return { type: 'StructureDeclaration', id, static: !!s0, body, interceptingComment: iComment, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(declNode, tComment);
@@ -263,34 +303,34 @@ StructDecl 'structure declaration' =
 
 MacroDecl 'macro declaration' =
   declNode:(
-    kind:('Window'i / 'Macro'i / 'Proc'i) _1 id:StdId _0 '(' _0 params:VariableList _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    kind:('Window'i / 'Macro'i / 'Proc'i) _1 id:StdId _0 '(' _0 params:VariableList _0 ')' _0 subtype:(':' _0 @_StdName _0)? iComment:EolWWOComment body:InFuncStmt* _0 end:_End {
       if (end[0].toLowerCase() !== 'end' && end[0].toLowerCase() !== 'endmacro') { error(`Expected "End" or "EndMacro" but "${end[0]}" found.`, end[1]); }
-      return { type: 'MacroDeclaration', id: id, kind: kind.toLowerCase(), params: params, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
+      return { type: 'MacroDeclaration', id, kind: kind.toLowerCase(), params, body, subtype, interceptingComment: iComment, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(declNode, tComment);
   }
 
 FuncDecl 'function declaration' =
-  // TODOS: parse parameters
+  // TODO: parse parameters
   declNode:(
-    // TODOS: `ret` is not parsed.
-    ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i !Word flag:(_0 @Flag)* _0 multiReturn:(
+    // TODO: `ret` is not parsed.
+    ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i !_Word flag:(_0 @Flag)* _0 multiReturn:(
       _0 '[' _0 @VariableList _0 ']' _0
     )? id:StdId _0 '(' _0 reqParams:VariableList _0 optParams:(
       '[' _0 params:VariableList _0 ']' { return { params, loc: location(), }; }
-    )? _0 ')' _0 subtype:(':' _0 @StdName _0)? iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    )? _0 ')' _0 subtype:(':' _0 @_StdName _0)? iComment:EolWWOComment body:InFuncStmt* _0 end:_End {
       // check 'end' appears or not.
       // Unless I misread the official manual, `End` is the only closing word 
       // of `Funciton` definition.
       // However, Use of `EndMacro` for `Function` can be found in several IPF files
-      // WaveMetrics bundled with Igor Pro.
+      // WaveMetrics bundled with Igor Pro 9.
       // I think it is mistaken usage.
       // If `EndMacro` appears, the parser reports a warning-level problem but 
       // do not stop parsing.
       // 
       // To the contrary, it is clearly written that a `Macro` definition 
-      // ends with either `End` or `EndMacro`).
+      // ends with either `End` or `EndMacro`.
       if (end[0].toLowerCase() === 'endmacro') {
         addProblem(`Expected "End" but "${end[0]}" found.`, end[1], DiagnosticSeverity.Warning);
       } else if (end[0].toLowerCase() !== 'end') {
@@ -319,7 +359,7 @@ FuncDecl 'function declaration' =
           optParams.params.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
         }
       } else {
-        // In cae one or more required parameters exist
+        // In case one or more required parameters exist
         if (optParams === null) {
           // If no brackets exists, simply check an empty element and report it.
           reqParams.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
@@ -338,7 +378,7 @@ FuncDecl 'function declaration' =
           }
         }
       }
-      return { type: 'FunctionDeclaration', id: id, threadsafe: !!ts, override: !!or, static: !!s0, params: reqParams, optParams: optParams?.params, return: multiReturn, body: body, subtype: subtype, loc: location(), interceptingComment: iComment, };
+      return { type: 'FunctionDeclaration', id, threadsafe: !!ts, override: !!or, static: !!s0, params: reqParams, optParams: optParams?.params, return: multiReturn, body, subtype, interceptingComment: iComment, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(declNode, tComment);
@@ -346,17 +386,20 @@ FuncDecl 'function declaration' =
 
 // body of top-level statements
 
-MenuStmt 'statement in menu block' =
-  lComments:(_0 @Comment)+ menuStmt:(_0 @(SubmenuDecl / MenuItemStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt)) {
-    return leadingCommentsAddedNode(menuStmt, lComments);
+InMenuStmt 'statement in menu block' =
+  lComments:(_0 @Comment)+ inMenuStmt:(_0 @(SubmenuDecl / MenuItemStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt)) {
+    return leadingCommentsAddedNode(inMenuStmt, lComments);
   }
   / _0 @(SubmenuDecl / MenuItemStmt / EmptyEolStmt) / _1 @EmptyEofStmt
 
-PictStmt 'statement in picture block' =
+InPictStmt 'statement in picture block' =
   lComments:(_0 @Comment)+ pictStmt:(_0 @(Ascii85Block / InvalidPictStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt)) {
     return leadingCommentsAddedNode(pictStmt, lComments);
   }
-  / _0 @(Ascii85Block / EmptyEolStmt / InvalidPictStmt / EmptyEolStmt) / _1 @EmptyEofStmt
+  /
+  _0 @(Ascii85Block / EmptyEolStmt / InvalidPictStmt / EmptyEolStmt)
+  /
+  _1 @EmptyEofStmt
 
 InvalidPictStmt =
   stmt:UnclassifiedEolStmt {
@@ -364,14 +407,14 @@ InvalidPictStmt =
     return stmt;
   }
 
-StructStmt 'statement in structure block' =
+InStructStmt 'statement in structure block' =
   lComments:(_0 @Comment)+ structStmt:(
     _0 @(StructMemberDecl / InvalidStructStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt)
   ) {
     return leadingCommentsAddedNode(structStmt, lComments);
   }
   /
-  _0 @(StructMemberDecl / InvalidStructStmt /EmptyEolStmt)
+  _0 @(StructMemberDecl / InvalidStructStmt / EmptyEolStmt)
   /
   _1 @EmptyEofStmt
 
@@ -381,16 +424,16 @@ InvalidStructStmt =
     return stmt;
   }
 
-FuncStmt 'statement in macro and function' =
+InFuncStmt 'statement in macro and function' =
   lComments:(_0 @Comment)+ funcStmt:(
-    _0 @(Directive / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / MultCmndStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt / InvalidFuncStmt)
+    _0 @(DirectiveStmt / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / OneLineCmndStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt / InvalidFuncStmt)
     // _0 @(UnclassifiedEolStmt / EmptyEolStmt / EmptyEofStmt)
   ) {
     return leadingCommentsAddedNode(funcStmt, lComments);
   }
   /
   // _0 @(UnclassifiedEolStmt / EmptyEolStmt)
-  _0 @(Directive / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / MultCmndStmt / EmptyEolStmt / InvalidFuncStmt)
+  _0 @(DirectiveStmt / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / OneLineCmndStmt / EmptyEolStmt / InvalidFuncStmt)
   /
   _1 @EmptyEofStmt
 
@@ -404,25 +447,27 @@ InvalidFuncStmt =
 
 SubmenuDecl 'submenu declaration' =
   declNode:(
-    'Submenu'i _1 id:StringId _0 iComment:EolWWOComment body:MenuStmt* _0 end:End {
+    'Submenu'i _1 id:StrId _0 iComment:EolWWOComment body:InMenuStmt* _0 end:_End {
       if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
-      return { type: 'SubmenuDeclaration', id: id, body: body, loc: location(), interceptingComment: iComment, };
+      return { type: 'SubmenuDeclaration', id, body, interceptingComment: iComment, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(declNode, tComment);
   }
 
+// TODO: parse menu item into { title, flags, execution }.
 MenuItemStmt 'menu item statement' =
-  !End p:$(!EolWWOComment .)+ tComment:EolWWOComment {
-    return { type: 'MenuItemStatement', value: p, loc: location(), trailingComment: (tComment ? tComment : undefined), };
+  !_End raw:$(!EolWWOComment .)+ tComment:EolWWOComment {
+    const node = { type: 'MenuItemStatement', raw, loc: location(), };
+    return trailingCommentAddedNode(node, tComment);
   }
 
 // statements in Picture declarations
 
 Ascii85Block 'ASCII85 block' =
   blockNode:(
-    'ASCII85Begin'i _0 iComment:EolWWOComment lines:(_0 !('ASCII85End'i) @$[^ \r\n]+ _0 Eol)* _0 'ASCII85End' {
-      return { type: 'Ascii85Block', data: lines, loc: location(), interceptingComment: iComment, };
+    'ASCII85Begin'i _0 iComment:EolWWOComment raw:(_0 !('ASCII85End'i) @$[^ \r\n]+ _0 _Eol)* _0 'ASCII85End' {
+      return { type: 'Ascii85Block', raw, interceptingComment: iComment, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(blockNode, tComment);
@@ -430,7 +475,7 @@ Ascii85Block 'ASCII85 block' =
 
 // statements in Structure declarations
 
-// TODOS: Array element is not checked. It may be a literal number, constant, or mathematical operation of them.
+// TODO: Array element is not checked. It may be a literal number, constant, or mathematical operation of them.
 StructMemberDecl 'structure member declaration'=
   stmtNode:(
     node0:(
@@ -438,14 +483,14 @@ StructMemberDecl 'structure member declaration'=
         return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), };
       }
       / 
-      kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) flag:(_0 '/' @[a-zA-Z]+)* {
-        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), flag: flag, };
+      kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) flags:(_0 @FlagWOValue)* {
+        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), flags, loc: location(), };
       }
       /
-      kind:$('FUNCREF'i / 'STRUCT'i) flag:(_0 '/' @[a-zA-Z]+)* _1 proto:StdName {
-        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), proto: proto, };
+      kind:$('FUNCREF'i / 'STRUCT'i) _1 proto:_StdName {
+        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), proto, loc: location(), };
       }
-    ) _1 declarations:StructMemberDeclr|1.., Comma| {
+    ) _1 declarations:StructMemberDeclr|1.., _Comma| {
         node0.declarations = declarations;
         node0.loc = location();
         return node0;
@@ -456,7 +501,7 @@ StructMemberDecl 'structure member declaration'=
 
 StructMemberDeclr 'structure member declarator' =
   id:(StdId / LiberalId) size:(_0 '[' _0 @$(!EosLA [^\]])* _0 ']')? {
-    return { type: 'StructureMemberDeclarator', id: id, size: size ? size : undefined, loc: location(), };
+    return { type: 'StructureMemberDeclarator', id, size: size ? size : undefined, loc: location(), };
   }
 
 // flow control
@@ -464,22 +509,22 @@ StructMemberDeclr 'structure member declarator' =
 IfStmt 'if statement' =
   node:(
     ifCase:(
-      'if'i _0 '(' _0 test0:BaseExpr _0 ')' _0 iComment0:EolWWOComment consequent0:FuncStmt* {
+      'if'i _0 '(' _0 test0:BaseExpr _0 ')' _0 iComment0:EolWWOComment consequent0:InFuncStmt* {
         return { type: 'IfCase', test: test0, consequent: consequent0, interceptingComment: iComment0, loc: location(), };
       }
     ) elseifCases:(
-      _0 'elseif'i _0 '(' _0 testI:BaseExpr _0 ')' _0 iCommentI:EolWWOComment consequentI:FuncStmt* {
+      _0 'elseif'i _0 '(' _0 testI:BaseExpr _0 ')' _0 iCommentI:EolWWOComment consequentI:InFuncStmt* {
         return { type: 'IfCase', test: testI, consequent: consequentI, interceptingComment: iCommentI, loc: location(), };
       }
     )* elseCase:(
-      _0 'else'i _0 iCommentN:EolWWOComment consequentN:FuncStmt* {
+      _0 'else'i _0 iCommentN:EolWWOComment consequentN:InFuncStmt* {
         return { type: 'IfCase', consequent: consequentN, interceptingComment: iCommentN, loc: location(), };
       }
-    )? _0 end:End {
+    )? _0 end:_End {
       if (end[0].toLowerCase() !== 'endif') { error(`Expected "endif" but "${end[0]}" found.`, end[1]); }
 
       const cases = elseCase ? [ifCase].concat(elseifCases, [elseCase]) : [ifCase].concat(elseifCases);
-      return { type: 'IfStatement', cases: cases, loc: location(), };
+      return { type: 'IfStatement', cases, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(node, tComment);
@@ -487,22 +532,22 @@ IfStmt 'if statement' =
 
 SwitchStmt 'switch statement' =
   node:(
-    kind:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment stmtsBeforeCase:FuncStmt* cases:(
-      _0 'case'i _1 test:(StringLiteral / SignedNumericLiteral / StdId) ':' _0 iCommentI:EolWWOComment consequent:FuncStmt* {
+    stmtName:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment stmtsBeforeCase:InFuncStmt* cases:(
+      _0 'case'i _1 test:(StrLiteral / SignedNumLiteral / StdId) ':' _0 iCommentI:EolWWOComment consequent:InFuncStmt* {
         return { type: 'SwitchCase', test, consequent, interceptingComment: iCommentI, loc: location(), };
       }
       /
-      _0 'default'i _0 ':'_0 iCommentI:EolWWOComment consequent:FuncStmt* {
+      _0 'default'i _0 ':'_0 iCommentI:EolWWOComment consequent:InFuncStmt* {
         return { type: 'SwitchCase', test: null, consequent, interceptingComment: iCommentI, loc: location(), };
       }
-    )* _0 end:End {
+    )* _0 end:_End {
       if (end[0].toLowerCase() !== 'endswitch') { error(`Expected "endswitch" but "${end[0]}" found.`, end[1]); }
       if (stmtsBeforeCase) {
         stmtsBeforeCase.forEach(stmt => { if (stmt.type !== 'EmptyStatement') { addProblem('Statement not allowed here.', stmt.loc); } });
       }
 
-      const kind2 = kind.toLowerCase() === 'strswitch' ? 'string' : 'number';
-      return { type: 'SwitchStatement', discriminant: discriminant, kind: kind2, cases, interceptingComment: iComment, loc: location(), };
+      const kind = stmtName.toLowerCase() === 'strswitch' ? 'string' : 'number';
+      return { type: 'SwitchStatement', discriminant, kind, cases, interceptingComment: iComment, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(node, tComment);
@@ -510,9 +555,9 @@ SwitchStmt 'switch statement' =
 
 TryStmt 'try statement' =
   node:(
-    'try'i _0 iComment0:EolWWOComment block:FuncStmt* _0 'catch'i _0 iComment1:EolWWOComment handler:FuncStmt* _0 end:End {
+    'try'i _0 iComment0:EolWWOComment block:InFuncStmt* _0 'catch'i _0 iComment1:EolWWOComment handler:InFuncStmt* _0 end:_End {
       if (end[0].toLowerCase() !== 'endtry') { error(`Expected "endtry" but "${end[0]}" found.`, end[1]); }
-      return { type: 'TryStatement', block: block, handler: handler, interceptingComment: iComment1, loc: location(), };
+      return { type: 'TryStatement', block, handler, interceptingComment: iComment1, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
     return trailingCommentAddedNode(node, tComment);
@@ -520,7 +565,7 @@ TryStmt 'try statement' =
 
 DoWhileStmt 'do-while statement' =
   node:(
-    'do'i _0 iComment:EolWWOComment body:FuncStmt* _0 'while'i _0 '(' test:$(!EolWWOComment [^)])* ')' {
+    'do'i _0 iComment:EolWWOComment body:InFuncStmt* _0 'while'i _0 '(' test:$(!EolWWOComment [^)])* ')' {
       return { type: 'DoWhileStatement', body: body, test: test, interceptingComment: iComment, loc: location(), };
     }
   ) _0 tComment:EolWWOComment {
@@ -529,8 +574,8 @@ DoWhileStmt 'do-while statement' =
 
 ForStmt 'for-loop' =
   node:(
-    // TODOS: not strict rule
-    'for'i _0 '(' _0 init:CommaSepAssignUpdateExpr? _0 ';' _0 test:BaseExpr? _0 ';' _0 update:CommaSepAssignUpdateExpr? _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    // TODO: not strict rule
+    'for'i _0 '(' _0 init:AssignUpdateSeqExpr? _0 ';' _0 test:BaseExpr? _0 ';' _0 update:AssignUpdateSeqExpr? _0 ')' _0 iComment:EolWWOComment body:InFuncStmt* _0 end:_End {
       if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
       return { type: 'ForStatement', init, test, update, body, interceptingComment: iComment, loc: location(), }; 
     }
@@ -540,8 +585,8 @@ ForStmt 'for-loop' =
 
 ForInStmt 'range-based for-loop' =
   node:(
-    // TODOS: not strict rule
-    'for'i _0 '(' _0 left:VariableWWOType? _0 ':' _0 right:BaseExpr _0 ')' _0 iComment:EolWWOComment body:FuncStmt* _0 end:End {
+    // TODO: not strict rule
+    'for'i _0 '(' _0 left:VariableWWOType? _0 ':' _0 right:BaseExpr _0 ')' _0 iComment:EolWWOComment body:InFuncStmt* _0 end:_End {
       if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
       return { type: 'ForInStatement', left: left, right: right, interceptingComment: iComment, loc: location(), }; 
     }
@@ -549,22 +594,24 @@ ForInStmt 'range-based for-loop' =
     return trailingCommentAddedNode(node, tComment);
   }
 
-CommaSepAssignUpdateExpr 'comma-separated assignment or update expressions' =
-  // TODOS: currently the returned value is not an AST object.
-  (AssignExpr / UpdateExpr)|.., Comma|
+AssignUpdateSeqExpr 'comma-separated assignment or update expressions' =
+  // TODO: currently the returned value is not an AST object.
+  expressions:(AssignExpr / UpdateExpr)|.., _Comma| {
+    return { type: 'SequenceExpression', expressions, loc: location(), };
+  }
 
 VariableWWOType 'variable with or without type' =
-  // TODOS: not strict rule
-  kind:$('FUNCREF'i / 'STRUCT'i) _0 proto:StdName _0 declarator:Declarator {
-    return { type: 'VariableDeclaration', kind: kind.toLowerCase(), proto, declarations: [declarator] };
+  // TODO: not strict rule
+  kind:$('FUNCREF'i / 'STRUCT'i) _0 proto:_StdName _0 declarator:Declarator {
+    return { type: 'VariableDeclaration', kind: kind.toLowerCase(), proto, declarations: [declarator], loc: location(), };
   }
   /
   kind:$('u'i? ('char'i / 'int'i ('16' / '32' / '64')?) / 'float'i / 'double'i) _1 declarator:Declarator {
-    return { type: 'VariableDeclaration', kind: kind.toLowerCase(), declarations: [declarator] };
+    return { type: 'VariableDeclaration', kind: kind.toLowerCase(), declarations: [declarator], loc: location(), };
   }
   /
-  kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) option:(_0 '/' @$[a-zA-Z0-9]+)* _1 declarator:Declarator {
-    return { type: 'VariableDeclaration', kind: kind.toLowerCase(), option, declarations: [declarator] };
+  kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) flags:(_0 @FlagWOValue)* _1 declarator:Declarator {
+    return { type: 'VariableDeclaration', kind: kind.toLowerCase(), flags, declarations: [declarator], loc: location(), };
   }
   /
   StdId
@@ -579,7 +626,7 @@ VariableWWOType 'variable with or without type' =
  * 'a,b,`: 3 elements including 1 empty element
  */
 VariableList =
-  heads:(VariableWWOType? CommaWithLoc)|..| tail:VariableWWOType? {
+  heads:(VariableWWOType? _CommaWLoc)|..| tail:VariableWWOType? {
     const nodesList = [];
     for (let i = 0; i < heads.length; i++) {
       const [node, commaLoc] = heads[i];
@@ -607,24 +654,23 @@ ContinueStmt 'continue statement' =
     return trailingCommentAddedNode(node, tComment);
   }
 
-MultCmndStmt 'multiple commands statement' =
-  !End node:(
-    args:(
+// a command or multiple commands in one line.
+OneLineCmndStmt 'statement for a command or multiple commands' =
+  !_End node:(
+    body:(
       ';' { return { type: 'EmptyStatement', loc: location(), }; }
       /
-      @(
-        ReturnStmt / DeclStmt / AssignStmt / OpStmt / @UpdateExpr _0 &(Eol / ';' / '//') / @CallExpr _0 &(Eol / ';' / '//')
-      ) (_0 ';')?
+      @(ReturnStmt / VarDeclStmt / AssignExprStmt / OpStmt / ExprStmt) (_0 ';')?
     )|1.., _0| {
-      // return (args.length === 1) ? args[0] : { type: 'MultipleStatement', args, loc: location(), };
-      if (args.length === 1) {
-        if (args[0].type === 'EmptyStatement') { addProblem('Empty statement.', args[0].loc, DiagnosticSeverity.Information); }
-        return args[0];
+      // return (args.length === 1) ? args[0] : { type: 'BundledStatement', args, loc: location(), };
+      if (body.length === 1) {
+        if (body[0].type === 'EmptyStatement') { addProblem('Empty statement.', body[0].loc, DiagnosticSeverity.Information); }
+        return body[0];
       } else {
-        args.forEach(arg => {
-          if (arg.type === 'EmptyStatement') { addProblem('Empty statement.', arg.loc, DiagnosticSeverity.Information); }
+        body.forEach(node => {
+          if (node.type === 'EmptyStatement') { addProblem('Empty statement.', node.loc, DiagnosticSeverity.Information); }
         });
-        return { type: 'MultipleStatement', args, loc: location(), };
+        return { type: 'BundledStatement', body, loc: location(), };
       }
     }
   ) _0 tComment:EolWWOComment {
@@ -633,32 +679,32 @@ MultCmndStmt 'multiple commands statement' =
 
 // > DisplayHelpTopic "Multiple Return Syntax"
 ReturnStmt 'return statement' =
-  'Return'i args:(_0 @(
+  'return'i args:(_0 @(
     BaseExpr
     /
-    '[' _0 elements:BaseExpr|.., Comma| exComma:CommaWithLoc? _0 ']' {
+    '[' _0 elements:BaseExpr|.., _Comma| exComma:_CommaWLoc? _0 ']' {
       if (exComma) { addProblem('Trailing comma not allowed.', exComma); };
-      return { type: 'ArrayExpression', elements, };
+      return { type: 'ArrayExpression', elements, kind: 'bracket', loc: location(), };
     } 
-  )? _0 &(Eol / ';' / '//')
+  )? _0 &(_Eol / ';' / '//')
 ) {
-    return { type: 'ReturnStatement', arguments: args, };
+    return { type: 'ReturnStatement', argument: args, loc: location(), };
   }
 
-DeclStmt 'declaration statement' =
+VarDeclStmt 'declaration statement' =
   node0:(
     kind:$('u'i? ('char'i / 'int'i ('16' / '32' / '64')?) / 'float'i / 'double'i) {
       return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location(), };
     }
-    / 
+    /
     kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) flags:(_0 @Flag)* {
-      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location(), flags, };
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), flags, loc: location(), };
     }
     /
-    kind:$('FUNCREF'i / 'STRUCT'i) flags:(_0 @Flag)* _1 proto:StdName {
-      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location(), proto, flags, };
+    kind:$('FUNCREF'i / 'STRUCT'i) flags:(_0 @Flag)* _1 proto:_StdName {
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location(), proto, flags, loc: location(), };
     }
-  ) _1 elements:DeclaratorWWOInit|1.., Comma| exComma:CommaWithLoc? _0 &(Eol / ';' / '//') {
+  ) _1 elements:DeclaratorWWOInit|1.., _Comma| exComma:_CommaWLoc? _0 &(_Eol / ';' / '//') {
     if (exComma) { addProblem('Trailing comma not allowed.', exComma); };
     if (/^(?:char|uchar|int(?:16|32)|uint(?:16|32)?)$/.test(node0.kind)) {
       addProblem('This type is available only for structure, not for function.', node0.loc);
@@ -669,35 +715,33 @@ DeclStmt 'declaration statement' =
   }
 
 Declarator 'variable delarator' =
-  pbr:(@'&' _0)? name:StdName {
-    return { type: 'VariableDeclarator', id: name, init: null, pbr: pbr === '&', };
+  pbr:(@'&' _0)? id:StdId {
+    return { type: 'VariableDeclarator', id, init: null, pbr: !!pbr, loc: location(), };
   }
 
 DeclaratorWWOInit 'variable delarator with or without initialization' =
-  '&' name:StdName { return { type: 'VariableDeclarator', id: name, init: null, pbr: true, }; }
+  '&' id:StdId { return { type: 'VariableDeclarator', id, init: null, pbr: true, loc: location(), }; }
   /
-  name:PathExpr init:(_0 '=' _0 @BaseExpr)? {
-    return { type: 'VariableDeclarator', id: name, init, pbr: false, };
+  id:PathExpr init:(_0 '=' _0 @BaseExpr)? {
+    return { type: 'VariableDeclarator', id, init, pbr: false, loc: location(), };
   }
 
-AssignStmt 'assignment statement' =
+AssignExprStmt 'expression statement for assignment' =
   // Assignment statement does not exist in the original AST.
-  multiThread:('MultiThread'i (_0 @Flag)* _1)?
-  left:LValue _0 op:$('=' !'=' / '+=' / '-=' / '*=' / '/=' / ':=') _0 right:(BraceListExpr / BaseExpr) _0 &(Eol / ';' / '//') {
-    return { type: 'AssignmentStatement', op, left, right, multiThread: !!multiThread, };
+  multiThread:('MultiThread'i flags:(_0 @Flag)* _1 { return { flags }; } )? expression:AssignExpr {
+    const node = { type: 'ExpressionStatement', expression, loc: location(), };
+    if (multiThread) {
+      node.multiThread = true;
+      node.flags = multiThread.flags;
+    }
+    return node;
   }
-
-AssignExpr 'assignment expression' =
-  left:LValue _0 operator:$('=' !'=' / '+=' / '-=' / '*=' / '/=' / ':=') _0 right:(BraceListExpr / BaseExpr) {
-    return { type: 'AssignmentExpression', operator, left, right, multiThread: false, };
-  }
-
 
 OpStmt 'operation statement' =
   name:$([a-zA-Z][a-zA-Z0-9]*) &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
-    Flag+ / Word+ / StringLiteral / _1 / !(Eol / ';' / '//') .)* {
-    // TODOS: object properties
-    return { type: 'ExOperationStatement', name, args, };
+    Flag+ / _Word+ / StrLiteral / _1 / !(_Eol / ';' / '//') .)* {
+    // TODO: object properties
+    return { type: 'OperationStatement', name, flags, args, loc: location(), };
   }
   // name:$([a-zA-Z][a-zA-Z0-9]*) &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
   //   (_0 ',' _0 / _1) @(
@@ -710,32 +754,37 @@ OpStmt 'operation statement' =
   //   /
   //   (_0 @Flag)+
   // )* _0 &(Eol / ';' / '//') {
-  //   // TODOS: object properties
-  //   return { type: 'ExOperationStatement', name, flags, args, };
+  //   // TODO: object properties
+  //   return { type: 'OperationStatement', name, flags, args, };
   // }
+
+ExprStmt 'expression statement' =
+  expression:(UpdateExpr / CallExpr) _0 &(_Eol / ';' / '//') {
+    return { type: 'ExpressionStatement', expression, loc: location(), };
+  }
 
 // list of values surrounded with braces ('{}')
 BraceListExpr 'list of values' =
-  '{' _0 elements:(BraceListExpr / BaseExpr)|1.., Comma| _0 '}' {
-    return { type: 'ArrayExpression', elements, exkind: 0, };
+  '{' _0 elements:(BraceListExpr / BaseExpr)|1.., _Comma| _0 '}' {
+    return { type: 'ArrayExpression', elements, kind: 'brace', loc: location(), };
   }
 
 // list of values surrounded with parentheses ('()')
 ParenListExpr 'list of values' =
-  '(' _0 elements:(BraceListExpr / BaseExpr)|1.., Comma| _0 ')' {
-    return { type: 'ArrayExpression', elements, exkind: 1, };
+  '(' _0 elements:(BraceListExpr / BaseExpr)|1.., _Comma| _0 ')' {
+    return { type: 'ArrayExpression', elements, kind: 'parenthesis', loc: location(), };
   }
 
 // list of values surrounded with brackets ('[]')
-BracketListExpr '' =
-  '[' _0 elements:(BraceListExpr / BaseExpr / '')|.., Comma| _0 ']' {
-    return { type: 'ArrayExpression', elements, exkind: 2, };
+BracketListExpr 'list of values' =
+  '[' _0 elements:(BraceListExpr / BaseExpr / '')|.., _Comma| _0 ']' {
+    return { type: 'ArrayExpression', elements, kind: 'bracket', loc: location(), };
   }
 
 //
 RefExpr 'reference expression' =
   '$' _0 arg:Factor {
-    return { type: 'ReferenceExpression', arg: arg, };
+    return { type: 'ReferenceExpression', argument: arg, loc: location(), };
   }
 
 BaseExpr =
@@ -748,9 +797,9 @@ Order8 =
   head:Order7 tails:(_0 ('&&' / '||') _0 Order7 / _0 '?' _0 Order7 _0 ':' _0 Order7)* {
     return tails.reduce((accumulator, currentValue) => {
       if (currentValue[1] === '&&' || currentValue[1] === '||') {
-        return { type: 'BinaryExpression', op: currentValue[1], left: accumulator, right: currentValue[3], };
+        return { type: 'BinaryExpression', operator: currentValue[1], left: accumulator, right: currentValue[3], loc: location(), };
       } else {
-        return { type: 'ConditionalExpression', test: accumulator, consequent: currentValue[3], alternative: currentValue[7], };
+        return { type: 'ConditionalExpression', test: accumulator, consequent: currentValue[3], alternative: currentValue[7], loc: location(), };
       }
     }, head);
   }
@@ -767,7 +816,7 @@ Order7 =
         }
         addProblem('Obsolete bit-wise binary operator.', loc, DiagnosticSeverity.Information);
       }
-      return { type: 'BinaryExpression', op: currentValue[2], left: currentValue[0], right: accumulator, };
+      return { type: 'BinaryExpression', operator: currentValue[2], left: currentValue[0], right: accumulator, loc: location(), };
     }, tail);
   }
 
@@ -783,7 +832,7 @@ Order7 =
 Order6 =
   heads:(Order5 _0 $('==' / '!=' / '>' !'>' '='? / '<' !'<' '='?) _0)* tail:Order5 {
     return heads.reduceRight((accumulator, currentValue) => {
-      return { type: 'BinaryExpression', op: currentValue[2], left: currentValue[0], right: accumulator, };
+      return { type: 'BinaryExpression', operator: currentValue[2], left: currentValue[0], right: accumulator, loc: location(), };
     }, tail);
   }
 
@@ -792,16 +841,16 @@ Order6 =
 Order5 =
   head:Order4 tails:(_0 $('+' / '-') _0 Order4)* {
     return tails.reduce((accumulator, currentValue) => {
-      return { type: 'BinaryExpression', op: currentValue[1], left: accumulator, right: currentValue[3], };
+      return { type: 'BinaryExpression', operator: currentValue[1], left: accumulator, right: currentValue[3], loc: location(), };
     }, head);
   }
 
 // multiplication and division: '*', '/'
 // evaluated from left to right.
 Order4 =
-  head:Order3 tails:(_0 $('*' / '/') _0 !(Word+ _0 '=') Order3)* {
+  head:Order3 tails:(_0 $('*' / '/') _0 !(_Word+ _0 '=') Order3)* {
     return tails.reduce((accumulator, currentValue) => {
-      return { type: 'BinaryExpression', op: currentValue[1], left: accumulator, right: currentValue[4], };
+      return { type: 'BinaryExpression', operator: currentValue[1], left: accumulator, right: currentValue[4], loc: location(), };
     }, head);
   }
 
@@ -815,7 +864,7 @@ Order3 =
         const loc = location();
         addProblem('Obsolete bit-wise unary operator.', getRange(loc.source, loc.start, 2, 0), DiagnosticSeverity.Information);
       }
-      return { type: 'UnaryExpression', op: currentValue[0], arg: accumulator, };
+      return { type: 'UnaryExpression', operator: currentValue[0], argument: accumulator, loc: location(), };
     }, tail);
   }
 
@@ -827,23 +876,23 @@ Order3 =
 // Owing to this rule, expression such as 2^-2 is allowed.
 Order2 =
   head:Order1 tails:(
-    _0 op:('^' / '<<' / '>>') _0 right:Order1 {
-      return { op, right, };
+    _0 operator:('^' / '<<' / '>>') _0 right:Order1 {
+      return { operator, right, };
     }
     /
-    _0 op:'^' _0 uos2:(@$('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)+ right2:Order1 {
+    _0 operator:'^' _0 uos2:(@$('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)+ right2:Order1 {
       const right = uos2.reduceRight((accumulator, currentValue) => {
         if (currentValue[0] === '%~') {
           const loc = location();
           addProblem('Obsolete bit-wise unary operator.', getRange(loc.source, loc.start, 2, 0), DiagnosticSeverity.Information);
         }
-        return { type: 'UnaryExpression', op: currentValue, arg: accumulator, };
+        return { type: 'UnaryExpression', operator: currentValue, arg: accumulator,   loc: location(), };
       }, right2);
-      return { op, right, } ; 
+      return { operator, right, };
     }
   )* {
     return tails.reduce((accumulator, currentValue) => {
-      return { type: 'BinaryExpression', op: currentValue.op, left: accumulator, right: currentValue.right, };
+      return { type: 'BinaryExpression', operator: currentValue.operator, left: accumulator, right: currentValue.right, loc: location(), };
     }, head);
   }
 
@@ -855,31 +904,37 @@ Order1 =
   /
   Factor
 
-
 Factor =
   '(' _0 @BaseExpr _0 ')'
-  / NumericLiteral / StringLiteral / CallExpr / Variable
+  / NumLiteral / StrLiteral / CallExpr / Variable
+
+_AssignOp = $('=' !'=' / '+=' / '-=' / '*=' / '/=' / ':=')
+
+AssignExpr 'assignment expression' =
+  left:LValue _0 operator:_AssignOp _0 right:(BraceListExpr / BaseExpr) {
+    return { type: 'AssignmentExpression', operator, left, right, multiThread: false, loc: location(), };
+  }
 
 UpdateExpr =
-  op:('++' / '--') _0 arg:(StdId / LiberalId) {
-    return { type: 'Gession', op: op, arg: arg, prefix: true, };
+  operator:('++' / '--') _0 argument:(StdId / LiberalId) {
+    return { type: 'UpdateExpression', operator, argument, prefix: true, loc: location(), };
   }
   /
-  arg:(StdId / LiberalId) _0 op:('++' / '--') {
-    return { type: 'UpdateExpression', op: op, arg: arg, prefix: false, };
+  argument:(StdId / LiberalId) _0 operator:('++' / '--') {
+    return { type: 'UpdateExpression', operator, argument, prefix: false, loc: location(), };
   }
 
 CallExpr 'function call' =
-  callees:(@(StdId / LiberalId) _0)|1.., '#' _0| '(' _0 args:FuncParam|.., Comma| _0')' !(_0 ('[' / '(')) {
+  callees:(@(StdId / LiberalId) _0)|1.., '#' _0| '(' _0 args:_FuncParam|.., _Comma| _0')' !(_0 ('[' / '(')) {
     if (callees.length > 3) {
       addProblem('Too many "#"s.', location());
     }
-    return { type: 'CallExpression', callee:callees[callees.length - 1] , modules: callees.slice(0, -1), arguments: args ?? [], loc: location(), };
+    return { type: 'CallExpression', callee:callees[callees.length - 1], modules: callees.slice(0, -1), arguments: args, loc: location(), };
   }
 
-FuncParam 'function parameter' =
+_FuncParam 'function parameter' =
   left:StdId _0 '=' _0 right:BaseExpr {
-    return { type: 'AssignmentStatement', operator: '=', left, right, };
+    return { type: 'AssignmentExpression', operator: '=', left, right, loc: location(), };
   }
   /
   BaseExpr
@@ -888,7 +943,7 @@ Variable =
   object:(
     heads:(@ArrayElement _0 '.' _0)+ tail:ArrayElement _0 {
       return heads.reduce((accumulator, currentValue) => {
-        return { type: 'MemberExpression', object: accumulator, property: currentValue, };
+        return { type: 'MemberExpression', object: accumulator, property: currentValue, loc: location(),  };
       }, tail);
     }
     /
@@ -911,7 +966,7 @@ Variable =
     '#' _0 BaseExpr
   )* {
     if (indexes && indexes.length !== 0) {
-      return { type: 'ExArrayElementExpression', object, indexes, };
+      return { type: 'ArrayElementExpression', object, indexes, loc: location(), };
     } else {
       return object;
     }
@@ -947,7 +1002,7 @@ End
 ArrayElement =
   object:(StdId / LiberalId) index:(_0 '[' _0 @BaseExpr _0 ']')? {
     if (index) {
-      return { type: 'ExArrayElement', object, index, };
+      return { type: 'ArrayElement', object, index, loc: location(), };
     } else {
       return object;
     }
@@ -955,16 +1010,19 @@ ArrayElement =
 
 PathExpr 'path expression' =
   heads:(@(RefExpr / StdId / LiberalId)? ':')+ tail:(RefExpr / StdId / LiberalId)? {
-    return { type: 'ExPathExpression', paths: [...heads, tail], loc: location(), };
+    return { type: 'PathExpression', body: [...heads, tail], loc: location(), };
   }
   /
   RefExpr / StdId / LiberalId
 
+// Using a reference expression such as `$destw` as the left value is allowed in macros but is not in functions. 
 LValue =
+  RefExpr
+  /
   Variable
   /
-  '[' _0 elements:VariableWWOType|.., Comma| _0 ']' {
-    return { type: 'ArrayExpression', elements, };
+  '[' _0 elements:VariableWWOType|.., _Comma| _0 ']' {
+    return { type: 'ArrayExpression', elements, kind: 'bracket', loc: location(), };
   }
 
 /* 
@@ -993,30 +1051,30 @@ ArrayElementAccessor =
   )? {
     if (extra) {
       checkWaveElemInc(extra.inc);
-      return { type: 'ExWaveSubrange', start, end: extra.end, inc: extra.inc, };
+      return { type: 'WaveRange', start, end: extra.end, increment: extra.inc, loc: location(), };
     } else {
-    return { type: 'ExElementIndex', arg: start, };
+    return { type: 'WaveIndex', index: start, loc: location(), };
     }
   }
   /
-  end:ArrayElemEnd inc:ArrayElemInc? {
-    checkWaveElemInc(inc);
-    return { type: 'ExWaveSubrange', start: null, end, inc, };
+  end:ArrayElemEnd increment:ArrayElemInc? {
+    checkWaveElemInc(increment);
+    return { type: 'WaveRange', start: null, end, increment, loc: location(), };
   }
   /
-  inc:ArrayElemInc {
-    checkWaveElemInc(inc);
-    return { type: 'ExWaveSubrange', start: null, end: null, inc, };
+  increment:ArrayElemInc {
+    checkWaveElemInc(increment);
+    return { type: 'WaveRange', start: null, end: null, increment, loc: location(), };
   }
 
 LabelOrIndex = 
   '*' { return { type: 'Literal', value: Infinity, raw: '*', loc: location(), }; }
   /
-  label:(@'%' _0)? arg:BaseExpr {
-    if (label) {
-      return { type: 'ExDimensionLabel', arg: arg, loc: location(), };
+  labelMarker:(@'%' _0)? labelOrIndex:BaseExpr {
+    if (labelMarker) {
+      return { type: 'WaveDimLabel', label: labelOrIndex, loc: location(), };
     } else {
-      return arg;
+      return labelOrIndex;
     }
 }
 
@@ -1031,27 +1089,27 @@ ArrayElemInc = ';' _0 inc:(@LabelOrIndex _0)? {
     return inc ?? { type: 'Literal', value: '', raw: '', loc: getRange(loc.source, loc.start, 0, 1), };
   }
 
-StdName 'standard name' =
+_StdName 'standard name' =
   // $[a-zA-Z0-9_]+
   [a-zA-Z][a-zA-Z0-9_]* { return text(); }
 
 StdId 'standard identifier' =
-  name:StdName {
-    return { type: 'Identifier', name: name, kind: 'strict', loc: location(), };
+  name:_StdName {
+    return { type: 'Identifier', name, kind: 'strict', loc: location(), };
   }
 
-LiberalName 'liberal name' =
+_LiberalName 'liberal name' =
   // "'" @$[^'";:]* "'"
   "'" str:$[^'";:]* "'" { return str; }
 
 LiberalId 'liberal identifier' =
-  name:LiberalName {
-    return { type: 'Identifier', name: name, kind: 'liberal', loc: location(), };
+  name:_LiberalName {
+    return { type: 'Identifier', name, kind: 'liberal', loc: location(), };
   }
 
-NumericLiteral 'numeric literal' =
+NumLiteral 'numeric literal' =
   // floating-point
-  (([0-9]+ (Exponent / '.' [0-9]* Exponent?)) / '.' [0-9]+ Exponent?) {
+  (([0-9]+ (_Exponent / '.' [0-9]* _Exponent?)) / '.' [0-9]+ _Exponent?) {
     return { type: 'Literal', value: parseFloat(text()), raw: text(), loc: location(), };
   }
   /
@@ -1066,44 +1124,54 @@ NumericLiteral 'numeric literal' =
   }
   /
   // NaN
-  'NaN'i !Word {
+  'NaN'i !_Word {
     return { type: 'Literal', value: NaN, raw: text(), loc: location(), };
   }
   /
   // Infinity
-  'Inf'i !Word {
+  'Inf'i !_Word {
     return { type: 'Literal', value: Infinity, raw: text(), loc: location(), };
   }
 
-SignedNumericLiteral =
-  op:('+' /  '-')? _0 arg:NumericLiteral {
-    return op ? { type: 'UnaryExpression', op, arg, } : arg;
+SignedNumLiteral =
+  operator:('+' /  '-')? _0 arg:NumLiteral {
+    return operator ? { type: 'UnaryExpression', operator, argument: arg, loc: location(), } : arg;
+  }
+
+_SignedNumLiteralRaw =
+  operator:('+' /  '-')? _0 arg:NumLiteral {
+    return Number(text());
   }
 
 // exponential part in floating-point digit, e.g., E+3 in 1.2E+3)
-Exponent = [eE] [+-]? [0-9]+
+_Exponent = [eE] [+-]? [0-9]+
 
-Word = [a-zA-Z0-9_]
+_Word = [a-zA-Z0-9_]
 
-StringRaw 'string' =
+_StrRaw 'string' =
   // '"' @$('\\' . / [^"])* '"'
   '"' str:$('\\' . / [^"])* '"' { return str; }
 
-StringLiteral 'string literal' =
-  str:StringRaw {
+StrLiteral 'string literal' =
+  str:_StrRaw {
     return { type: 'Literal', value: str, raw: text(), loc: location(), };
   }
   /
   'U+' body:$([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) {
     return { type: 'Literal', value: String.fromCodePoint(parseInt(body, 16)), raw: text(), loc: location(), };  }
 
-StringId 'string identifier' =
-  name:StringRaw {
-    return { type: 'Identifier', name: name, kind: 'string', loc: location(), };
+StrId 'string identifier' =
+  name:_StrRaw {
+    return { type: 'Identifier', name, kind: 'string', loc: location(), };
+  }
+
+FlagWOValue =
+  '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* {
+    return { type: 'Flag', key, loc: location(), };
   }
 
 Flag 'operation flag' =
   // '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / SignedNumericLiteral / StringLiteral / CallExpr / RefExpr / Variable))? {
   '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / BaseExpr))? {
-    return { type: 'ExFlag', key, value, };
+    return { type: 'Flag', key, value, loc: location(), };
   }
