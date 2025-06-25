@@ -172,6 +172,7 @@
     "js-yaml:apiReference": "js-yaml syntaxes/igorpro.apiReference.yaml > syntaxes/igorpro.apiReference.json"
   },
   "dependencies": {
+    "estraverse": "^5.3.0",
     "semver": "^7.7.2"
   },
   "devDependencies": {

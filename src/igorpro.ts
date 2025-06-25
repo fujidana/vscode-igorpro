@@ -5,6 +5,7 @@ export const SELECTOR = { language: 'igorpro' };
 // export const SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
 export const BUILTIN_URI = 'igorpro://system/built-in.md';
 export const AST_URI = 'igorpro://user/ast.json';
+export const ACTIVE_FILE_URI = 'igorpro://user/active-document.md';
 
 
 export function convertPosition(position: Location): vscode.Position {

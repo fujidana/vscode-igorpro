@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as lang from "./igorpro";
 import { Provider } from "./provider";
 import { SyntaxError, parse } from './grammar';
+import { traverse } from './traverser';
 import type * as tree from './igorproTree';
 
 /**
@@ -42,14 +43,17 @@ async function findFilesInWorkspaces() {
  * This class manages documents opened in editors and other documents in the current workspaces.
  */
 export class UserProvider extends Provider implements vscode.DefinitionProvider, vscode.DocumentSymbolProvider, vscode.WorkspaceSymbolProvider, vscode.DocumentDropEditProvider, vscode.TextDocumentContentProvider {
+
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
-    // private readonly treeCollection: Map<string, tree.Program>;
+    private readonly treeCollection: Map<string, tree.Program>;
+    private readonly symbolCollection: Map<string, vscode.DocumentSymbol[]>;
 
     constructor(context: vscode.ExtensionContext) {
         super(context);
 
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('igorpro');
-        // this.treeCollection = new Map();
+        this.treeCollection = new Map();
+        this.symbolCollection = new Map();
 
         const inspectSyntaxTreeCommandHandler = async () => {
             const editor = vscode.window.activeTextEditor;
@@ -88,21 +92,16 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             if (vscode.languages.match(lang.SELECTOR, document)) {
                 const documentUriString = document.uri.toString();
 
-                // this.treeCollection.delete(documentUriString);
+                this.treeCollection.delete(documentUriString);
+                this.symbolCollection.delete(documentUriString);
+                this.diagnosticCollection.delete(document.uri);
 
-                // check whether the file is in a workspace folder. If not in a folder, delete from the database.
+                // check whether the file is in a workspace folder.
+                // If not in a folder, delete from the database.
                 const filesInWorkspaces = await findFilesInWorkspaces();
-                if (filesInWorkspaces.has(documentUriString)) {
-                    // if file also exists in a workspace folder...
-                    // clear diagnostics if setting for workspace.diagnoseProblem is false. 
-                    // const diagnoseInWorkspace = vscode.workspace.getConfiguration('vscode-igorpro.workspace', document).get<boolean>('diagnoseProblems', false);
-                    // if (!diagnoseInWorkspace) {
-                    this.diagnosticCollection.delete(document.uri);
-                    // }
-                } else {
+                if (!filesInWorkspaces.has(documentUriString)) {
                     // if file does not exist in a workspace folder, clear all.
                     this.storageCollection.delete(documentUriString);
-                    this.diagnosticCollection.delete(document.uri);
                     this.completionItemCollection.delete(documentUriString);
                 }
             }
@@ -168,6 +167,12 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             }
         };
 
+        // a hander invoked when the configuration is changed
+        const configurationDidChangeListener = (event: vscode.ConfigurationChangeEvent) => {
+            if (event.affectsConfiguration('files.associations') || event.affectsConfiguration('files.encoding')) {
+                this.refreshCollections();
+            }
+        };
 
         const workspaceFoldersDidChangeListener = (event: vscode.WorkspaceFoldersChangeEvent) => {
             this.refreshCollections();
@@ -190,7 +195,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             vscode.workspace.onWillDeleteFiles(fileWillDeleteListener),
 
             // register other event listeners
-            // vscode.workspace.onDidChangeConfiguration(configurationChangeListener),
+            vscode.workspace.onDidChangeConfiguration(configurationDidChangeListener),
             vscode.workspace.onDidChangeWorkspaceFolders(workspaceFoldersDidChangeListener),
 
             // register providers
@@ -248,108 +253,18 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         }
     }
 
-    /**
-     * @param program Parser AST object.
-     * @param uriString document URI string.
-     * @param position the current cursor position. If not given, top-level symbols (global variables, constant, macro and functions) are picked up.
-     */
-    private collectSymbolsFromTree(program: tree.Program, uriString: string, position?: vscode.Position) {
-
-        const constantRefMap: lang.ReferenceMap = new Map();
-        // const menuRefMap: igorpro.ReferenceMap = new Map();
-        const pictureRefMap: lang.ReferenceMap = new Map();
-        const structureRefMap: lang.ReferenceMap = new Map();
-        const macroRefMap: lang.ReferenceMap = new Map();
-        const functionRefMap: lang.ReferenceMap = new Map();
-
-        // const nestedNodes: string[] = [];
-        function makeRefItem(node: tree.TopLevelDeclaration): lang.ReferenceItem {
-            return {
-                signature: node.id.name,
-                description: node.leadingComments ? node.leadingComments.map(comment => comment.value).join('\n') : undefined,
-                location: node.id.loc
-            };
-        }
-        function makeSignatureForMacroAndFunc(node: tree.FunctionDeclaration | tree.MacroDeclaration): string {
-            let signature = node.id.name;
-
-            signature += '(' + node.params.map(param => {
-                if (param.type === 'Identifier') {
-                    return param.name;
-                } else if (param.type === 'VariableDeclaration') {
-                    return param.declarations.map(decl => decl.id).join(', ');
-                } else {
-                    return '';
-                }
-            }).join(', ');
-
-            if (node.type === 'FunctionDeclaration' && node.optParams) {
-                signature += '[' + node.optParams.map(param => {
-                    if (param.type === 'Identifier') {
-                        return param.name;
-                    } else if (param.type === 'VariableDeclaration') {
-                        return param.declarations.map(decl => decl.id).join(', ');
-                    } else {
-                        return '';
-                    }
-                }).join(', ') + ']';
-            }
-            signature += ')';
-
-            if (node.subtype) {
-                signature += ': ' + node.subtype;
-            }
-            return signature;
-        }
-
-        for (const node of program.body) {
-            if (node.type === 'ConstantDeclaration') {
-                const refItem = makeRefItem(node);
-                refItem.static = node.static;
-                constantRefMap.set(node.id.name.toLowerCase(), refItem);
-                // } else if (node.type === 'MenuDeclaration') {
-                //     menuRefMap.set(node.id.name.toLowerCase(), makeRefItem(node));
-            } else if (node.type === 'PictureDeclaration') {
-                const refItem = makeRefItem(node);
-                refItem.static = node.static;
-                pictureRefMap.set(node.id.name.toLowerCase(), refItem);
-            } else if (node.type === 'StructureDeclaration') {
-                const refItem = makeRefItem(node);
-                refItem.static = node.static;
-                structureRefMap.set(node.id.name.toLowerCase(), refItem);
-            } else if (node.type === 'MacroDeclaration') {
-                const refItem = makeRefItem(node);
-                refItem.signature = makeSignatureForMacroAndFunc(node);
-                macroRefMap.set(node.id.name.toLowerCase(), refItem);
-            } else if (node.type === 'FunctionDeclaration') {
-                const refItem = makeRefItem(node);
-                refItem.static = node.static;
-                refItem.signature = makeSignatureForMacroAndFunc(node);
-                functionRefMap.set(node.id.name.toLowerCase(), refItem);
-            }
-        }
-
-        this.storageCollection.set(uriString, new Map([
-            [lang.ReferenceItemKind.constant, constantRefMap],
-            // [igorpro.ReferenceItemKind.menu, menuRefMap],
-            [lang.ReferenceItemKind.picture, pictureRefMap],
-            [lang.ReferenceItemKind.macro, macroRefMap],
-            [lang.ReferenceItemKind.function, functionRefMap],
-        ]));
-    }
 
     private parseDocumentContents(contents: string, uri: vscode.Uri, isOpenDocument: boolean, diagnoseProblems: boolean) {
         const uriString = uri.toString();
 
-        let program: tree.Program;
+        let tree: tree.Program;
         try {
-            program = parse(contents);
+            tree = parse(contents);
         } catch (error) {
             if (error instanceof SyntaxError) {
                 if (diagnoseProblems) {
                     const diagnostic = new vscode.Diagnostic(lang.convertRange(error.location), error.message, vscode.DiagnosticSeverity.Error);
                     this.diagnosticCollection.set(uri, [diagnostic]);
-                    // this.updateCompletionItemsForUriString(uriString);
                 }
             } else {
                 console.log('Unknown error in sytax parsing', error);
@@ -360,21 +275,25 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
             }
             // update with an empty map object.
             this.storageCollection.set(uriString, new Map());
+            // this.updateCompletionItemsForUriString(uriString);
             return false;
         }
 
         this.diagnosticCollection.delete(uri);
         if (diagnoseProblems) {
-            this.diagnosticCollection.set(uri, program.problems.map(
+            this.diagnosticCollection.set(uri, tree.problems.map(
                 problem => new vscode.Diagnostic(lang.convertRange(problem.loc), problem.message, problem.severity))
             );
         }
 
-        // if (isOpenDocument) {
-        //     this.treeCollection.set(uriString, program);
-        // }
+        const [storage, symbols] = traverse(tree);
 
-        this.collectSymbolsFromTree(program, uriString);
+        if (isOpenDocument) {
+            this.treeCollection.set(uriString, tree);
+            this.symbolCollection.set(uriString, symbols);
+        }
+
+        this.storageCollection.set(uriString, storage);
         this.updateCompletionItemsForUriString(uriString);
 
         return true;
@@ -389,6 +308,8 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
         this.storageCollection.clear();
         this.diagnosticCollection.clear();
         this.completionItemCollection.clear();
+        this.treeCollection.clear();
+        this.symbolCollection.clear();
 
         // parse documents opened by editors
         const documentUriStringSet = new Set<string>();
@@ -442,85 +363,18 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
     }
 
     /**
-     * Required implementation of vscode.DocumentSymbolProvider
+     * Required implementation of `vscode.DocumentSymbolProvider`.
      */
     public provideDocumentSymbols(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SymbolInformation[] | vscode.DocumentSymbol[]> {
         if (token.isCancellationRequested) { return; }
 
-        let program: tree.Program;
-        try {
-            program = parse(document.getText());
-        } catch (error) {
-            return undefined;
-        }
-
-        // if (document.isUntitled) {
-        //     const workspcaes = vscode.workspace.workspaceFolders;
-        //     if (workspcaes !== undefined) {
-        //         vscode.workspace.fs.writeFile(vscode.Uri.joinPath(workspcaes[0].uri, 'tmp.json'), new TextEncoder().encode(JSON.stringify(program.body, undefined, 2)));
-        //     }
-        //     console.log(JSON.stringify(program.body));
-        // }
-
-        function getDocumentSymbol(node: tree.TopLevelDeclaration | tree.SubmenuDeclaration, kind: vscode.SymbolKind) {
-            if (node.loc && node.id.loc) {
-                return new vscode.DocumentSymbol(node.id.name, '', kind, lang.convertRange(node.loc), lang.convertRange(node.id.loc));
-            }
-        }
-
-        function getMenuDocumentSymbol(node: tree.MenuDeclaration | tree.SubmenuDeclaration) {
-            const symbol = getDocumentSymbol(node, vscode.SymbolKind.Event);
-            if (symbol) {
-                for (const subnode of node.body) {
-                    if (subnode.type === 'SubmenuDeclaration') {
-                        const subsymbol = getMenuDocumentSymbol(subnode);
-                        if (subsymbol) {
-                            symbol.children.push(subsymbol);
-                        }
-                    }
-                }
-                return symbol;
-            }
-        }
-
-        const symbols = new Array<vscode.DocumentSymbol>();
-        let symbol: vscode.DocumentSymbol | undefined;
-
-        for (const node of program.body) {
-            if (node.type === 'ConstantDeclaration') {
-                const symbol = getDocumentSymbol(node, vscode.SymbolKind.Constant);
-                if (symbol) {
-                    symbols.push(symbol);
-                }
-            } else if (node.type === 'MenuDeclaration') {
-                const symbol = getMenuDocumentSymbol(node);
-                if (symbol) {
-                    symbols.push(symbol);
-                }
-            } else if (node.type === 'PictureDeclaration') {
-                if ((symbol = getDocumentSymbol(node, vscode.SymbolKind.Object)) !== undefined) {
-                    symbols.push(symbol);
-                }
-            } else if (node.type === 'StructureDeclaration') {
-                if ((symbol = getDocumentSymbol(node, vscode.SymbolKind.Struct)) !== undefined) {
-                    symbols.push(symbol);
-                }
-            } else if (node.type === 'MacroDeclaration') {
-                if ((symbol = getDocumentSymbol(node, vscode.SymbolKind.Method)) !== undefined) {
-                    symbols.push(symbol);
-                }
-            } else if (node.type === 'FunctionDeclaration') {
-                if ((symbol = getDocumentSymbol(node, vscode.SymbolKind.Function)) !== undefined) {
-                    symbols.push(symbol);
-                }
-            }
-        }
-
-        return symbols;
+        return this.symbolCollection.get(document.uri.toString());
     }
 
     /**
-     * Required implementation of vscode.WorkspaceSymbolProvider
+     * Required implementation of `vscode.WorkspaceSymbolProvider`.
+     * 
+     * This function looks for all symbol definitions that matched with `query` from the workspace.
      */
     public provideWorkspaceSymbols(query: string, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SymbolInformation[]> {
         if (token.isCancellationRequested) { return; }
@@ -575,7 +429,7 @@ export class UserProvider extends Provider implements vscode.DefinitionProvider,
                         } else if (pathComponents.includes('User Procedures')) {
                             return `#include "${lastPathComponent.substring(0, lastPathComponent.length - 4)}"\n`;
                         } else {
-                            // TODOS: This should return a full path. Currently only a file name.
+                            // TODO: This should return a full path. Currently only a file name.
                             return `#include "${lastPathComponent.substring(0, lastPathComponent.length - 4)}"\n`;
                         }
                     }
