@@ -347,7 +347,7 @@ export interface VariableDeclaration extends BaseStatement {
 
 export interface VariableDeclarator extends BaseNode {
     type: 'VariableDeclarator';
-    id: Identifier | PathExpression;
+    id: Identifier; // Identifier | PathExpression;
     init: Expression | null; // TODO: type not yet given
     pbr?: boolean; // pass-by-reference
 }
@@ -357,7 +357,7 @@ export interface OperationStatement extends BaseStatement {
     type: 'OperationStatement';
     name: string;
     flags: Flag[];
-    args: string[];
+    expression: string;
 }
 
 /**

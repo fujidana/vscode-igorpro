@@ -480,7 +480,7 @@ StructMemberDecl 'structure member declaration'=
   stmtNode:(
     node0:(
       kind:$('u'i? ('char'i / 'int'i ('16' / '32' / '64')) / 'float'i / 'double'i) {
-        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), };
+        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), loc: location(), };
       }
       / 
       kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) flags:(_0 @FlagWOValue)* {
@@ -722,7 +722,8 @@ Declarator 'variable delarator' =
 DeclaratorWWOInit 'variable delarator with or without initialization' =
   '&' id:StdId { return { type: 'VariableDeclarator', id, init: null, pbr: true, loc: location(), }; }
   /
-  id:PathExpr init:(_0 '=' _0 @BaseExpr)? {
+  // id:PathExpr init:(_0 '=' _0 @BaseExpr)? {
+  id:StdId init:(_0 '=' _0 @BaseExpr)? {
     return { type: 'VariableDeclarator', id, init, pbr: false, loc: location(), };
   }
 
