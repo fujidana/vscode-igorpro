@@ -57,8 +57,8 @@ export interface Comment extends BaseNodeWithoutComments {
     value: string;
 }
 
-interface BaseBlock extends BaseStatement {
-    interceptingComment?: Comment;
+export interface BaseBlock extends BaseStatement {
+    innerComments?: Comment[];
 }
 
 export interface Problem extends BaseNode {
@@ -73,7 +73,7 @@ export interface Program extends BaseNode {
     problems: Problem[];
 }
 
-interface BaseStatement extends BaseNode { }
+export interface BaseStatement extends BaseNode { }
 
 export type ParentStatement =
     | DirectiveStatement
@@ -125,18 +125,29 @@ export type InFunctionStatement =
     | UnclassifiedStatement;
 
 
+/** *
+ * A statement that include multiple statement using ";" as a separator.
+ */
 export interface BundledStatement extends BaseStatement {
     type: 'BundledStatement';
-    body: (
-        | ReturnStatement
-        | VariableDeclaration
-        // | AssignmentStatement
-        | OperationStatement
-        | ExpressionStatement
-        | EmptyStatement
-        | UnclassifiedStatement
-    )[];
+    body: BundlableStatement[];
 }
+
+/**
+ * A set of statement executable in a single line with or without ";" 
+ * as a separator.
+ *
+ * This is a subset of `InFunctionStatement`. It looks statements in this
+ * list except `ReturnStatement` can be executed in the command window.
+ */
+type BundlableStatement =
+    | ReturnStatement
+    | VariableDeclaration
+    // | AssignmentStatement
+    | OperationStatement
+    | ExpressionStatement
+    | EmptyStatement
+    | UnclassifiedStatement;
 
 export interface EmptyStatement extends BaseStatement {
     type: 'EmptyStatement';
@@ -273,7 +284,7 @@ export interface FunctionDeclaration extends BaseFunction {
     return: any; // TODO: type is incorrect.
 }
 
-export interface IfStatement extends BaseStatement {
+export interface IfStatement extends BaseBlock {
     type: 'IfStatement';
     cases: IfCase[];
 }
@@ -361,7 +372,7 @@ export interface OperationStatement extends BaseStatement {
 }
 
 /**
- * Only update expressions and call expressions are allowed
+ * Only expressions of update, function call, and assignment can be used as a statement.
  */
 export interface ExpressionStatement extends BaseStatement {
     type: 'ExpressionStatement';
@@ -414,6 +425,8 @@ export interface EmptyExpression extends BaseExpression {
 
 type LValue = BaseExpression; // TODO: limit to more specific types.
 
+// Currently appears only in `init` and `update` of `ForStatement`.
+// Not a member of `Expression`.
 export interface SequenceExpression extends BaseExpression {
     type: 'SequenceExpression';
     expressions: Expression[];

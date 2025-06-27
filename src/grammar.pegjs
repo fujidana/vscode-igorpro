@@ -10,6 +10,7 @@
  * @typedef { import('./grammar').GrammarSource } GrammarSource
 
  * @typedef { import('./igorproTree').BaseStatement } BaseStatement
+ * @typedef { import('./igorproTree').BaseBlock } BaseBlock
  * @typedef { import('./igorproTree').Comment } Comment
  */
 
@@ -65,11 +66,12 @@ const operationRegExp = new RegExp(
 
   /**
    * Add leading comments to a node, it they exist.
-   * @param {BaseStatement} node - The node to which the comments are added.
+   * @template {BaseStatement} T
+   * @param {T} node - The node to which the comments are added.
    * @param {Comment[] | null | undefined} comments - The comments to be added.
-   * @returns {BaseStatement} - The node with the added comments.
+   * @returns {T} - The node with the added comments.
    */
-  function leadingCommentsAddedNode(node, comments) {
+  function addLeadingCommentsToNode(node, comments) {
       if (comments && comments.length !== 0) {
       node.leadingComments = comments;
     }
@@ -78,13 +80,45 @@ const operationRegExp = new RegExp(
 
   /**
    * Add a trailing comment to a node, it it exists.
-   * @param {BaseStatement} node - The node to which the comments are added.
+   * @template {BaseStatement} T
+   * @param {T} node - The node to which the comments are added.
    * @param {Comment | null | undefined} comment - The comments to be added.
-   * @returns {BaseStatement} - The node with the added comment.
+   * @returns {T} - The node with the added comment.
    */
-  function trailingCommentAddedNode(node, comment) {
+  function addTrailingCommentToNode(node, comment) {
     if (comment) {
       node.trailingComment = comment;
+    }
+    return node;
+  }
+
+  /**
+   * Throw an error with a message and location.
+   * @template {BaseBlock} T
+   * @param {T} node - The node to which the comments are added.
+   * @param {{label: string, comment: Comment | null, loc: LocationRange } | null} end - The end pattern of the node. `null` if not found.
+   * @param {string} expectedEndLabel - The expected label to close block.
+   * @param {string} blockLabel - The expected label to close block.
+   * @param {Comment | null | undefined} innerComment - inner comment to be added to the node.
+   * @returns {T} - The modified node with the end pattern applied.
+   */
+  function modifyNodeUsingEndPattern(node, end, expectedEndLabel, blockLabel, innerComment = undefined) {
+    const nodeLoc = node.loc ?? location();
+    if (end) {
+      // Add trailing comment if it exists.
+      if (end.comment) {
+        node.trailingComment = end.comment;
+      }
+      // Adjust the `end` location of the node.
+      const endLoc = { line: end.loc.start.line, column: end.loc.start.column + end.label.length, offset: end.loc.start.offset + end.label.length };
+      node.loc = { source: nodeLoc.source, start: nodeLoc.start, end: endLoc };
+      // Add inner comment if it exists.
+      if (innerComment) {
+        node.innerComments = [innerComment];
+      }
+    } else {
+      // Report a problem if the end label is not found.
+      addProblem(`Expected ${expectedEndLabel} for ${blockLabel} but not found.`, nodeLoc);
     }
     return node;
   }
@@ -134,21 +168,17 @@ Program = body:ParentStmt* {
   return { type: 'Program', body, problems, };
 }
 
-// whitespaces
-// _0 = $[ \t]*
-// _1 = $[ \t]+
-
-// whitespace, horizontal tab and line-continuation
+/** Zero or more whitespaces, horizontal tabs and line-continuations. */
 _0 = ([ \t] / '\\' _Eol)* { return text(); }
+/** One or more whitespaces, horizontal tabs and line-continuations. */
 _1 = ([ \t] / '\\' _Eol)+ { return text(); }
 
 _Comma = _0 ',' _0
 _CommaWLoc = _0 ',' _0 { return location(); }
 
-// _Eol: end of line.
-// _Eof: end of file.
-
+/** EOL (End of line). */
 _Eol = ('\n' / '\r\n' / '\r') {}
+/** EOF (End of file). */
 _Eof = !. {}
 
 Comment 'line comment' =
@@ -156,56 +186,57 @@ Comment 'line comment' =
     '//' p:$(!_Eol .)* { return { type: 'Line', value: p, loc: location(), }; }
   ) (_Eol / _Eof)
 
-// EolWWOComment: end of line with or without a trailing line comment.
-// EosWWOComment: end of statement with an optional trailing line comment.
-// EosLA: end of statement used in lookahead ('&' and '!').
-EolWWOComment = (';' _0)? p:(Comment / _Eol / _Eof) { return p ? p : undefined; }
-EosWWOComment = EolWWOComment / ';' { return undefined; }
-EosLA = _Eol / _Eof / Comment / ';' {}
+/** End of line with or without a trailing line comment. */
+EolWWOComment = (';' _0)? p:(_Eol / _Eof / Comment) { return p ? p : undefined; }
+/** Simplified version of end of statement for lookahead ('&' and '!'). */
+_EosLA = _Eol / _Eof / Comment / ';' {}
 
 // commonly used statements
 
-// empty statement that ends with EOL. 
+/** Empty statement that ends with EOL. */
 EmptyEolStmt 'empty statement that ends with EOL' =
   _Eol { const loc = location(); loc.end = loc.start; return { type: 'EmptyStatement', loc, }; }
 
+/** Empty statement that ends with EOF. */
 EmptyEofStmt 'empty statement that ends with EOF' =
   _Eof { return { type: 'EmptyStatement', loc: location(), }; }
 
-EmptyAboveEndStmt 'empty statement above the end' =
-  &_End { return { type: 'EmptyStatement', loc: location(), }; }
-
-// non-empty statement
-UnclassifiedEolStmt =
-  !_End value:$(!EolWWOComment .)+ tComment:EolWWOComment {
-    return { type: 'UnclassifiedStatement', value, loc: location(), trailingComment: tComment ?? undefined, };
-  }
-
 // top-level statements
 ParentStmt 'top-level statement' =
-  lComments:(_0 @Comment)+ parentStmt:(_0 @(DirectiveStmt / ParentDecl / EmptyEolStmt / EmptyEofStmt)) {
-    return leadingCommentsAddedNode(parentStmt, lComments);
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(ParentStmtBase / EmptyEofStmt)
+  ) { return addLeadingCommentsToNode(stmt, lComments); }
+  /
+  _0 @ParentStmtBase
+  /
+  _1 @EmptyEofStmt
+
+
+_CommonEnd =
+  label:'End'i _0 comment:EolWWOComment {
+    return { label, comment, loc: location() };
   }
-  / _0 @(DirectiveStmt / ParentDecl / EmptyEolStmt) / _1 @EmptyEofStmt
 
-// non-empty statement
-InvalidParentStmt =
-  stmt:UnclassifiedEolStmt {
-    addProblem('Invalid as a top-level statement.', stmt.loc, DiagnosticSeverity.Warning);
-    return stmt;
+/**
+ * Empty statement always created without text consumption.
+ * Typically used in the form: `&_CommonEnd CommonEmptyStmt` to consume
+ * line comments just above the end of the block.
+ */
+BaseEmptyStmt =
+  &{ return true; } { return { type: 'EmptyStatement', loc: location(), }; }
+
+/**
+ * Empty statement created with any text until the end of line consumed.
+ * Fails only when no characters are found until the end of line or comment.
+ * Typically used in the form: `!_CommonEnd CommonInvalidStmt` to consume
+ * lines not parsed by the other rules.
+ */
+BaseInvalidStmt =
+  value:$(!EolWWOComment .)+ trailingComment:EolWWOComment {
+    const node = { type: 'UnclassifiedStatement', value, loc: location(), trailingComment, };
+    addProblem('Invalid statement.', node.loc);
+    return node;
   }
-
-
-// end of block
-_End =
-  // p:$('End'i ('Macro'i / 'Structure'i)?) _0 &EosLA { return [p, location()]; }
-  p:$('End'i ('Macro'i / 'Structure'i / 'if'i / 'switch'i / 'try'i / 'for'i)?/ 'elseif'i _0 '(' (!EosLA .)*  / 'else'i / 'case'i _1 (!EosLA .)*) _0 &EosLA { return [p, location()]; } / 'default'i / 'catch'i / 'while'i _0 '(' (!EosLA .)*
-  // p:$("End"i [a-zA-Z0-9_]*) _0 &EosLA { return [p, location()]; }  
-
-// EndStmt =
-//   p:_End {
-//     return { type: 'UnclassifiedStatement', value: p, };
-//   }
 
 DirectiveStmt 'directive' =
   // TODO: parse values
@@ -213,9 +244,13 @@ DirectiveStmt 'directive' =
     return { type: 'DirectiveStatement', directive, expression, trailingComment, };
   }
 
-// top-level declarations. This does not include compiler derivatives.
-ParentDecl 'top-level declaration' =
-  ConstDecl / MenuDecl / PictDecl / StructDecl / MacroDecl / FuncDecl / InvalidParentStmt
+// top-level declarations, derivatives, and some other invalid statements.
+ParentStmtBase =
+  DirectiveStmt / ConstDecl / MenuDecl / PictDecl / StructDecl / MacroDecl / FuncDecl / EmptyEolStmt
+  /
+  node: InFuncStmt { addProblem('Invalid as top-level context. Move into function declaration.', node.loc, DiagnosticSeverity.Warning); return node; }
+  /
+  BaseInvalidStmt
 
 ConstDecl 'constant declaration' =
   // TODO: parse a value
@@ -245,232 +280,218 @@ ConstDecl 'constant declaration' =
   }
 
 _ConstDeclValue =
-  s:_StrRaw _0 &EolWWOComment { return { kind: 'string', value: s, raw: text(), loc: location() }; } /
-  n:_SignedNumLiteralRaw _0 &EolWWOComment { return { kind: 'number', value: n, raw: text(), loc: location() }; } /
+  s:_StrRaw _0 &EolWWOComment { return { kind: 'string', value: s, raw: text(), loc: location() }; }
+  /
+  n:_SignedNumLiteralRaw _0 &EolWWOComment { return { kind: 'number', value: n, raw: text(), loc: location() }; }
+  /
   '(' _0 n1:_SignedNumLiteralRaw _0 ',' _0 n2:_SignedNumLiteralRaw _0 ')' _0 &EolWWOComment {
     return { kind: 'complex', value: [n1, n2], raw: text(), loc: location() };
-  } /
+  }
+  /
   $(!EolWWOComment .)+ { return { kind: 'unknown', value: null, raw: text(), loc: location() }; }
 
 MenuDecl 'menu declaration' =
-  declNode:(
-    'Menu'i _1 id:StrId _0 options:(',' _0 @StdId _0 )* iComment:EolWWOComment body:InMenuStmt* _0 end:_End {
-      if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
-      const node = { type: 'MenuDeclaration', id, body, interceptingComment: iComment, loc: location(), };
-      options.forEach((option) => {
-        if (option.name.toLowerCase() === 'dynamic') {
-          node.dynamic = true;
-        } else if (option.name.toLowerCase() === 'hideable') {
-          node.hideable = true;
-        } else if (option.name.toLowerCase() === 'contextualmenu') {
-          node.contextualMenu = true;
-        } else {
-          addProblem(`Unknown menu option "${option.name}".`, option.loc);
-        }
-      });
-      return node;
-    }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(declNode, tComment);
-  }
+  'Menu'i _1 id:StrId _0 options:(',' _0 @StdId _0 )* iComment:EolWWOComment
+  body:InMenuStmt*
+  _0 end:(_Eof / _CommonEnd) {
+    const node = { type: 'MenuDeclaration', id, body, loc: location(), };
+    options.forEach((option) => {
+      if (option.name.toLowerCase() === 'dynamic') {
+        node.dynamic = true;
+      } else if (option.name.toLowerCase() === 'hideable') {
+        node.hideable = true;
+      } else if (option.name.toLowerCase() === 'contextualmenu') {
+        node.contextualMenu = true;
+      } else {
+        addProblem(`Unknown menu option "${option.name}".`, option.loc);
+      }
+    });
+    return modifyNodeUsingEndPattern(node, end, '"End"', '"Menu" declaration', iComment);
+}
 
 PictDecl 'picture declaration' =
-  declNode:(
-    s0:('Static'i _1)? 'Picture'i _1 id:StdId _0 iComment:EolWWOComment body:InPictStmt* _0 end:_End {
-      if (body) {
-        body = body.filter((stmt) => stmt.type === 'Ascii85Block');
-      }
-      if (!body || body.length === 0) { error('Expected ASCII85 block but not found.'); }
-      else if (body.length > 1) { error('Expected only one ASCII85 block but found more.'); }
+  s0:('Static'i _1)? 'Picture'i _1 id:StdId _0 iComment:EolWWOComment
+  body:InPictStmt*
+  _0 end:(_Eof / _CommonEnd) {
+    const ascii85Blocks = body.filter((stmt) => stmt.type === 'Ascii85Block');
+    if (ascii85Blocks.length === 0) { addProblem('Expected ASCII85 block but not found.', location()); }
+    else if (ascii85Blocks.length > 1) { addProblem('Expected only one ASCII85 block but found more.', location()); }
 
-      if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
-
-      return { type: 'PictureDeclaration', id, static: !!s0, body, interceptingComment: iComment, loc: location(), };
-    }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(declNode, tComment);
+    const node = { type: 'PictureDeclaration', id, static: !!s0, body, loc: location(), };
+    return modifyNodeUsingEndPattern(node, end, '"End"', '"Picture" declaration', iComment);
   }
  
 StructDecl 'structure declaration' =
-  declNode:(
-    s0:('Static'i _1)? 'Structure'i _1 id:StdId _0 iComment:EolWWOComment body:InStructStmt* _0 end:_End {
-      if (end[0].toLowerCase() !== 'endstructure') { error(`Expected "EndStructure" but "${end[0]}" found.`, end[1]); }
-      return { type: 'StructureDeclaration', id, static: !!s0, body, interceptingComment: iComment, loc: location(), };
-    }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(declNode, tComment);
+  s0:('Static'i _1)? 'Structure'i _1 id:StdId _0 iComment:EolWWOComment
+  body:InStructStmt*
+  _0 end:(_Eof / _StructEnd) {
+    const node = { type: 'StructureDeclaration', id, static: !!s0, body, loc: location(), };
+    return modifyNodeUsingEndPattern(node, end, '"EndStructure"', '"Structure" declaration', iComment);
   }
 
 MacroDecl 'macro declaration' =
-  declNode:(
-    kind:('Window'i / 'Macro'i / 'Proc'i) _1 id:StdId _0 '(' _0 params:VariableList _0 ')' _0 subtype:(':' _0 @_StdName _0)? iComment:EolWWOComment body:InFuncStmt* _0 end:_End {
-      if (end[0].toLowerCase() !== 'end' && end[0].toLowerCase() !== 'endmacro') { error(`Expected "End" or "EndMacro" but "${end[0]}" found.`, end[1]); }
-      return { type: 'MacroDeclaration', id, kind: kind.toLowerCase(), params, body, subtype, interceptingComment: iComment, loc: location(), };
-    }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(declNode, tComment);
+  kind:('Window'i / 'Macro'i / 'Proc'i) _1 id:StdId _0 '(' _0 params:VariableList _0 ')' _0 subtype:(':' _0 @_StdName _0)? iComment:EolWWOComment
+  body:InFuncStmt*
+  _0 end:(_Eof / _FuncEnd) {
+    const node = { type: 'MacroDeclaration', id, kind: kind.toLowerCase(), params, body, subtype, loc: location(), };
+    return modifyNodeUsingEndPattern(node, end, '"End" or "EndMacro"', '"Macro" declaration', iComment);
   }
 
 FuncDecl 'function declaration' =
   // TODO: parse parameters
-  declNode:(
-    // TODO: `ret` is not parsed.
-    ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i !_Word flag:(_0 @Flag)* _0 multiReturn:(
-      _0 '[' _0 @VariableList _0 ']' _0
-    )? id:StdId _0 '(' _0 reqParams:VariableList _0 optParams:(
-      '[' _0 params:VariableList _0 ']' { return { params, loc: location(), }; }
-    )? _0 ')' _0 subtype:(':' _0 @_StdName _0)? iComment:EolWWOComment body:InFuncStmt* _0 end:_End {
-      // check 'end' appears or not.
-      // Unless I misread the official manual, `End` is the only closing word 
-      // of `Funciton` definition.
-      // However, Use of `EndMacro` for `Function` can be found in several IPF files
-      // WaveMetrics bundled with Igor Pro 9.
-      // I think it is mistaken usage.
-      // If `EndMacro` appears, the parser reports a warning-level problem but 
-      // do not stop parsing.
-      // 
-      // To the contrary, it is clearly written that a `Macro` definition 
-      // ends with either `End` or `EndMacro`.
-      if (end[0].toLowerCase() === 'endmacro') {
-        addProblem(`Expected "End" but "${end[0]}" found.`, end[1], DiagnosticSeverity.Warning);
-      } else if (end[0].toLowerCase() !== 'end') {
-        error(`Expected "End" but "${end[0]}" found.`, end[1]);
-      }
+  // TODO: `ret` is not parsed.
+  ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i !_Word flag:(_0 @Flag)* _0 multiReturn:(
+    _0 '[' _0 @VariableList _0 ']' _0
+  )? id:StdId _0 '(' _0 reqParams:VariableList _0 optParams:(
+    '[' _0 params:VariableList _0 ']' { return { params, loc: location(), }; }
+  )? _0 ')' _0 subtype:(':' _0 @_StdName _0)? iComment:EolWWOComment
+  body:InFuncStmt*
+  _0 end:(_Eof / _FuncEnd) {
+    // Check multi-return syntax
+    if (multiReturn !== null) {
+      if (multiReturn.length === 0) {
 
-      // Check multi-return syntax
-      if (multiReturn !== null) {
-        if (multiReturn.length === 0) {
-
-        } else {
-          multiReturn.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Return variable not defined.', param.loc); } });
-        }
-      }
-
-      // Check input parameters and their separators (comma).
-      if (reqParams.length === 0) {
-        // In case required parameters are not provided
-        if (optParams === null) {
-          // Do nothing if neither required parameters or optional parameters are provided
-        } else if (optParams.params.length === 0) {
-          // If bracket exists but nothing in it, report an erro.
-          addProblem('No optional parameters defined in brackets.', optParams.loc);
-        } else {
-          // Otherwise, report error if empty element exists.
-          optParams.params.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-        }
       } else {
-        // In case one or more required parameters exist
-        if (optParams === null) {
-          // If no brackets exists, simply check an empty element and report it.
-          reqParams.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-        }  else if (optParams.params.length === 0) {
-          // If brackets exists but nothing in it, simply check an empty element and report it. The last comma outside the bracket is valid.
-          reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-          addProblem('No optional parameters defined in brackets.', optParams.loc);
-        } else {
-          // If both required parameters and optional parameters are provided, check the both.
-          reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-          optParams.params.forEach((param, i, params) => { if (i !== 0 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-          if (reqParams[reqParams.length - 1].type === 'EmptyExpression' && optParams.params[0].type === 'EmptyExpression') {
-            addProblem('Duplicated commas.', optParams.params[0].loc, DiagnosticSeverity.Warning);
-          } else if (reqParams[reqParams.length - 1].type !== 'EmptyExpression' && optParams.params[0].type !== 'EmptyExpression') {
-            addProblem('Missing comma between required parameters and optional parameters.', getRange(optParams.loc.source, optParams.loc.start, 1, 0), DiagnosticSeverity.Warning);
-          }
+        multiReturn.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Return variable not defined.', param.loc); } });
+      }
+    }
+
+    // Check input parameters and their separators (comma).
+    if (reqParams.length === 0) {
+      // In case required parameters are not provided
+      if (optParams === null) {
+        // Do nothing if neither required parameters or optional parameters are provided
+      } else if (optParams.params.length === 0) {
+        // If bracket exists but nothing in it, report an erro.
+        addProblem('No optional parameters defined in brackets.', optParams.loc);
+      } else {
+        // Otherwise, report error if empty element exists.
+        optParams.params.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+      }
+    } else {
+      // In case one or more required parameters exist
+      if (optParams === null) {
+        // If no brackets exists, simply check an empty element and report it.
+        reqParams.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+      }  else if (optParams.params.length === 0) {
+        // If brackets exists but nothing in it, simply check an empty element and report it. The last comma outside the bracket is valid.
+        reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+        addProblem('No optional parameters defined in brackets.', optParams.loc);
+      } else {
+        // If both required parameters and optional parameters are provided, check the both.
+        reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+        optParams.params.forEach((param, i, params) => { if (i !== 0 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+        if (reqParams[reqParams.length - 1].type === 'EmptyExpression' && optParams.params[0].type === 'EmptyExpression') {
+          addProblem('Duplicated commas.', optParams.params[0].loc, DiagnosticSeverity.Warning);
+        } else if (reqParams[reqParams.length - 1].type !== 'EmptyExpression' && optParams.params[0].type !== 'EmptyExpression') {
+          addProblem('Missing comma between required parameters and optional parameters.', getRange(optParams.loc.source, optParams.loc.start, 1, 0), DiagnosticSeverity.Warning);
         }
       }
-      return { type: 'FunctionDeclaration', id, threadsafe: !!ts, override: !!or, static: !!s0, params: reqParams, optParams: optParams?.params, return: multiReturn, body, subtype, interceptingComment: iComment, loc: location(), };
     }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(declNode, tComment);
+    const node = { type: 'FunctionDeclaration', id, threadsafe: !!ts, override: !!or, static: !!s0, params: reqParams, optParams: optParams?.params, return: multiReturn, body, subtype, loc: location(), };
+
+    // Use of `EndMacro` for `Function` can be found in several IPF files
+    // WaveMetrics bundled with Igor Pro 9.
+    // I think it is misuse and `End` is only allowed for `Function`.
+    // 
+    // To the contrary, it is clearly written in the official document 
+    // that a `Macro` definition ends with either `End` or `EndMacro`.
+    if (end && end.label.toLowerCase() === 'endmacro') {
+      addProblem(`Expected "End" but "EndMacro" found.`, end.loc, DiagnosticSeverity.Warning);
+    }
+    return modifyNodeUsingEndPattern(node, end, '"End" or "EndMacro"', '"Function" declaration', iComment);
   }
 
 // body of top-level statements
 
-InMenuStmt 'statement in menu block' =
-  lComments:(_0 @Comment)+ inMenuStmt:(_0 @(SubmenuDecl / MenuItemStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt)) {
-    return leadingCommentsAddedNode(inMenuStmt, lComments);
-  }
-  / _0 @(SubmenuDecl / MenuItemStmt / EmptyEolStmt) / _1 @EmptyEofStmt
-
-InPictStmt 'statement in picture block' =
-  lComments:(_0 @Comment)+ pictStmt:(_0 @(Ascii85Block / InvalidPictStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt)) {
-    return leadingCommentsAddedNode(pictStmt, lComments);
-  }
+// Menu block ends with 'end' and thus common patterns are available.
+InMenuStmt =
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(!_CommonEnd @InMenuStmtBase / &_CommonEnd @BaseEmptyStmt / EmptyEofStmt)
+  ) { return addLeadingCommentsToNode(stmt, lComments); }
   /
-  _0 @(Ascii85Block / EmptyEolStmt / InvalidPictStmt / EmptyEolStmt)
+  _0 !_CommonEnd @InMenuStmtBase
   /
   _1 @EmptyEofStmt
 
-InvalidPictStmt =
-  stmt:UnclassifiedEolStmt {
-    addProblem('Invalid as a picture statement.', stmt.loc);
-    return stmt;
-  }
+InMenuStmtBase =
+  SubmenuDecl / MenuItemStmt / EmptyEolStmt / BaseInvalidStmt
+
+// Picture block ends with 'end' and thus common patterns are available.
+InPictStmt =
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(!_CommonEnd @InPictStmtBase / &_CommonEnd @BaseEmptyStmt / EmptyEofStmt)
+  ) { return addLeadingCommentsToNode(stmt, lComments); } /
+  _0 !_CommonEnd @InPictStmtBase
+  /
+  _1 @EmptyEofStmt
+
+InPictStmtBase =
+  Ascii85Block / EmptyEolStmt / BaseInvalidStmt
 
 InStructStmt 'statement in structure block' =
-  lComments:(_0 @Comment)+ structStmt:(
-    _0 @(StructMemberDecl / InvalidStructStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt)
-  ) {
-    return leadingCommentsAddedNode(structStmt, lComments);
-  }
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(!_StructEnd @InStructStmtBase / &_StructEnd @BaseEmptyStmt / EmptyEofStmt)
+  ) { return addLeadingCommentsToNode(stmt, lComments); }
   /
-  _0 @(StructMemberDecl / InvalidStructStmt / EmptyEolStmt)
+  _0 !_StructEnd @InStructStmtBase
   /
   _1 @EmptyEofStmt
 
-InvalidStructStmt =
-  stmt:UnclassifiedEolStmt {
-    addProblem('Invalid as a structure statement.', stmt.loc);
-    return stmt;
-  }
+InStructStmtBase =
+  StructMemberDecl / EmptyEolStmt / BaseInvalidStmt
 
-InFuncStmt 'statement in macro and function' =
-  lComments:(_0 @Comment)+ funcStmt:(
-    _0 @(DirectiveStmt / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / OneLineCmndStmt / EmptyEolStmt / EmptyEofStmt / EmptyAboveEndStmt / InvalidFuncStmt)
-    // _0 @(UnclassifiedEolStmt / EmptyEolStmt / EmptyEofStmt)
-  ) {
-    return leadingCommentsAddedNode(funcStmt, lComments);
-  }
+_StructEnd =
+  label:'EndStructure'i _0 comment:EolWWOComment { return { label, comment, loc: location() }; }
+
+
+InFuncStmt =
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(!_FuncEnd @InFuncStmtBase / &_FuncEnd @BaseEmptyStmt / EmptyEofStmt)
+  ) { return addLeadingCommentsToNode(stmt, lComments); }
   /
-  // _0 @(UnclassifiedEolStmt / EmptyEolStmt)
-  _0 @(DirectiveStmt / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / OneLineCmndStmt / EmptyEolStmt / InvalidFuncStmt)
+  _0 !_FuncEnd @InFuncStmtBase
   /
   _1 @EmptyEofStmt
 
-InvalidFuncStmt =
-  stmt:UnclassifiedEolStmt {
-    addProblem('Invalid as a function/macro statement.', stmt.loc);
-    return stmt;
+InFuncStmtBase =
+  DirectiveStmt / IfStmt / SwitchStmt / TryStmt / DoWhileStmt / ForStmt / ForInStmt / BreakStmt / ContinueStmt / OneLineCmndStmt / EmptyEolStmt / BaseInvalidStmt
+
+_FuncEnd =
+  label:$('End'i 'Macro'i?) _0 comment:EolWWOComment {
+    return { label, comment, loc: location() };
   }
 
 // statements in Menu declarations
 
 SubmenuDecl 'submenu declaration' =
-  declNode:(
-    'Submenu'i _1 id:StrId _0 iComment:EolWWOComment body:InMenuStmt* _0 end:_End {
-      if (end[0].toLowerCase() !== 'end') { error(`Expected "End" but "${end[0]}" found.`, end[1]); }
-      return { type: 'SubmenuDeclaration', id, body, interceptingComment: iComment, loc: location(), };
-    }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(declNode, tComment);
+  'Submenu'i _1 id:StrId _0 iComment:EolWWOComment
+  body:InMenuStmt*
+  _0 end:(_Eof / _CommonEnd) {
+    const node = { type: 'SubmenuDeclaration', id, body, loc: location(), };
+    return modifyNodeUsingEndPattern(node, end, '"End"', '"Submenu" declaration', iComment);
   }
 
 // TODO: parse menu item into { title, flags, execution }.
 MenuItemStmt 'menu item statement' =
-  !_End raw:$(!EolWWOComment .)+ tComment:EolWWOComment {
+  raw:$(!EolWWOComment .)+ tComment:EolWWOComment {
     const node = { type: 'MenuItemStatement', raw, loc: location(), };
-    return trailingCommentAddedNode(node, tComment);
+    return addTrailingCommentToNode(node, tComment);
   }
 
 // statements in Picture declarations
 
 Ascii85Block 'ASCII85 block' =
-  blockNode:(
-    'ASCII85Begin'i _0 iComment:EolWWOComment raw:(_0 !('ASCII85End'i) @$[^ \r\n]+ _0 _Eol)* _0 'ASCII85End' {
-      return { type: 'Ascii85Block', raw, interceptingComment: iComment, loc: location(), };
-    }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(blockNode, tComment);
+  'ASCII85Begin'i _0 iComment:EolWWOComment
+  raw:(_0 !_Ascii85BlockEnd @$[^ \r\n]+ _0 _Eol)*
+  _0 end:(_Eof / _Ascii85BlockEnd) {
+  const node = { type: 'Ascii85Block', raw, loc: location(), };
+  return modifyNodeUsingEndPattern(node, end, '"ASCII85End"', 'ASCII85 block', iComment);
+}
+
+_Ascii85BlockEnd =
+  label:'ASCII85End' _0 comment:EolWWOComment {
+    return { label, comment, loc: location() };
   }
 
 // statements in Structure declarations
@@ -496,106 +517,246 @@ StructMemberDecl 'structure member declaration'=
         return node0;
     }
   ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(stmtNode, tComment);
+    return addTrailingCommentToNode(stmtNode, tComment);
   }
 
 StructMemberDeclr 'structure member declarator' =
-  id:(StdId / LiberalId) size:(_0 '[' _0 @$(!EosLA [^\]])* _0 ']')? {
+  id:(StdId / LiberalId) size:(_0 '[' _0 @$(!_EosLA [^\]])* _0 ']')? {
     return { type: 'StructureMemberDeclarator', id, size: size ? size : undefined, loc: location(), };
   }
 
 // flow control
 
-IfStmt 'if statement' =
-  node:(
-    ifCase:(
-      'if'i _0 '(' _0 test0:BaseExpr _0 ')' _0 iComment0:EolWWOComment consequent0:InFuncStmt* {
-        return { type: 'IfCase', test: test0, consequent: consequent0, interceptingComment: iComment0, loc: location(), };
-      }
-    ) elseifCases:(
-      _0 'elseif'i _0 '(' _0 testI:BaseExpr _0 ')' _0 iCommentI:EolWWOComment consequentI:InFuncStmt* {
-        return { type: 'IfCase', test: testI, consequent: consequentI, interceptingComment: iCommentI, loc: location(), };
-      }
-    )* elseCase:(
-      _0 'else'i _0 iCommentN:EolWWOComment consequentN:InFuncStmt* {
-        return { type: 'IfCase', consequent: consequentN, interceptingComment: iCommentN, loc: location(), };
-      }
-    )? _0 end:_End {
-      if (end[0].toLowerCase() !== 'endif') { error(`Expected "endif" but "${end[0]}" found.`, end[1]); }
+// - if
 
-      const cases = elseCase ? [ifCase].concat(elseifCases, [elseCase]) : [ifCase].concat(elseifCases);
-      return { type: 'IfStatement', cases, loc: location(), };
+IfStmt 'if statement' =
+  ifCase:(
+    'if'i _0 '(' _0 test:BaseExpr _0 ')' _0 iComment:EolWWOComment
+    consequent:InFuncInIfStmt* {
+      const node = { type: 'IfCase', test, consequent, loc: location(), };
+      if (iComment) {
+        node.innerComments = [iComment];
+      }
+      return node;
     }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(node, tComment);
+  ) otherCases:(
+    _0 elseifOrElse:(_IfElseIf / _IfElse)
+    consequent:InFuncInIfStmt* {
+      const node = { type: 'IfCase', consequent, loc: location(), };
+      if (elseifOrElse.label.toLowerCase() === 'elseif') {
+        node.test = elseifOrElse.test;
+      }
+      if (elseifOrElse.comment) {
+        node.innerComments = [elseifOrElse.comment];
+      }
+      return node;
+    }
+  )*_0 end:(_Eof / &_FuncEnd / _IfEnd) {
+    // check the order or "elseif" and "else" cases
+    let elseDidAppear = false;
+    otherCases.forEach(case0 => {
+      if (case0.test) {
+        if (elseDidAppear) {
+          addProblem('"elseif" appears after "else".', case0.loc, DiagnosticSeverity.Warning);
+        }
+      } else {
+        if (elseDidAppear) {
+          addProblem('Duplicated "else".', case0.loc);
+        }
+        elseDidAppear = true;
+      }
+    });
+
+    const node = { type: 'IfStatement', cases: [ifCase].concat(otherCases), loc: location(), };
+    // Comment at `if (...)` line is added to the first `IfCase`, not to the `IfStatement`.
+    return modifyNodeUsingEndPattern(node, end, '"endif"', '"if" block', null);
   }
+
+InFuncInIfStmt =
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(!_IfBlock @InFuncStmtBase / &_IfBlock @BaseEmptyStmt / EmptyEofStmt)
+    ) { return addLeadingCommentsToNode(stmt, lComments); }
+  /
+  _0 !_IfBlock @InFuncStmtBase
+  /
+  _1 @EmptyEofStmt
+
+_IfBlock =
+  _FuncEnd / _IfElseIf / _IfElse / _IfEnd
+_IfElseIf =
+  label:'elseif'i _0 '(' _0 test:BaseExpr _0 ')' _0 comment:EolWWOComment { return { label, test, comment, loc: location() }; }
+_IfElse =
+  label:'else'i _0 comment:EolWWOComment { return { label, comment, loc: location() }; }
+_IfEnd =
+  label:'endif'i _0 comment:EolWWOComment { return { label, comment, loc: location() }; }
+
+// - switch
 
 SwitchStmt 'switch statement' =
-  node:(
-    stmtName:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment stmtsBeforeCase:InFuncStmt* cases:(
-      _0 'case'i _1 test:(StrLiteral / SignedNumLiteral / StdId) ':' _0 iCommentI:EolWWOComment consequent:InFuncStmt* {
-        return { type: 'SwitchCase', test, consequent, interceptingComment: iCommentI, loc: location(), };
+  stmtName:$('str'i? 'switch'i) _0 '(' _0 discriminant:BaseExpr _0 ')' _0 iComment:EolWWOComment
+  stmtsBeforeCase:InFuncInSwitchStmt*
+  cases:(
+    _0 case0:_SwitchCase consequent:InFuncInSwitchStmt* {
+      const node = { type: 'SwitchCase', test:case0.test, consequent, loc: location(), };
+      if (case0.comment) {
+        node.innerComments = [case0.comment];
       }
-      /
-      _0 'default'i _0 ':'_0 iCommentI:EolWWOComment consequent:InFuncStmt* {
-        return { type: 'SwitchCase', test: null, consequent, interceptingComment: iCommentI, loc: location(), };
-      }
-    )* _0 end:_End {
-      if (end[0].toLowerCase() !== 'endswitch') { error(`Expected "endswitch" but "${end[0]}" found.`, end[1]); }
-      if (stmtsBeforeCase) {
-        stmtsBeforeCase.forEach(stmt => { if (stmt.type !== 'EmptyStatement') { addProblem('Statement not allowed here.', stmt.loc); } });
-      }
-
-      const kind = stmtName.toLowerCase() === 'strswitch' ? 'string' : 'number';
-      return { type: 'SwitchStatement', discriminant, kind, cases, interceptingComment: iComment, loc: location(), };
+      return node;
     }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(node, tComment);
+    /
+    _0 default0:_SwitchDefault consequent:InFuncInSwitchStmt* {
+      const node = { type: 'SwitchCase', test: null, consequent, loc: location(), };
+      if (default0.comment) {
+        node.innerComments = [default0.comment];
+      }
+      return node;
+    }
+  )* _0 end:(_Eof / &_FuncEnd / _SwitchEnd) {
+    const loc = location();
+    // check if statements exist before the first case.
+    if (stmtsBeforeCase) {
+      stmtsBeforeCase.forEach(stmt => { if (stmt.type !== 'EmptyStatement') { addProblem('Statement not allowed here.', stmt.loc); } });
+    }
+    // check the order or "case" and "default" cases
+    let defaultDidAppear = false;
+    if (!cases.some(case0 => !!case0.test)) {
+      addProblem('At least one "case" required.', loc, DiagnosticSeverity.Warning);
+    }
+    cases.forEach(case0 => {
+      if (case0.test) {
+        if (defaultDidAppear) {
+          addProblem('"case" appears after "default".', case0.loc, DiagnosticSeverity.Warning);
+        }
+      } else {
+        if (defaultDidAppear) {
+          addProblem('Duplicated "default".', case0.loc, DiagnosticSeverity.Warning);
+        }
+        defaultDidAppear = true;
+      }
+    });
+
+    const kind = stmtName.toLowerCase() === 'strswitch' ? 'string' : 'number';
+    const node = { type: 'SwitchStatement', discriminant, kind, cases, loc, };
+    return modifyNodeUsingEndPattern(node, end, '"endswitch"', '"switch" block', iComment);
   }
+
+InFuncInSwitchStmt =
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(!_SwitchBlock @InFuncStmtBase / &_SwitchBlock @BaseEmptyStmt / EmptyEofStmt)
+  ) { return addLeadingCommentsToNode(stmt, lComments); }
+  /
+  _0 !_SwitchBlock @InFuncStmtBase
+  /
+  _1 @EmptyEofStmt
+
+_SwitchBlock =
+  _FuncEnd / _SwitchCase / _SwitchDefault / _SwitchEnd
+_SwitchCase =
+  label:'case'i _1 test:(StrLiteral / SignedNumLiteral / StdId) ':' _0 comment:EolWWOComment { return { label, test, comment, loc: location(), }; }
+_SwitchDefault =
+  label:'default'i _0 ':'_0 comment:EolWWOComment { return { label, comment, loc: location(), }; }
+_SwitchEnd =
+  label:'endswitch'i _0 comment:EolWWOComment { return { label, comment, loc: location(), }; }
+
+// - try
 
 TryStmt 'try statement' =
-  node:(
-    'try'i _0 iComment0:EolWWOComment block:InFuncStmt* _0 'catch'i _0 iComment1:EolWWOComment handler:InFuncStmt* _0 end:_End {
-      if (end[0].toLowerCase() !== 'endtry') { error(`Expected "endtry" but "${end[0]}" found.`, end[1]); }
-      return { type: 'TryStatement', block, handler, interceptingComment: iComment1, loc: location(), };
+  'try'i _0 iComment:EolWWOComment
+  block:InFuncInTryStmt*
+  _0 catchHeader:_TryCatch
+  handler:InFuncInTryStmt*
+  _0 end:(_Eof / &_FuncEnd / _TryEnd) {
+    const node = { type: 'TryStatement', block, handler, loc: location(), };
+    modifyNodeUsingEndPattern(node, end, '"endtry"', '"try" block', iComment);
+      // TODO: create `CatchClause` node.
+    if (catchHeader.comment) {
+      node.innerComments = node.innerComments ?
+        [...node.innerComments, catchHeader.comment] :
+        catchHeader.comment;
     }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(node, tComment);
+    return node;
   }
+
+InFuncInTryStmt =
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(!_TryBlock @InFuncStmtBase / &_TryBlock @BaseEmptyStmt / EmptyEofStmt)
+  ) { return addLeadingCommentsToNode(stmt, lComments); }
+  /
+  _0 !_TryBlock @InFuncStmtBase
+  /
+  _1 @EmptyEofStmt
+
+_TryBlock =
+  _FuncEnd / _TryCatch / _TryEnd
+_TryCatch =
+  label:'catch'i _0 comment:EolWWOComment { return { label, comment, loc: location(), }; }
+_TryEnd =
+  label:'endtry'i _0 comment:EolWWOComment { return { label, comment, loc: location(), }; }
+
+// - do-while
 
 DoWhileStmt 'do-while statement' =
-  node:(
-    'do'i _0 iComment:EolWWOComment body:InFuncStmt* _0 'while'i _0 '(' test:$(!EolWWOComment [^)])* ')' {
-      return { type: 'DoWhileStatement', body: body, test: test, interceptingComment: iComment, loc: location(), };
-    }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(node, tComment);
+  'do'i _0 iComment:EolWWOComment
+  body:InFuncInDoWhileStmt*
+  _0 end:(_Eof / &_FuncEnd / _DoWhileEnd) {
+    const node = { type: 'DoWhileStatement', body, test: end?.test, loc: location(), };
+    return modifyNodeUsingEndPattern(node, end, '"while(...)"', '"do-while" block', iComment);
   }
 
+InFuncInDoWhileStmt =
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(!_DoWhileBlock @InFuncStmtBase / &_DoWhileBlock @BaseEmptyStmt / EmptyEofStmt)
+  ) { return addLeadingCommentsToNode(stmt, lComments); }
+  /
+  _0 !_DoWhileBlock @InFuncStmtBase
+
+  /
+  _1 @EmptyEofStmt
+
+_DoWhileBlock =
+  _FuncEnd / _DoWhileEnd
+
+_DoWhileEnd =
+  label:'while'i _0 '(' _0 test:BaseExpr _0 ')' _0 comment:EolWWOComment { return { label, test, comment, loc: location(), }; }
+
+// - for
+
 ForStmt 'for-loop' =
-  node:(
-    // TODO: not strict rule
-    'for'i _0 '(' _0 init:AssignUpdateSeqExpr? _0 ';' _0 test:BaseExpr? _0 ';' _0 update:AssignUpdateSeqExpr? _0 ')' _0 iComment:EolWWOComment body:InFuncStmt* _0 end:_End {
-      if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
-      return { type: 'ForStatement', init, test, update, body, interceptingComment: iComment, loc: location(), }; 
-    }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(node, tComment);
+  // TODO: not strict rule
+  'for'i _0 '(' _0 init:AssignUpdateSeqExpr? _0 ';' _0 test:BaseExpr? _0 ';' _0 update:AssignUpdateSeqExpr? _0 ')'_0 iComment:EolWWOComment
+  body:InFuncInForStmt*
+  _0 end:(_Eof / &_FuncEnd / _ForEnd) {
+    const node = { type: 'ForStatement', init, test, update, body, loc: location(), };
+    return modifyNodeUsingEndPattern(node, end, '"endfor"', 'for-loop', iComment);
   }
 
 ForInStmt 'range-based for-loop' =
-  node:(
-    // TODO: not strict rule
-    'for'i _0 '(' _0 left:VariableWWOType? _0 ':' _0 right:BaseExpr _0 ')' _0 iComment:EolWWOComment body:InFuncStmt* _0 end:_End {
-      if (end[0].toLowerCase() !== 'endfor') { error(`Expected "endfor" but "${end[0]}" found.`, end[1]); }
-      return { type: 'ForInStatement', left: left, right: right, interceptingComment: iComment, loc: location(), }; 
-    }
-  ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(node, tComment);
+  // TODO: not strict rule
+  'for'i _0 '(' _0 left:VariableWWOType? _0 ':' _0 right:BaseExpr _0 ')' _0 iComment:EolWWOComment
+  body:InFuncInForStmt*
+  _0 end:(_Eof / &_FuncEnd / _ForEnd) {
+    const node = { type: 'ForInStatement', left: left, right: right, loc: location(), };
+    return modifyNodeUsingEndPattern(node, end, '"endfor"', 'for-loop', iComment);
   }
 
+InFuncInForStmt =
+  lComments:(_0 @Comment)+ stmt:(
+    _0 @(!_ForBlock @InFuncStmtBase / &_ForBlock @BaseEmptyStmt / EmptyEofStmt)
+  ) { return addLeadingCommentsToNode(stmt, lComments); }
+  /
+  _0 !_ForBlock @InFuncStmtBase
+  /
+  _1 @EmptyEofStmt
+
+_ForBlock =
+  _FuncEnd / _ForEnd
+_ForEnd =
+  label:'endfor'i _0 comment:EolWWOComment { return { label, comment, loc: location() }; }
+
+
+
+
 AssignUpdateSeqExpr 'comma-separated assignment or update expressions' =
-  // TODO: currently the returned value is not an AST object.
   expressions:(AssignExpr / UpdateExpr)|.., _Comma| {
     return { type: 'SequenceExpression', expressions, loc: location(), };
   }
@@ -644,19 +805,19 @@ BreakStmt 'braek statement' =
   node:(
     'break'i { return { type: 'BreakStatement', loc: location(), }; }
   ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(node, tComment);
+    return addTrailingCommentToNode(node, tComment);
   }
 
 ContinueStmt 'continue statement' =
   node:(
     'continue'i { return { type: 'ContinueStatement', loc: location(), }; }
   ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(node, tComment);
+    return addTrailingCommentToNode(node, tComment);
   }
 
 // a command or multiple commands in one line.
 OneLineCmndStmt 'statement for a command or multiple commands' =
-  !_End node:(
+  node:(
     body:(
       ';' { return { type: 'EmptyStatement', loc: location(), }; }
       /
@@ -674,7 +835,7 @@ OneLineCmndStmt 'statement for a command or multiple commands' =
       }
     }
   ) _0 tComment:EolWWOComment {
-    return trailingCommentAddedNode(node, tComment);
+    return addTrailingCommentToNode(node, tComment);
   }
 
 // > DisplayHelpTopic "Multiple Return Syntax"
@@ -702,7 +863,7 @@ VarDeclStmt 'declaration statement' =
     }
     /
     kind:$('FUNCREF'i / 'STRUCT'i) flags:(_0 @Flag)* _1 proto:_StdName {
-      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location(), proto, flags, loc: location(), };
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), proto, flags, loc: location(), };
     }
   ) _1 elements:DeclaratorWWOInit|1.., _Comma| exComma:_CommaWLoc? _0 &(_Eol / ';' / '//') {
     if (exComma) { addProblem('Trailing comma not allowed.', exComma); };
@@ -739,12 +900,13 @@ AssignExprStmt 'expression statement for assignment' =
   }
 
 OpStmt 'operation statement' =
-  name:$([a-zA-Z][a-zA-Z0-9]*) &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
-    Flag+ / _Word+ / StrLiteral / _1 / !(_Eol / ';' / '//') .)* {
+  name:_StdName2 &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
+    Flag+ / _Word+ / StrLiteral / _1 / !(_Eol / ';' / '//') .
+  )* {
     // TODO: object properties
     return { type: 'OperationStatement', name, flags, args, loc: location(), };
   }
-  // name:$([a-zA-Z][a-zA-Z0-9]*) &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
+  // name:_StdName2 &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
   //   (_0 ',' _0 / _1) @(
   //     BaseExpr (_0 '=' _0 (BaseExpr / BraceListExpr / ParenListExpr / BracketListExpr+))?
   //     /
@@ -1091,8 +1253,10 @@ ArrayElemInc = ';' _0 inc:(@LabelOrIndex _0)? {
   }
 
 _StdName 'standard name' =
-  // $[a-zA-Z0-9_]+
   [a-zA-Z][a-zA-Z0-9_]* { return text(); }
+
+_StdName2 'standard name' =
+  [a-zA-Z][a-zA-Z0-9]* { return text(); }
 
 StdId 'standard identifier' =
   name:_StdName {
@@ -1147,6 +1311,7 @@ _SignedNumLiteralRaw =
 // exponential part in floating-point digit, e.g., E+3 in 1.2E+3)
 _Exponent = [eE] [+-]? [0-9]+
 
+// word, mainly used for look-ahead.
 _Word = [a-zA-Z0-9_]
 
 _StrRaw 'string' =
@@ -1167,12 +1332,12 @@ StrId 'string identifier' =
   }
 
 FlagWOValue =
-  '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* {
+  '/' _0 key:_StdName2 {
     return { type: 'Flag', key, loc: location(), };
   }
 
 Flag 'operation flag' =
-  // '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / SignedNumericLiteral / StringLiteral / CallExpr / RefExpr / Variable))? {
-  '/' _0 key:$[a-zA-Z][a-zA-Z0-9]* value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / BaseExpr))? {
+  // '/' _0 key:_StdName2 value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / SignedNumericLiteral / StringLiteral / CallExpr / RefExpr / Variable))? {
+  '/' _0 key:_StdName2 value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / BaseExpr))? {
     return { type: 'Flag', key, value, loc: location(), };
   }
