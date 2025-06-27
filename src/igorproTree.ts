@@ -92,6 +92,7 @@ export type ParentDeclaration =
 export type InMenuStatement =
     | SubmenuDeclaration
     | MenuItemStatement
+    | MenuHelpStatement
     | EmptyStatement
     | UnclassifiedStatement;
 
@@ -217,10 +218,16 @@ export interface SubmenuDeclaration extends BaseMenu {
     type: 'SubmenuDeclaration';
 }
 
-// TODO: parse menu item into { title, flags, execution }.
 export interface MenuItemStatement extends BaseStatement {
     type: 'MenuItemStatement';
-    raw: string;
+    label: StringIdentifier | Expression;
+    quite: boolean;
+    execution: BundledStatement | BundlableStatement;
+}
+
+export interface MenuHelpStatement extends BaseStatement {
+    type: 'MenuHelpStatement';
+    messages: Expression[];
 }
 
 // picture
