@@ -415,7 +415,7 @@ InMenuStmt =
   _1 @EmptyEofStmt
 
 InMenuStmtBase =
-  SubmenuDecl / MenuItemStmt / EmptyEolStmt / BaseInvalidStmt
+  SubmenuDecl / MenuItemStmt / MenuHelpStmt / EmptyEolStmt / BaseInvalidStmt
 
 // Picture block ends with 'end' and thus common patterns are available.
 InPictStmt =
@@ -472,11 +472,40 @@ SubmenuDecl 'submenu declaration' =
     return modifyNodeUsingEndPattern(node, end, '"End"', '"Submenu" declaration', iComment);
   }
 
-// TODO: parse menu item into { title, flags, execution }.
+/**
+ * Menu item statement (or menu help string).
+ * 
+ * format: _MenuItemString_[, _MnuIemFlag_][, _ExecutionText_]
+ * _MenuItemString_: is typically string but can be an expression. Check `DisplayHelpTopic "Dynamic Menu Items"`.
+ * _MenuItemFlag_: optional, only `/Q` is allowed.
+ * _ExecutionText_: optional, one-line command statement.
+ */
 MenuItemStmt 'menu item statement' =
-  raw:$(!EolWWOComment .)+ tComment:EolWWOComment {
-    const node = { type: 'MenuItemStatement', raw, loc: location(), };
-    return addTrailingCommentToNode(node, tComment);
+  !_CommonEnd _0 label:(StrId / BaseExpr) _0 flags:(',' @(_0 @FlagWOValue)+ _0)? option:(
+    ',' _0 stmt:OneLineCmndStmt _0 { return { key: 'execution', statement: stmt }; }
+    /
+    comment:EolWWOComment { return { key: 'comment', comment }; }
+  ) {
+    const node = { type: 'MenuItemStatement', label, loc: location(), };
+    flags?.forEach(flag => {
+      if (flag.key.toUpperCase() === 'Q') {
+        node.quite = true;
+      } else {
+        addProblem(`Unknown menu item flag "/${flag.key}".`, flag.loc);
+      }
+    });
+    if (option.key === 'execution') {
+      node.execution = option.statement;
+    } else if (option.key === 'comment') {
+      addTrailingCommentToNode(node, option.comment);
+  }
+  return node;
+}
+
+MenuHelpStmt 'menu help statement' =
+  !_CommonEnd _0 'help'i _0 '=' _0 '{' _0 messages:(BaseExpr|.., _Comma|) _0 '}' _0 comment:EolWWOComment {
+    const node = { type: 'MenuHelpStatement', messages, loc: location(), };
+    return addTrailingCommentToNode(node, comment);
   }
 
 // statements in Picture declarations
