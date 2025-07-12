@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import * as tree from './igorproTree';
-import * as lang from './igorpro';
-import type { LocationRange } from './grammar';
+import * as lang from './language';
+import type { LocationRange } from './parser';
+import type * as tree from './tree';
 
 // NOTE: estraverse is patched to support Igor Pro specific node types.
 // import * as estraverse from 'estraverse';

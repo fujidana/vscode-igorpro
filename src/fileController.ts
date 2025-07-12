@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import * as lang from "./igorpro";
-import { Provider } from "./provider";
-import { SyntaxError, parse } from './grammar';
+import * as lang from "./language";
+import { Controller } from "./controller";
+import { SyntaxError, parse } from './parser';
 import { traverse } from './traverser';
-import type * as tree from './igorproTree';
+import type * as tree from './tree';
 
 /**
  * Get a set of the URIs of supported files from workspaces
@@ -42,7 +42,7 @@ async function findFilesInWorkspaces() {
  * Provider class for user's documents.
  * This class manages documents opened in editors and other documents in the current workspaces.
  */
-export class UserProvider extends Provider implements vscode.DefinitionProvider, vscode.DocumentSymbolProvider, vscode.WorkspaceSymbolProvider, vscode.DocumentDropEditProvider, vscode.TextDocumentContentProvider {
+export class FileController extends Controller implements vscode.DefinitionProvider, vscode.DocumentSymbolProvider, vscode.WorkspaceSymbolProvider, vscode.DocumentDropEditProvider, vscode.TextDocumentContentProvider {
 
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly treeCollection: Map<string, tree.Program>;

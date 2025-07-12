@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as lang from './igorpro';
+import * as lang from './language';
 import { SemVer, satisfies } from 'semver';
 
 interface SuppressMessagesConfig {
@@ -126,9 +126,9 @@ function getWordTypeInCommand(document: vscode.TextDocument, position: vscode.Po
 }
 
 /**
- * Provider class
+ * Controller class
  */
-export class Provider implements vscode.CompletionItemProvider<lang.CompletionItem>, vscode.HoverProvider, vscode.SignatureHelpProvider {
+export class Controller implements vscode.CompletionItemProvider<lang.CompletionItem>, vscode.HoverProvider, vscode.SignatureHelpProvider {
     // vscode.Uri objects can not be used as a key for a Map object because these 
     // objects having the same string representation can be recognized different,
     // i.e., uriA.toString() === uriB.toString() but uriA !== uriB.

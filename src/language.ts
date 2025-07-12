@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { Location, LocationRange } from './grammar';
+import type { Location, LocationRange } from './parser';
 
 export const SELECTOR = { language: 'igorpro' };
 // export const SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];

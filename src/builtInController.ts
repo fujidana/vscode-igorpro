@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import * as lang from './igorpro';
-import { Provider } from "./provider";
+import * as lang from './language';
+import { Controller } from "./controller";
 
 interface APIReference {
     constants: lang.ReferenceItem[];
@@ -17,15 +17,15 @@ interface APIReference {
 /**
  * Provider subclass that manages built-in symbols.
  */
-export class SystemProvider extends Provider implements vscode.TextDocumentContentProvider {
+export class BuiltInController extends Controller implements vscode.TextDocumentContentProvider {
     // private activeWorkspaceFolder: vscode.WorkspaceFolder | undefined;
 
     constructor(context: vscode.ExtensionContext) {
         super(context);
 
         // load the API reference file
-        const apiReferenceUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.apiReference.json');
-        const promisedStorage = vscode.workspace.fs.readFile(apiReferenceUri).then(uint8Array => {
+        const builtInRefUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.builtIns.json');
+        const promisedStorage = vscode.workspace.fs.readFile(builtInRefUri).then(uint8Array => {
             return vscode.workspace.decode(uint8Array, { encoding: 'utf8' });
         }).then(decodedString => {
             // convert JSON-formatted file contents to a javascript object.
