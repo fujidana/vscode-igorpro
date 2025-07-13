@@ -68,26 +68,14 @@ const VisitorKeys = {
     Flag: ['value'],
 };
 
-export function traverse(program: tree.Program): [lang.ReferenceStorage, vscode.DocumentSymbol[]] {
+export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.DocumentSymbol[]] {
+    // Create variables to store data.
+    const refBook: lang.ReferenceBook = new Map();
+    const symbols: vscode.DocumentSymbol[] = [];;
 
-    const constantRefMap: lang.ReferenceMap = new Map();
-    // const menuRefMap: igorpro.ReferenceMap = new Map();
-    const pictureRefMap: lang.ReferenceMap = new Map();
-    const structureRefMap: lang.ReferenceMap = new Map();
-    const macroRefMap: lang.ReferenceMap = new Map();
-    const functionRefMap: lang.ReferenceMap = new Map();
-
-    const ReferenceStorage: lang.ReferenceStorage = new Map([
-        [lang.ReferenceItemKind.constant, constantRefMap],
-        // [lang.ReferenceItemKind.menu, menuRefMap],
-        [lang.ReferenceItemKind.picture, pictureRefMap],
-        [lang.ReferenceItemKind.macro, macroRefMap],
-        [lang.ReferenceItemKind.function, functionRefMap],
-    ]);
-
-    const symbols = new Array<vscode.DocumentSymbol>();
     let parentSymbol: vscode.DocumentSymbol | undefined;
 
+    // Traverse the syntax tree.
     estraverse.traverse(program, {
         enter: (node: tree.Node, parent: tree.Node | null) => {
             // console.log(node.type, parent?.type);
@@ -97,34 +85,32 @@ export function traverse(program: tree.Program): [lang.ReferenceStorage, vscode.
                 let symbol: vscode.DocumentSymbol | undefined;
 
                 if (node.type === 'ConstantDeclaration') {
-                    const refItem = makeRefItem(node);
-                    refItem.static = node.static;
-                    constantRefMap.set(node.id.name.toLowerCase(), refItem);
+                    const refItem = makeReferenceItem(node, 'constant', { isStatic: node.static });
+                    refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Constant)) !== undefined) {
                         symbols.push(symbol);
                     }
                     return estraverse.VisitorOption.Skip;
                 } else if (node.type === 'MenuDeclaration') {
-                    // menuRefMap.set(node.id.name.toLowerCase(), makeRefItem(node));
+                    // const refItem = makeRefItem(node, 'menu');
+                    // refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getMenuSymbol(node)) !== undefined) {
                         symbols.push(symbol);
                     }
                     return estraverse.VisitorOption.Skip;
                 } else if (node.type === 'PictureDeclaration') {
-                    const refItem = makeRefItem(node);
-                    refItem.static = node.static;
-                    pictureRefMap.set(node.id.name.toLowerCase(), refItem);
+                    const refItem = makeReferenceItem(node, 'picture', { isStatic: node.static });
+                    refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Object)) !== undefined) {
                         symbols.push(symbol);
                     }
                     return estraverse.VisitorOption.Skip;
                 } else if (node.type === 'StructureDeclaration') {
-                    const refItem = makeRefItem(node);
-                    refItem.static = node.static;
-                    structureRefMap.set(node.id.name.toLowerCase(), refItem);
+                    const refItem = makeReferenceItem(node, 'structure', { isStatic: node.static });
+                    refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Struct)) !== undefined) {
                         for (const subnode of node.body) {
@@ -136,19 +122,18 @@ export function traverse(program: tree.Program): [lang.ReferenceStorage, vscode.
                     }
                     return estraverse.VisitorOption.Skip;
                 } else if (node.type === 'MacroDeclaration') {
-                    const refItem = makeRefItem(node);
-                    refItem.signature = makeSignatureForMacroAndFunc(node);
-                    macroRefMap.set(node.id.name.toLowerCase(), refItem);
+                    const signature = makeSignatureForMacroAndFunc(node);
+                    const refItem = makeReferenceItem(node, 'macro', { signature });
+                    refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Method)) !== undefined) {
                         symbols.push(symbol);
                     }
                     parentSymbol = symbol;
                 } else if (node.type === 'FunctionDeclaration') {
-                    const refItem = makeRefItem(node);
-                    refItem.static = node.static;
-                    refItem.signature = makeSignatureForMacroAndFunc(node);
-                    functionRefMap.set(node.id.name.toLowerCase(), refItem);
+                    const signature = makeSignatureForMacroAndFunc(node);
+                    const refItem = makeReferenceItem(node, 'function', { signature, isStatic: node.static });
+                    refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Function)) !== undefined) {
                         symbols.push(symbol);
@@ -188,15 +173,7 @@ export function traverse(program: tree.Program): [lang.ReferenceStorage, vscode.
         keys: VisitorKeys,
     });
 
-    return [ReferenceStorage, symbols];
-
-    function makeRefItem(node: tree.ParentDeclaration): lang.ReferenceItem {
-        return {
-            signature: node.id.name,
-            description: node.leadingComments ? node.leadingComments.map(comment => comment.value).join('\n') : undefined,
-            location: node.id.loc
-        };
-    }
+    return [refBook, symbols];
 
     function makeSignatureForMacroAndFunc(node: tree.FunctionDeclaration | tree.MacroDeclaration): string {
         let signature = node.id.name;
@@ -276,5 +253,19 @@ export function traverse(program: tree.Program): [lang.ReferenceStorage, vscode.
             }
         });
         return symbols;
+    }
+}
+
+function makeReferenceItem(node: tree.ParentDeclaration, category: lang.ReferenceCategory, option?: { signature?: string, isStatic?: boolean }): lang.ReferenceItem {
+    const signature = option?.signature ?? node.id.name;
+    const isStatic = option?.isStatic ?? undefined;
+    const description =
+        node.leadingComments && node.leadingComments.length > 0 ?
+            node.leadingComments[node.leadingComments.length - 1].value :
+            undefined;
+    if (isStatic !== undefined) {
+        return { signature, category, description, isStatic, location: node.id.loc, };
+    } else {
+        return { signature, category, description, isStatic, location: node.id.loc, };
     }
 }

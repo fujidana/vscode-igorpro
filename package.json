@@ -3,7 +3,7 @@
   "name": "vscode-igorpro",
   "displayName": "Igor Pro",
   "description": "Igor Pro support for VS Code",
-  "version": "1.5.0",
+  "version": "1.6.0-alpha.1",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -61,8 +61,8 @@
     ],
     "commands": [
       {
-        "command": "igorpro.openReferenceManual",
-        "title": "Open Reference Manual",
+        "command": "igorpro.showBuiltInSymbols",
+        "title": "Show Built-in Symbols",
         "category": "Igor Pro",
         "icon": "$(references)"
       },
@@ -76,7 +76,7 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "igorpro.openReferenceManual"
+          "command": "igorpro.showBuiltInSymbols"
         },
         {
           "command": "igorpro.inspectSyntaxTree",
@@ -103,7 +103,7 @@
           "vscode-igorpro.showReferenceManualInPreview": {
             "type": "boolean",
             "default": true,
-            "markdownDescription": "Shows a preview (Webview created by built-in Markdown extension) in addition to a markdown source after [Open Reference Manual](command:igorpro.openReferenceManual) command is invoked."
+            "markdownDescription": "Shows a preview (Webview created by built-in Markdown extension) in addition to a markdown source after [Show Built-in Symbols](command:igorpro.showBuiltInSymbols) command is invoked."
           },
           "vscode-igorpro.suggest.suppressMessages": {
             "type": "object",

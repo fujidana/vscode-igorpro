@@ -2,64 +2,52 @@ import * as vscode from 'vscode';
 import * as lang from './language';
 import { Controller } from "./controller";
 
-interface APIReference {
-    constants: lang.ReferenceItem[];
-    variables: lang.ReferenceItem[];
-    functions: lang.ReferenceItem[];
-    operations: lang.ReferenceItem[];
-    keywords: lang.ReferenceItem[];
-    structures: lang.ReferenceItem[];
-    subtypes: lang.ReferenceItem[];
-    pragmas: lang.ReferenceItem[];
-    hooks: lang.ReferenceItem[];
-}
-
 /**
  * Provider subclass that manages built-in symbols.
  */
 export class BuiltInController extends Controller implements vscode.TextDocumentContentProvider {
     // private activeWorkspaceFolder: vscode.WorkspaceFolder | undefined;
+    private promisedRefBooks;
 
     constructor(context: vscode.ExtensionContext) {
         super(context);
 
-        // load the API reference file
+        // Load built-in symbol database from the JSON file.
         const builtInRefUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.builtIns.json');
-        const promisedStorage = vscode.workspace.fs.readFile(builtInRefUri).then(uint8Array => {
+        this.promisedRefBooks = vscode.workspace.fs.readFile(builtInRefUri).then(uint8Array => {
             return vscode.workspace.decode(uint8Array, { encoding: 'utf8' });
         }).then(decodedString => {
             // convert JSON-formatted file contents to a javascript object.
-            const apiReference: APIReference = JSON.parse(decodedString);
+            const refBookLike: lang.ReferenceBookLike = JSON.parse(decodedString);
 
-            // convert the object to ReferenceMap and register the set.
-            const storage: lang.ReferenceStorage = new Map([
-                [lang.ReferenceItemKind.constant, new Map(Object.entries(apiReference.constants))],
-                [lang.ReferenceItemKind.variable, new Map(Object.entries(apiReference.variables))],
-                [lang.ReferenceItemKind.function, new Map(Object.entries(apiReference.functions))],
-                [lang.ReferenceItemKind.operation, new Map(Object.entries(apiReference.operations))],
-                [lang.ReferenceItemKind.keyword, new Map(Object.entries(apiReference.keywords))],
-                [lang.ReferenceItemKind.structure, new Map(Object.entries(apiReference.structures))],
-                [lang.ReferenceItemKind.subtype, new Map(Object.entries(apiReference.subtypes))],
-                [lang.ReferenceItemKind.pragma, new Map(Object.entries(apiReference.pragmas))],
-                [lang.ReferenceItemKind.hook, new Map(Object.entries(apiReference.hooks))],
-            ]);
-            this.storageCollection.set(lang.BUILTIN_URI, storage);
-            this.updateCompletionItemsForUriString(lang.BUILTIN_URI);
-            return storage;
+            // ['picture', 'macro', 'undefined'] are not used.
+            const builtInsParams: { uriString: string, categories: lang.ReferenceCategory[], referenceBook?: lang.ReferenceBook }[] = [
+                { uriString: lang.BUILTIN_URI, categories: ['constant', 'variable', 'structure', 'function', 'keyword'] },
+                { uriString: lang.OPERATION_URI, categories: ['operation'] },
+                { uriString: lang.EXTRA_URI, categories: ['subtype', 'pragma', 'hook'] },
+            ];
+            builtInsParams.forEach(param => {
+                const refBook = lang.flattenRefBook(refBookLike, param.categories);
+                // Register it in the database.
+                this.referenceCollection.set(param.uriString, refBook);
+                this.updateCompletionItemsForUriString(param.uriString);
+                param.referenceBook = refBook;
+            });
+            return builtInsParams;
         });
 
-        // callback function that shows reference manual as a virtual document
-        const openReferenceManualCommandHandler = async () => {
-            const storage = await promisedStorage;
-
-            const quickPickItems = [{ key: 'all', label: '$(references) all' }];
-            for (const itemKind of storage.keys()) {
-                const metadata = lang.getReferenceItemKindMetadata(itemKind);
-                quickPickItems.push({ key: metadata.label, label: `$(${metadata.iconIdentifier}) ${metadata.label}` });
+        /** Command handler fow showing built-in symbols as a virtual document. */
+        const showBuiltInSymbolsCommandHandler = async () => {
+            // ['picture', 'macro', 'undefined'] are not used.
+            const categories = ['constant', 'variable', 'structure', 'function', 'operation', 'keyword', 'subtype', 'pragma', 'hook'] as const;
+            const quickPickItems = [{ category: 'all', label: '$(references) all' }];
+            for (const category of categories) {
+                const metadata = lang.referenceCategoryMetadata[category];
+                quickPickItems.push({ category: category, label: `$(${metadata.iconIdentifier}) ${metadata.label}` });
             }
             const quickPickItem = await vscode.window.showQuickPick(quickPickItems);
             if (quickPickItem) {
-                const uri = vscode.Uri.parse(lang.BUILTIN_URI).with({ query: quickPickItem.key });
+                const uri = vscode.Uri.parse(lang.BUILTIN_URI).with({ query: quickPickItem.category });
                 const editor = await vscode.window.showTextDocument(uri, { preview: false });
                 const flag = vscode.workspace.getConfiguration('vscode-igorpro').get<boolean>('showReferenceManualInPreview');
                 if (flag) {
@@ -70,21 +58,22 @@ export class BuiltInController extends Controller implements vscode.TextDocument
             }
         };
 
+        // Register command and event handlers.
         context.subscriptions.push(
-            // register command handlers
-            vscode.commands.registerCommand('igorpro.openReferenceManual', openReferenceManualCommandHandler),
-            // register providers
+            // Register command handlers.
+            vscode.commands.registerCommand('igorpro.showBuiltInSymbols', showBuiltInSymbolsCommandHandler),
+            // Register providers.
             vscode.workspace.registerTextDocumentContentProvider('igorpro', this),
         );
     }
 
     /**
-     * required implementation of vscode.TextDocumentContentProvider
+     * Required implementation of vscode.TextDocumentContentProvider.
      */
-    public provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
+    public async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string | undefined> {
         if (token.isCancellationRequested) { return; }
 
-        const getFormattedStringForItem = (item: { signature?: string, description?: string, deprecated?: lang.VersionRange, available?: lang.VersionRange }) => {
+        const getFormattedStringForItem = (item: { signature: string, description?: string, deprecated?: lang.VersionRange, available?: lang.VersionRange }) => {
             let mdText = `\`${item.signature}\``;
             mdText += item.description ? ` \u2014 ${item.description}\n\n` : '\n\n';
             if (item.available) {
@@ -97,43 +86,46 @@ export class BuiltInController extends Controller implements vscode.TextDocument
         };
 
         if (lang.BUILTIN_URI === uri.with({ query: '' }).toString()) {
-            const storage = this.storageCollection.get(lang.BUILTIN_URI);
-            if (storage) {
-                let mdText = '# Igor Pro Reference Manual\n\n';
-                mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) or command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';
+            const refBookParams = await this.promisedRefBooks;
 
-                for (const [itemKind, map] of storage.entries()) {
-                    const itemKindLabel = lang.getReferenceItemKindMetadata(itemKind).label;
+            const refBookLike = refBookParams.map(
+                param => param.referenceBook ? lang.categorizeRefBook(param.referenceBook, param.categories) : {}
+            ).reduce(
+                (left, right) => Object.assign(left, right)
+            );
 
-                    // if 'query' is not 'all', skip maps other than the speficed query.
-                    if (uri.query && uri.query !== 'all' && uri.query !== itemKindLabel) {
-                        continue;
+            let mdText = '# Igor Pro Built-in Symbols\n\n';
+            mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) or command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';
+
+            for (const [category, refSheet] of Object.entries(refBookLike)) {
+                // If 'query' is not 'all', skip maps other than the speficed query.
+                if (uri.query && uri.query !== 'all' && uri.query !== category) {
+                    continue;
+                }
+
+                // Add heading for each category.
+                mdText += `## ${lang.referenceCategoryMetadata[category as keyof typeof refBookLike].label}\n\n`;
+
+                // Add each item.
+                for (const [identifier, refItemLike] of Object.entries(refSheet)) {
+                    // *Specific to Igor Pro*: Keys (identifiers) in the database are lowercased.
+                    // If the case-insensitive match of the key with its signature is succeeded,
+                    // use the value in the signature field.
+                    if (refItemLike.signature && refItemLike.signature.substring(0, identifier.length).toLowerCase() === identifier) {
+                        mdText += `### ${refItemLike.signature.substring(0, identifier.length)}\n\n`;
+                    } else {
+                        console.log('Mismatch between key and signature:', identifier, refItemLike.signature);
+                        mdText += `### ${identifier}\n\n`;
                     }
-
-                    // add heading for each category
-                    mdText += `## ${itemKindLabel}\n\n`;
-
-                    // add each item
-                    for (const [key, item] of map.entries()) {
-                        // Keys in the database are lowercased for the sake of easy searching.
-                        // If the case-insensitive match of the key with its signature is succeeded,
-                        // use the value in the signature field.
-                        if (item.signature && item.signature.substring(0, key.length).toLowerCase() === key) {
-                            mdText += `### ${item.signature.substring(0, key.length)}\n\n`;
-                        } else {
-                            console.log('Mismatch between key and signature:', key, item.signature);
-                            mdText += `### ${key}\n\n`;
-                        }
-                        mdText += getFormattedStringForItem(item);
-                        if (item.overloads) {
-                            for (const overload of item.overloads) {
-                                mdText += getFormattedStringForItem(overload);
-                            }
+                    mdText += getFormattedStringForItem(refItemLike);
+                    if (refItemLike.overloads) {
+                        for (const overload of refItemLike.overloads) {
+                            mdText += getFormattedStringForItem(overload);
                         }
                     }
                 }
-                return mdText;
             }
+            return mdText;
         }
     }
 }
