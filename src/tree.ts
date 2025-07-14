@@ -7,7 +7,7 @@
 
 
 import type { DiagnosticSeverity } from 'vscode';
-import type { LocationRange } from './grammar';
+import type { LocationRange } from './parser';
 
 interface BaseNodeWithoutComments {
     type: string;
@@ -42,6 +42,7 @@ interface NodeMap {
     Expression: Expression;
 
     SequenceExpression: SequenceExpression;
+    Literal: Literal;
     WaveRange: WaveRange;
     WaveIndex: WaveIndex;
     WaveDimLabel: WaveDimLabel;

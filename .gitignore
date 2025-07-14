@@ -4,7 +4,8 @@ node_modules
 .vscode-test/
 .vscode-test-web/
 *.vsix
+.env
 .DS_Store
 syntaxes/*.json
-src/grammar.d.ts
-src/grammar.js
+src/parser.d.ts
+src/parser.js

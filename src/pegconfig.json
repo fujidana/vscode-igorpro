@@ -1,8 +1,0 @@
-{
-    "cache": true,
-    "dts": true,
-    "input": "src/grammar.pegjs",
-    "output": "src/grammar.js",
-    "returnTypes": {
-    }
-}

@@ -9,7 +9,7 @@
 # This file is intended to be converted to JSON by
 # `npx js-yaml ./src/igorpro.apiReference.yaml > ./syntaxes/igorpro.apiReference.json`
 
-constants:
+constant:
   inf:
     signature: Inf
     description: |-
@@ -35,7 +35,7 @@ constants:
     available:
       range: '>=7.0.0'
 
-variables:
+variable:
   datetime:
     signature: DateTime
     description: |-
@@ -68,7 +68,7 @@ variables:
 
       On the Macintosh, a tick is actually 1/60.15 seconds.
 
-functions:
+function:
   abs:
     signature: abs(num)
   acos:
@@ -1229,7 +1229,7 @@ functions:
     available:
       range: '>=9.0.0'
 
-operations:
+operation:
   abort:
     signature: Abort [errorMessageStr]
   addfifodata:
@@ -2494,7 +2494,7 @@ operations:
   waveclear:
     signature: WAVEClear localName0[, localName1...]
 
-keywords:
+keyword:
   # Declarative operations
   string:
     signature: String [/G] strName0[/N=name0][=strExpr0][, strName1[/N=name1][=strExpr1]...]
@@ -2903,7 +2903,7 @@ keywords:
       By default, the root data folder is the current data folder when Igor starts a new experiment.
       In commands, root is used as part of a path specifying the location of a data object in the folder hierarchy.
 
-structures:
+structure:
   hdf5datainfo:
     signature: HDF5DataInfo
   hdf5datatypeinfo:
@@ -2959,7 +2959,7 @@ structures:
   wmwinhookstruct:
     signature: WMWinHookStruct
 
-subtypes:
+subtype:
   buttoncontrol:
     signature: ButtonControl
   camerawindow:
@@ -3005,7 +3005,7 @@ subtypes:
   tablestyle:
     signature: TableStyle
 
-pragmas:
+pragma:
   defaulttab:
     signature: DefaultTab
     available:
@@ -3027,7 +3027,7 @@ pragmas:
   version:
     signature: version
 
-hooks:
+hook:
   aftercompiledhook:
     signature: AfterCompiledHook()
   afterfileopenhook:

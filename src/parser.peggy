@@ -5,13 +5,13 @@
 
 /**
  * JSDoc-style type definitions.
- * @typedef { import('./grammar').LocationRange } LocationRange
- * @typedef { import('./grammar').Location } Location
- * @typedef { import('./grammar').GrammarSource } GrammarSource
+ * @typedef { import('./parser').LocationRange } LocationRange
+ * @typedef { import('./parser').Location } Location
+ * @typedef { import('./parser').GrammarSource } GrammarSource
 
- * @typedef { import('./igorproTree').BaseStatement } BaseStatement
- * @typedef { import('./igorproTree').BaseBlock } BaseBlock
- * @typedef { import('./igorproTree').Comment } Comment
+ * @typedef { import('./tree').BaseStatement } BaseStatement
+ * @typedef { import('./tree').BaseBlock } BaseBlock
+ * @typedef { import('./tree').Comment } Comment
  */
 
 // The author is not sure whether the following is a proper way to 
