@@ -5,7 +5,7 @@
   "description": "Igor Pro support for VS Code",
   "version": "1.6.0-alpha.1",
   "engines": {
-    "vscode": "^1.100.0"
+    "vscode": "^1.101.0"
   },
   "categories": [
     "Programming Languages",
@@ -176,12 +176,11 @@
     "semver": "^7.7.2"
   },
   "devDependencies": {
-    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@types/assert": "^1.5.11",
     "@types/mocha": "^10.0.10",
-    "@types/node": "20.x",
+    "@types/node": "22.x",
     "@types/semver": "^7.7.0",
-    "@types/vscode": "^1.100.0",
+    "@types/vscode": "^1.101",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.11",
@@ -189,6 +188,7 @@
     "@vscode/test-web": "^0.0.71",
     "assert": "^2.1.0",
     "esbuild": "^0.25.3",
+    "esbuild-plugin-polyfill-node": "^0.3.0",
     "eslint": "^9.25.1",
     "glob": "^11.0.2",
     "js-yaml": "^4.1.0",
