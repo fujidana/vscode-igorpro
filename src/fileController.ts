@@ -6,6 +6,7 @@ import { traverse } from './traverser';
 import type * as tree from './tree';
 
 import { existsSync, promises } from 'node:fs';
+import { relative } from 'node:path';
 
 
 type IncludeArgument = {
@@ -475,15 +476,26 @@ export class FileController extends Controller implements vscode.DefinitionProvi
             if (ipfPathList.length > 0) {
                 return new vscode.DocumentDropEdit(ipfPathList.map(
                     path => {
-                        const pathComponents = path.split('/');
-                        const lastPathComponent = pathComponents[pathComponents.length - 1];
-                        if (pathComponents.includes('WaveMetrics Procedures')) {
-                            return `#include <${lastPathComponent.substring(0, lastPathComponent.length - 4)}>\n`;
-                        } else if (pathComponents.includes('User Procedures')) {
-                            return `#include "${lastPathComponent.substring(0, lastPathComponent.length - 4)}"\n`;
+                        const pathSegments = path.split('/');
+                        const lastPathSegment = pathSegments[pathSegments.length - 1];
+                        const baseName = lastPathSegment.substring(0, lastPathSegment.length - 4);
+                        let specialDir: string | undefined;
+                        if ((specialDir = this.getSpecialDirPath('app', 'WaveMetrics Procedures')) !== undefined && path.startsWith(specialDir)) {
+                            return `#include <${baseName}>\n`;
+                        } else if ((specialDir = this.getSpecialDirPath('app', 'User Procedures')) !== undefined && path.startsWith(specialDir)) {
+                            return `#include "${baseName}"\n`;
+                        } else if ((specialDir = this.getSpecialDirPath('user', 'User Procedures')) !== undefined && path.startsWith(specialDir)) {
+                            return `#include "${baseName}"\n`;
                         } else {
-                            // TODO: This should return a full path. Currently only a file name.
-                            return `#include "${lastPathComponent.substring(0, lastPathComponent.length - 4)}"\n`;
+                            // Show in relative path.
+                            // While a Relative path can have three bases
+                            // the Igor Pro Folder, the Igor Pro User Files folder,
+                            // and the folder containing the procedure file, 
+                            // here the base is the last one.
+                            const pathFrom = vscode.Uri.joinPath(document.uri, '..').path;
+                            const pathTo = path.substring(0, path.length - 4);
+                            const relPath = relative(pathFrom, pathTo);
+                            return `#include "${convertPosixPathToHfsPath(relPath)}"\n`;
                         }
                     }
                 ).join(''));
@@ -644,4 +656,35 @@ function convertHfsPathToPosixPath(hfsPath: string) {
         }
     }
     return segments.join('/');
+}
+
+/**
+ * Convert a POSIX path to a classic Mac OS path (also known as HFS path).
+ */
+function convertPosixPathToHfsPath(posixPath: string) {
+    const segments: string[] = [];
+    posixPath.split('/').forEach(segment => {
+        if (segment === '.') {
+            // do nothing
+        } else if (segment === '..') {
+            segments.push('');
+        } else {
+            segments.push(segment.replace(/:/g, ''));
+        }
+    });
+
+    if (posixPath.startsWith('/')) {
+        if (process.platform === 'win32') {
+            segments.shift();
+        } else if (process.platform === 'darwin') {
+            // Since a partition name is not included in a POSIX path, here
+            // the default value is used instead.
+            segments[0] = 'Macintosh HD';
+        } else {
+            return undefined;
+        }
+    } else {
+        segments.unshift('');
+    }
+    return segments.join(':');
 }
