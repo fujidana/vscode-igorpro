@@ -18,7 +18,9 @@ The textual contents of the IntelliSens code hints are cited from [the official 
     - __code snippets__ - templates that make it easier to enter repeating code patterns, such as loops and conditional-statements
   - __Help with function signatures__ - help that appears during a user types an argument in a function call
 - __Code navigation__
-  - __Symbol navigation inside a document__ - available from _Go to Symbol in Editor_ (Ctrl+Shift+O) menubar item and the navigation bar at the top the editor pane (aka breadcrumbs)
+  - __Symbol navigation in workspaces__ - available via _Go to Symbol in Workspace_ (Ctrl+T)
+  - __Show definitions of a symbol__ - available via _Go to Definition_ (F12) and _Peek Definition_ (Alt+F12)
+  - __links__ - link to a file specified in `#include` statements.
 
 Currently IntelliSense features support user-defined constants, structure, macros, and functions, in addition to built-in keywords, functions and operations; it does not cover local parameters (variables, strings, wave references, etc.) inside user-defined functions.
 
