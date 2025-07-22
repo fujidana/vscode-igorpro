@@ -5,6 +5,25 @@ import { SyntaxError, parse } from './parser';
 import { traverse } from './traverser';
 import type * as tree from './tree';
 
+import { existsSync, promises } from 'node:fs';
+import { relative } from 'node:path';
+
+
+type IncludeArgument = {
+    range: vscode.Range,
+    raw: string,
+    builtin: boolean,
+    baseUri?: vscode.Uri,
+};
+
+class IgorproDocumentLink extends vscode.DocumentLink {
+    includeArgument: IncludeArgument;
+    constructor(range: vscode.Range, includeArgument: IncludeArgument) {
+        super(range, undefined);
+        this.includeArgument = includeArgument;
+    }
+}
+
 /**
  * Get a set of the URIs of supported files from workspaces.
  * 
@@ -42,11 +61,42 @@ async function findFilesInWorkspaces() {
 /**
  * A controller subclass that handles files and documents in the current workspace.
  */
-export class FileController extends Controller implements vscode.DefinitionProvider, vscode.DocumentSymbolProvider, vscode.WorkspaceSymbolProvider, vscode.DocumentDropEditProvider, vscode.TextDocumentContentProvider {
+export class FileController extends Controller implements vscode.DefinitionProvider, vscode.DocumentSymbolProvider, vscode.WorkspaceSymbolProvider, vscode.DocumentLinkProvider<IgorproDocumentLink>, vscode.DocumentDropEditProvider, vscode.TextDocumentContentProvider {
 
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly treeCollection: Map<string, tree.Program>;
     private readonly symbolCollection: Map<string, vscode.DocumentSymbol[]>;
+
+    /**
+     * Return the path to a special directory.
+     * 
+     * The root of "app" domain is "Igor Pro N Folder" folder in the Applications folder.
+     * This folder contains "User Procedures", "WaveMetrics Procedures", "Igor Procedures", etc.
+     * 
+     * The root of "user" domain is "Igor Pro N User Files" folder.
+     * This folder contains "User Procedures", "Igor Procedures", etc.
+     */
+
+    getSpecialDirPath(domain: 'user' | 'app', dirName?: 'User Procedures' | 'WaveMetrics Procedures') {
+        let basePath: string | undefined;
+        if (domain === 'app') {
+            if (process.platform === 'win32') {
+                basePath = `/C:/Program Files/WaveMetrics/Igor Pro ${this.igorVersion.major} Folder`;
+            } else if (process.platform === 'darwin') {
+                basePath = `/Applications/Igor Pro ${this.igorVersion.major} Folder`;
+            }
+        } else if (domain === 'user') {
+            const homedir = process.env.HOME || process.env.USERPROFILE; // || os.homedir();
+            if (homedir) {
+                basePath = `${homedir}/Documents/WaveMetrics/Igor Pro ${this.igorVersion.major} User Files`;
+            }
+        }
+        if (!dirName) {
+            return basePath;
+        } else {
+            return basePath ? basePath + '/' + dirName : undefined;
+        }
+    }
 
     constructor(context: vscode.ExtensionContext) {
         super(context);
@@ -197,6 +247,7 @@ export class FileController extends Controller implements vscode.DefinitionProvi
             vscode.languages.registerDefinitionProvider(lang.SELECTOR, this),
             vscode.languages.registerDocumentSymbolProvider(lang.SELECTOR, this),
             vscode.languages.registerWorkspaceSymbolProvider(this),
+            vscode.languages.registerDocumentLinkProvider(lang.SELECTOR, this),
             vscode.languages.registerDocumentDropEditProvider(lang.SELECTOR, this),
             vscode.workspace.registerTextDocumentContentProvider('igorpro', this),
 
@@ -391,6 +442,27 @@ export class FileController extends Controller implements vscode.DefinitionProvi
     }
 
     /**
+     * Required implementation of `vscode.DocumentLinkProvider`.
+     */
+    public provideDocumentLinks(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<IgorproDocumentLink[] | undefined> {
+        if (token.isCancellationRequested) { return; }
+
+        const includeArguments = parseIncludeStatements(document.getText(), vscode.Uri.joinPath(document.uri, '..'));
+        return includeArguments.map(arg => new IgorproDocumentLink(arg.range, arg));
+    }
+
+    /**
+     * Optional implementation of `vscode.DocumentLinkProvider`.
+     */
+    public resolveDocumentLink(link: IgorproDocumentLink, token: vscode.CancellationToken): vscode.ProviderResult<IgorproDocumentLink> {
+        if (token.isCancellationRequested) { return; }
+
+        return this.findUriForIncludeArgument(link.includeArgument).then(
+            uri => { link.target = uri; return link; }
+        );
+    }
+
+    /**
      * Required implementation of `vscode.DocumentDropEditProvider`.
      * 
      * This function is called when a file is dropped into the editor.
@@ -404,15 +476,26 @@ export class FileController extends Controller implements vscode.DefinitionProvi
             if (ipfPathList.length > 0) {
                 return new vscode.DocumentDropEdit(ipfPathList.map(
                     path => {
-                        const pathComponents = path.split('/');
-                        const lastPathComponent = pathComponents[pathComponents.length - 1];
-                        if (pathComponents.includes('WaveMetrics Procedures')) {
-                            return `#include <${lastPathComponent.substring(0, lastPathComponent.length - 4)}>\n`;
-                        } else if (pathComponents.includes('User Procedures')) {
-                            return `#include "${lastPathComponent.substring(0, lastPathComponent.length - 4)}"\n`;
+                        const pathSegments = path.split('/');
+                        const lastPathSegment = pathSegments[pathSegments.length - 1];
+                        const baseName = lastPathSegment.substring(0, lastPathSegment.length - 4);
+                        let specialDir: string | undefined;
+                        if ((specialDir = this.getSpecialDirPath('app', 'WaveMetrics Procedures')) !== undefined && path.startsWith(specialDir)) {
+                            return `#include <${baseName}>\n`;
+                        } else if ((specialDir = this.getSpecialDirPath('app', 'User Procedures')) !== undefined && path.startsWith(specialDir)) {
+                            return `#include "${baseName}"\n`;
+                        } else if ((specialDir = this.getSpecialDirPath('user', 'User Procedures')) !== undefined && path.startsWith(specialDir)) {
+                            return `#include "${baseName}"\n`;
                         } else {
-                            // TODO: This should return a full path. Currently only a file name.
-                            return `#include "${lastPathComponent.substring(0, lastPathComponent.length - 4)}"\n`;
+                            // Show in relative path.
+                            // While a Relative path can have three bases
+                            // the Igor Pro Folder, the Igor Pro User Files folder,
+                            // and the folder containing the procedure file, 
+                            // here the base is the last one.
+                            const pathFrom = vscode.Uri.joinPath(document.uri, '..').path;
+                            const pathTo = path.substring(0, path.length - 4);
+                            const relPath = relative(pathFrom, pathTo);
+                            return `#include "${convertPosixPathToHfsPath(relPath)}"\n`;
                         }
                     }
                 ).join(''));
@@ -445,4 +528,163 @@ export class FileController extends Controller implements vscode.DefinitionProvi
             }
         }
     }
+
+    async findUriForIncludeArgument(incArg: IncludeArgument): Promise<vscode.Uri | undefined> {
+        if (incArg.builtin) {
+            // In case the path is enclosed with brackets, like
+            // `#include <ipffile>`, then the file should be somewhere
+            // in "WaveMetrics Procedures" folder or its subfolder.
+            const basePath = this.getSpecialDirPath('app', 'WaveMetrics Procedures');
+            if (basePath !== undefined) {
+                for await (const path of promises.glob(`**/${incArg.raw}.ipf`, { cwd: basePath })) {
+                    return vscode.Uri.joinPath(vscode.Uri.file(basePath), path);
+                }
+            }
+        } else if (!incArg.raw.includes(':')) {
+            // In case the path does not contain path separator and is
+            // enclosed with quotation marks, like `#include "ipffile"`,
+            // then the file should be somewhere in "User Procedures" 
+            // or its subfolder.
+            // There are two "User Procedures" folders. One is in
+            // "Igor Pro Folder" and the other is in "Igor Pro User Files".
+            const domains = ['app', 'user'] as const;
+            for (const domain of domains) {
+                const basePath = this.getSpecialDirPath(domain, 'User Procedures');
+                if (basePath !== undefined) {
+                    for await (const path of promises.glob(`**/${incArg.raw}.ipf`, { cwd: basePath })) {
+                        return vscode.Uri.joinPath(vscode.Uri.file(basePath), path);
+                    }
+                }
+            }
+        } else if (!incArg.raw.startsWith(':')) {
+            // In case the path is an aboslute path, like
+            // #include "Hard Drive:absolute:path:to:ipffile",
+            const path = convertHfsPathToPosixPath(incArg.raw + '.ipf');
+            const uri2 = path ? vscode.Uri.file(path) : undefined;
+            return uri2 && existsSync(uri2.path) ? uri2 : undefined;
+            // return (uri2 && (await vscode.workspace.fs.stat(uri2)).type & vscode.FileType.File) ? uri2 : undefined;
+        } else {
+            // In case the path is a relative path, like
+            // `#include ":relative:path:to:ipffile"`,
+            // then the relative path should be revolved to either 
+            // the Igor Pro Folder, the Igor Pro User Files folder,
+            // or the folder containing the procedure file that
+            // contains the `#include` statement.
+            const basePaths = [this.getSpecialDirPath('app'), this.getSpecialDirPath('user'), incArg.baseUri?.path];
+            const path = convertHfsPathToPosixPath(incArg.raw + '.ipf');
+            if (path) {
+                for (const basePath of basePaths) {
+                    if (basePath) {
+                        const uri2 = vscode.Uri.joinPath(vscode.Uri.file(basePath), path);
+                        if (existsSync(uri2.path)) {
+                            // if ((await vscode.workspace.fs.stat(uri2)).type & vscode.FileType.File) {
+                            return uri2;
+                        }
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
+}
+
+function parseIncludeStatements(content: string, baseUri: vscode.Uri): IncludeArgument[] {
+    const lines = content.split(/\n|\r\n?/);
+
+    const includeRegExp: RegExp = /^(#include\b\s*)(<([^"<>]+)>|"([^"<>]+)")/;
+    const includeArguments: IncludeArgument[] = [];
+
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+        const lineText = lines[lineIndex];
+        const matches = lineText.match(includeRegExp);
+        if (matches !== null) {
+            const range = new vscode.Range(lineIndex, matches[1].length + 1, lineIndex, matches[1].length + matches[2].length - 1);
+            if (matches[2].startsWith('<')) {
+                includeArguments.push({ range, raw: matches[3], builtin: true });
+            } else {
+                includeArguments.push({ range, raw: matches[4], builtin: false, baseUri });
+            }
+        }
+    }
+    return includeArguments;
+}
+
+/**
+ * Convert a classic Mac OS path (also known as HFS path) to a POSIX path.
+ * e.g.,
+ * - absolute path:
+ *   - 'Hard Drive:absolute:path:to:file.txt' -> '/absolute/path/to/file.txt' (macOS)
+ *   - 'C:absolute:path:to:file.txt' -> '/C:/absolute/path/to/file.txt' (Windows)
+ * - relative path:
+ *   - ':relative:path:to:file.txt' -> './relative/path/to/file.txt'
+ *   - ':::path1::path2:path3:' -> './../../path1/../path2/path3/'
+ * @param hfsPath HFS path.
+ * @returns POSIX path.
+ */
+function convertHfsPathToPosixPath(hfsPath: string) {
+    // Replace path separators, taking parent directory pattern (`::`) into
+    // consideration.
+    const segments = hfsPath.split(':').map((segment, index, array) => {
+        if (segment.length === 0) {
+            if (index === 0) {
+                return '.';
+            } else if (index === array.length - 1) {
+                return '';
+            } else {
+                return '..';
+            }
+        } else {
+            return segment;
+        }
+    });
+
+    // In case the path is an absolute path, a partition name at the head of an
+    // HFS path is treated differently on Windows and macOS. On Windows 
+    // it is used like `/C:/parent/child`. On macOS it is not used in a POSIX
+    // path.
+    if (!hfsPath.startsWith(':')) {
+        if (process.platform === 'win32') {
+            if (segments.length > 0) {
+                segments[0] = segments[0] + ':';
+            }
+        } else if (process.platform === 'darwin') {
+            if (segments.length > 0) {
+                segments[0] = '';
+            }
+        } else {
+            return undefined;
+        }
+    }
+    return segments.join('/');
+}
+
+/**
+ * Convert a POSIX path to a classic Mac OS path (also known as HFS path).
+ */
+function convertPosixPathToHfsPath(posixPath: string) {
+    const segments: string[] = [];
+    posixPath.split('/').forEach(segment => {
+        if (segment === '.') {
+            // do nothing
+        } else if (segment === '..') {
+            segments.push('');
+        } else {
+            segments.push(segment.replace(/:/g, ''));
+        }
+    });
+
+    if (posixPath.startsWith('/')) {
+        if (process.platform === 'win32') {
+            segments.shift();
+        } else if (process.platform === 'darwin') {
+            // Since a partition name is not included in a POSIX path, here
+            // the default value is used instead.
+            segments[0] = 'Macintosh HD';
+        } else {
+            return undefined;
+        }
+    } else {
+        segments.unshift('');
+    }
+    return segments.join(':');
 }
