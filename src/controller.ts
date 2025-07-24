@@ -12,16 +12,35 @@ const suppressMessagesConfig = {
 
 type SuppressMessagesConfig = Partial<typeof suppressMessagesConfig>;
 
-function getStringOfSignatureAndComment(item: lang.ReferenceItem, category: lang.ReferenceCategory) {
+function getShortDescription(item: lang.ReferenceItem, category: lang.ReferenceCategory, itemUriString: string, documentUriString: string, markdownFormat: boolean) {
     let symbolLabel: string;
+    let itemUriLabel: string | undefined;
 
     symbolLabel = lang.referenceCategoryMetadata[category].label;
 
+    if (itemUriString === lang.BUILTIN_URI || itemUriString === lang.OPERATION_URI || itemUriString === lang.EXTRA_URI) {
+        symbolLabel = 'built-in ' + symbolLabel;
+    } else if (itemUriString === documentUriString) {
+        if (item.location) {
+            symbolLabel = `${symbolLabel} defined at l.${item.location.start.line} in this file `;
+        } else {
+            symbolLabel = symbolLabel + ' defined in this file';
+        }
+    } else {
+        itemUriLabel = vscode.workspace.asRelativePath(vscode.Uri.parse(itemUriString));
+        symbolLabel = markdownFormat ? 'user-defined ' + symbolLabel : symbolLabel + ' defined in ' + itemUriLabel;
+    }
     let mainText = `${item.signature} // ${item.isStatic ? 'static ' : ''}${symbolLabel}`;
     if (item.overloads && item.overloads.length > 1) {
         mainText += `, ${item.overloads.length} overloads`;
     }
 
+    if (markdownFormat) {
+        mainText = '```\n' + mainText + '\n```\n\n';
+        if (itemUriLabel) {
+            mainText += `_defined in_ [${itemUriLabel}](${itemUriString}).\n\n`;
+        }
+    }
     return mainText;
 }
 
@@ -101,7 +120,6 @@ function parseSignatureInEditing(line: string, position: number) {
     return prevMatch ? { 'signature': prevMatch[2].toLowerCase(), 'argumentIndex': substr.split(',').length - 1 } : undefined;
 }
 
-
 /***
  * Get an Igor Pro-style version string (like `7.38` and `9.02`) from the settings 
  * and convert it to a SemVer object.
@@ -131,31 +149,22 @@ function getWordTypeInCommand(document: vscode.TextDocument, position: vscode.Po
 /**
  * Controller class
  */
-export class Controller implements vscode.CompletionItemProvider<lang.CompletionItem>, vscode.HoverProvider, vscode.SignatureHelpProvider {
+export class Controller<T extends lang.UpdateSession = lang.UpdateSession> implements vscode.CompletionItemProvider<lang.CompletionItem>, vscode.HoverProvider, vscode.SignatureHelpProvider {
 
     // In JavaScript, equality comparison (`==` and `===`) of two different objects
     // is always `false`, regardless of the equality of their values.
     // Therefore, the string representation of the Uri object is used in the extension.
     // String is a primitive type and thus, the equality comparision is based on the value.
 
-    public readonly referenceCollection = new Map<string, lang.ReferenceBook>();
-    protected readonly completionItemCollection = new Map<string, lang.CompletionItem[]>();
+    public readonly updateSessionMap: Map<string, T> = new Map();
     protected igorVersion: SemVer;
 
     constructor(context: vscode.ExtensionContext) {
         this.igorVersion = getIgorVersion();
 
         const configurationChangeListener = (event: vscode.ConfigurationChangeEvent) => {
-            if (event.affectsConfiguration('vscode-igorpro.suggest.suppressMessages')) {
-                for (const uriString of this.referenceCollection.keys()) {
-                    this.updateCompletionItemsForUriString(uriString);
-                }
-            }
             if (event.affectsConfiguration('vscode-igorpro.igorVersion')) {
                 this.igorVersion = getIgorVersion();
-                for (const uriString of this.referenceCollection.keys()) {
-                    this.updateCompletionItemsForUriString(uriString);
-                }
             }
         };
 
@@ -169,68 +178,9 @@ export class Controller implements vscode.CompletionItemProvider<lang.Completion
     }
 
     /**
-     * Generate completion items from the registered database and cache it in the map using `uri` as the key.
-     * Subclass must invoke it when the database contents are changed.
-     */
-    protected updateCompletionItemsForUriString(uriString: string): lang.CompletionItem[] | undefined {
-        const refBook = this.referenceCollection.get(uriString);
-        if (refBook) {
-            const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages', suppressMessagesConfig);
-            const suppressDetail = config['completionItem.label.detail'] ?? false;
-            const suppressDescription = config['completionItem.label.description'] ?? false;
-            let description: string | undefined;
-
-            if (!suppressDescription) {
-                if (uriString === lang.BUILTIN_URI || uriString === lang.OPERATION_URI || uriString === lang.EXTRA_URI) {
-                    description = 'built-in';
-                    // } else if (uriString === igorpro.ACTIVE_FILE_URI) {
-                    //     description = 'local';
-                } else {
-                    description = vscode.workspace.asRelativePath(vscode.Uri.parse(uriString));
-                }
-            }
-
-            const completionItems: lang.CompletionItem[] = [];
-
-            for (const [identifier, refItem] of refBook.entries()) {
-                // *Specific to Igor Pro*: eliminate several categories.
-                if (refItem.category !== 'constant' && refItem.category !== 'variable' && refItem.category !== 'function' && refItem.category !== 'operation' && refItem.category !== 'keyword') {
-                    continue;
-                }
-                if (refItem.available && !satisfies(this.igorVersion, refItem.available.range)) {
-                    // Skip items if unavailable.
-                    continue;
-                }
-                // *Specific to Igor Pro*: Since an identifier is always small letters, 
-                // use the first word in a signiture as the label for completion item.
-                if (!refItem.signature.toLowerCase().startsWith(identifier)) {
-                    console.log('error, mismatch with ID and signature', identifier, refItem.signature);
-                    continue;
-                }
-                const label = refItem.signature.substring(0, identifier.length);
-                const detail = (!suppressDetail && refItem.signature.startsWith(identifier)) ? refItem.signature.substring(identifier.length) : undefined;
-                const completionItem = new lang.CompletionItem({ label, detail, description }, uriString, refItem.category, refItem.isStatic ?? false);
-                // if (refItem.snippet) {
-                //     completionItem.insertText = new vscode.SnippetString(refItem.snippet);
-                // }
-                if (refItem.deprecated && satisfies(this.igorVersion, refItem.deprecated.range)) {
-                    // Add "Deprecated" tag to the completion item.
-                    completionItem.tags = [vscode.CompletionItemTag.Deprecated];
-                }
-                completionItems.push(completionItem);
-            }
-            this.completionItemCollection.set(uriString, completionItems);
-            return completionItems;
-        } else {
-            this.completionItemCollection.delete(uriString);
-            return undefined;
-        }
-    }
-
-    /**
      * Required implementation of vscode.CompletionItemProvider.
      */
-    public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionList<lang.CompletionItem> | lang.CompletionItem[]> {
+    public async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionList<lang.CompletionItem> | lang.CompletionItem[] | undefined> {
         if (token.isCancellationRequested) { return; }
 
         const range = document.getWordRangeAtPosition(position);
@@ -245,48 +195,102 @@ export class Controller implements vscode.CompletionItemProvider<lang.Completion
 
         // If it is a flag in operation, currently no suggestion.
         if (wordType === WordType.flag) {
-            return undefined;
+            return;
         }
 
-        const itemsArray: lang.CompletionItem[][] = [];
-        for (const [uriString, items] of this.completionItemCollection) {
-            if (uriString === lang.BUILTIN_URI) {
-                itemsArray.push(items.filter(item => {
-                    if (wordType === WordType.firstWord) {
-                        return (item.kind === vscode.CompletionItemKind.Function) ? false : true;
-                    } else {
-                        return (item.kind === vscode.CompletionItemKind.Field) ? false : true;
+        const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages', suppressMessagesConfig);
+        const suppressDetail = config['completionItem.label.detail'] ?? false;
+        const suppressDescription = config['completionItem.label.description'] ?? false;
+        const completionItems: lang.CompletionItem[] = [];
+
+        for (const [uriString, session] of this.updateSessionMap) {
+            const refBook = (await session.promise)?.refBook;
+
+            // Quit if cancelled and skip if symbol is not found in a file.
+            if (token.isCancellationRequested) { return; }
+            if (refBook === undefined) { continue; }
+
+            let description: string | undefined;
+            if (!suppressDescription) {
+                if (uriString === lang.BUILTIN_URI || uriString === lang.OPERATION_URI || uriString === lang.EXTRA_URI) {
+                    description = 'built-in';
+                } else {
+                    description = vscode.workspace.asRelativePath(vscode.Uri.parse(uriString));
+                }
+            }
+
+            for (const [identifier, refItem] of refBook.entries()) {
+                // *Specific to Igor Pro*
+                // Eliminate several categories.
+                if (refItem.category !== 'constant' && refItem.category !== 'variable' && refItem.category !== 'function' && refItem.category !== 'operation' && refItem.category !== 'keyword') {
+                    continue;
+                }
+                // Static symbols in another file are not used.
+                if (refItem.isStatic && uriString !== document.uri.toString()) {
+                    continue;
+                }
+                // Built-in functions are not allowed at the first word of the sentence.
+                // Operations are allowed only at the first word of hte sentense.
+                if (wordType === WordType.firstWord) {
+                    if (refItem.category === 'function' && uriString === lang.BUILTIN_URI) {
+                        continue;
                     }
-                }));
-            } else if (uriString !== document.uri.toString()) {
-                itemsArray.push(items.filter(item => !item.isStatic));
-            } else {
-                itemsArray.push(items);
+                } else {
+                    if (refItem.category === 'operation') {
+                        continue;
+                    }
+                }
+                // Skip items if unavailable.
+                if (refItem.available && !satisfies(this.igorVersion, refItem.available.range)) {
+                    continue;
+                }
+
+                // *Specific to Igor Pro*: Since an identifier is always small letters, 
+                // use the first word in a signiture as the label for completion item.
+                if (!refItem.signature.toLowerCase().startsWith(identifier)) {
+                    console.log('Error. mismatch with ID and signature', identifier, refItem.signature);
+                    continue;
+                }
+
+                // Create completion item.
+                const label = refItem.signature.substring(0, identifier.length);
+                const detail = (!suppressDetail && refItem.signature.startsWith(identifier)) ? refItem.signature.substring(identifier.length) : undefined;
+                const completionItem = new lang.CompletionItem({ label, detail, description }, uriString, refItem.category, refItem.isStatic ?? false);
+                // if (refItem.snippet) {
+                //     completionItem.insertText = new vscode.SnippetString(refItem.snippet);
+                // }
+
+                // Add "Deprecated" tag to the completion item.
+                if (refItem.deprecated && satisfies(this.igorVersion, refItem.deprecated.range)) {
+                    completionItem.tags = [vscode.CompletionItemTag.Deprecated];
+                }
+
+                // Add item to item list.
+                completionItems.push(completionItem);
             }
         }
 
-        return new Array<lang.CompletionItem>().concat(...itemsArray);
+        return completionItems;
     }
 
     /**
      * Optional implementation of vscode.CompletionItemProvider.
      */
-    public resolveCompletionItem(completionItem: lang.CompletionItem, token: vscode.CancellationToken): vscode.ProviderResult<lang.CompletionItem> {
+    public async resolveCompletionItem(completionItem: lang.CompletionItem, token: vscode.CancellationToken): Promise<lang.CompletionItem | undefined> {
         if (token.isCancellationRequested) { return; }
 
-        const category = completionItem.category;
         const refUriString = completionItem.uriString;
 
         const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages', suppressMessagesConfig);
         const truncationlevel = config['completionItem.documentation'] === true ? TruncationLevel.line : TruncationLevel.paragraph;
 
-        // find the symbol information about the symbol.
+        // Find the symbol information about the symbol.
         const label = typeof completionItem.label === 'string' ? completionItem.label : completionItem.label.label;
-        const refItem = this.referenceCollection.get(refUriString)?.get(label);
-        if (refItem === undefined) { return; }
+        const refItem = (await this.updateSessionMap.get(refUriString)?.promise)?.refBook.get(label.toLowerCase());
 
-        // copy completion item.
-        const newCompletionItem = Object.assign({}, completionItem);
+        // Quit if cancelled or symbol is not found in the file.
+        if (token.isCancellationRequested) { return; }
+        if (refItem === undefined) { return; }
 
         // Set the description of the completion item
         // If the main description exists, append it.
@@ -304,8 +308,12 @@ export class Controller implements vscode.CompletionItemProvider<lang.Completion
             }
         }
 
-        // set the detail of the completion item
-        newCompletionItem.detail = getStringOfSignatureAndComment(refItem, category);
+        // Copy completion item and update its properties.
+        const newCompletionItem = Object.assign({}, completionItem);
+        const category = completionItem.category;
+        const activeEditor = vscode.window.activeTextEditor;
+        const documentUriString = activeEditor ? activeEditor.document.uri.toString() : '';
+        newCompletionItem.detail = getShortDescription(refItem, category, refUriString, documentUriString, false);
         newCompletionItem.documentation = documentation;
 
         return newCompletionItem;
@@ -314,7 +322,7 @@ export class Controller implements vscode.CompletionItemProvider<lang.Completion
     /**
      * Required implementation of vscode.HoverProvider.
      */
-    public provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
+    public async provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Promise<vscode.Hover | undefined> {
         if (token.isCancellationRequested) { return; }
 
         const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages', suppressMessagesConfig);
@@ -337,30 +345,31 @@ export class Controller implements vscode.CompletionItemProvider<lang.Completion
         // Start to seek if the selection is a proper identifier.
         const contents: vscode.MarkdownString[] = [];
 
+        for (const [uriString, session] of this.updateSessionMap.entries()) {
+            const refItem = (await session.promise)?.refBook.get(selectorName);
 
-        for (const [uriString, refBook] of this.referenceCollection.entries()) {
-            const refItem = refBook.get(selectorName);
+            // Quit if cancelled and skip if symbol is not found in a file.
+            if (token.isCancellationRequested) { return; }
+            if (refItem === undefined) { continue; }
 
-            // Skip if symbol is not found in the database for specific file.
             // *Specific to Igor Pro*: Also Skip in several cases.
-            if (refItem === undefined) {
+            if (refItem.isStatic && uriString !== document.uri.toString()) {
                 continue;
-            } else if (!refItem.isStatic || uriString === document.uri.toString()) {
-                continue;
-            } else if (wordType === WordType.firstWord) {
-                // Built-in functions can not placed at the begining of the sentence.
+            }
+            // Built-in functions are not allowed at the first word of the sentence.
+            // Operations are allowed only at the first word of hte sentense.
+            if (wordType === WordType.firstWord) {
                 if (refItem.category === 'function' && uriString === lang.BUILTIN_URI) {
                     continue;
                 }
             } else {
-                // Operations can be placed only at the begining of the sentence.            }
                 if (refItem.category === 'operation') {
                     continue;
                 }
             }
 
             // Create markdown text if symbol is found.
-            let mainMarkdown = new vscode.MarkdownString().appendCodeblock(getStringOfSignatureAndComment(refItem, refItem.category));
+            let mainMarkdown = new vscode.MarkdownString(getShortDescription(refItem, refItem.category, uriString, document.uri.toString(), true));
 
             const truncatedString = truncateString(truncationLevel, refItem);
             if (truncatedString) {
@@ -386,7 +395,7 @@ export class Controller implements vscode.CompletionItemProvider<lang.Completion
     /**
      * Required implementation of vscode.SignatureHelpProvider.
      */
-    public provideSignatureHelp(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.SignatureHelpContext): vscode.ProviderResult<vscode.SignatureHelp> {
+    public async provideSignatureHelp(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.SignatureHelpContext): Promise<vscode.SignatureHelp | undefined> {
         if (token.isCancellationRequested) { return; }
 
         const signatureHint = parseSignatureInEditing(document.lineAt(position.line).text, position.character);
@@ -395,16 +404,20 @@ export class Controller implements vscode.CompletionItemProvider<lang.Completion
         const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages', suppressMessagesConfig);
         const truncationLevel = config['signatureHelp.signatures.documentation'] === true ? TruncationLevel.paragraph : TruncationLevel.full;
 
-        for (const [uriString, refBook] of this.referenceCollection.entries()) {
-            const refItem = refBook.get(signatureHint.signature);
-            if (refItem === undefined || refItem.category !== 'function' || !refItem.isStatic || uriString === document.uri.toString()) {
+        for (const [uriString, session] of this.updateSessionMap.entries()) {
+            const refItem = (await session.promise)?.refBook.get(signatureHint.signature);
+
+            // Quit if cancelled and skip if symbol is not found in a file or symbol is not the one for function.
+            if (token.isCancellationRequested) { return; }
+            if (refItem === undefined || refItem.category !== 'function' || refItem.isStatic && uriString !== document.uri.toString()) {
                 continue;
             }
+
             const signatureHelp = new vscode.SignatureHelp();
             const overloads = refItem.overloads ?? [{ signature: refItem.signature, description: refItem.description }];
 
             for (const overload of overloads) {
-                // assume that usage.signature must exist.
+                // Assume that usage.signature must exist.
                 const signatureInformation = new vscode.SignatureInformation(overload.signature);
                 const truncatedString = truncateString(truncationLevel, overload);
                 if (truncatedString) {
