@@ -347,7 +347,13 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 analyzeContentOfUri(query.uri, false, false, this.externalOperationIdentifiers, tokenSource.token);
             const session: lang.FileUpdateSession = { promise, tokenSource };
             // Attach a callback that will clean the cancellation token when update is finished.
-            session.promise.finally(() => {
+            session.promise.then(parsedData => {
+                if (parsedData?.diagnostics) {
+                    this.diagnosticCollection.set(uri, parsedData.diagnostics);
+                } else {
+                    this.diagnosticCollection.delete(uri);
+                }
+            }).finally(() => {
                 tokenSource.dispose();
                 session.tokenSource = undefined;
             });
