@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import type { Location, LocationRange } from './parser';
+import type * as tree from './tree';
 
 export const SELECTOR = { language: 'igorpro' };
 // export const SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
@@ -18,6 +19,12 @@ export function convertPosition(position: Location): vscode.Position {
 export function convertRange(range: LocationRange): vscode.Range {
     return new vscode.Range(convertPosition(range.start), convertPosition(range.end));
 }
+
+export type ParsedData = { refBook: ReferenceBook };
+export type ParsedFileData = { refBook: ReferenceBook, tree?: tree.Program, symbols?: vscode.DocumentSymbol[], diagnostics?: vscode.Diagnostic[] };
+
+export type UpdateSession<T extends ParsedData = ParsedData> = { promise: Promise<T | undefined> };
+export type FileUpdateSession = { promise: Promise<ParsedFileData | undefined>, tokenSource?: vscode.CancellationTokenSource | undefined, tokenSource1?: vscode.CancellationTokenSource | undefined };
 
 /**
  * Map object consisting of pairs of a unique identifier and a reference item.
@@ -44,7 +51,7 @@ export type VersionRange = {
     description?: string;
 };
 
-const referenceCategoryNames = ['undefined', 'constant', 'variable', 'picture', 'macro', 'function', 'operation', 'keyword', 'structure', 'subtype', 'pragma', 'hook'] as const;
+export const referenceCategoryNames = ['constant', 'variable', 'picture', 'macro', 'function', 'operation', 'keyword', 'structure', 'subtype', 'pragma', 'hook'] as const;
 
 export type ReferenceCategory = typeof referenceCategoryNames[number];
 
@@ -132,12 +139,12 @@ export const referenceCategoryMetadata: { readonly [K in ReferenceCategory]: Ref
         completionItemKind: undefined,
         symbolKind: vscode.SymbolKind.Null // no corresponding value
     },
-    undefined: {
-        label: "unknown symbol",
-        iconIdentifier: 'symbol-null',
-        completionItemKind: undefined,
-        symbolKind: vscode.SymbolKind.Null
-    },
+    // undefined: {
+    //     label: "unknown symbol",
+    //     iconIdentifier: 'symbol-null',
+    //     completionItemKind: undefined,
+    //     symbolKind: vscode.SymbolKind.Null
+    // },
 };
 
 export class CompletionItem extends vscode.CompletionItem {

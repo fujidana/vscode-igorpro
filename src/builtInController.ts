@@ -2,39 +2,27 @@ import * as vscode from 'vscode';
 import * as lang from './language';
 import { Controller } from "./controller";
 
+
+type ReferenceConfiguration = { uriString: string, categories: readonly lang.ReferenceCategory[] };
+
+const builtInConfigs: ReferenceConfiguration[] = [
+    { uriString: lang.BUILTIN_URI, categories: ['constant', 'variable', 'structure', 'function', 'keyword'] },
+    { uriString: lang.OPERATION_URI, categories: ['operation'] },
+    { uriString: lang.EXTRA_URI, categories: ['subtype', 'pragma', 'hook'] },
+];
+
 /**
  * Provider subclass that manages built-in symbols.
  */
 export class BuiltInController extends Controller implements vscode.TextDocumentContentProvider {
-    // private activeWorkspaceFolder: vscode.WorkspaceFolder | undefined;
-    private promisedRefBooks;
 
     constructor(context: vscode.ExtensionContext) {
         super(context);
 
         // Load built-in symbol database from the JSON file.
+        // ['picture', 'macro', 'undefined'] are not used for built-in symbol database.
         const builtInRefUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.builtIns.json');
-        this.promisedRefBooks = vscode.workspace.fs.readFile(builtInRefUri).then(uint8Array => {
-            return vscode.workspace.decode(uint8Array, { encoding: 'utf8' });
-        }).then(decodedString => {
-            // convert JSON-formatted file contents to a javascript object.
-            const refBookLike: lang.ReferenceBookLike = JSON.parse(decodedString);
-
-            // ['picture', 'macro', 'undefined'] are not used.
-            const builtInsParams: { uriString: string, categories: lang.ReferenceCategory[], referenceBook?: lang.ReferenceBook }[] = [
-                { uriString: lang.BUILTIN_URI, categories: ['constant', 'variable', 'structure', 'function', 'keyword'] },
-                { uriString: lang.OPERATION_URI, categories: ['operation'] },
-                { uriString: lang.EXTRA_URI, categories: ['subtype', 'pragma', 'hook'] },
-            ];
-            builtInsParams.forEach(param => {
-                const refBook = lang.flattenRefBook(refBookLike, param.categories);
-                // Register it in the database.
-                this.referenceCollection.set(param.uriString, refBook);
-                this.updateCompletionItemsForUriString(param.uriString);
-                param.referenceBook = refBook;
-            });
-            return builtInsParams;
-        });
+        this.loadReferenceBooks(builtInRefUri, builtInConfigs);
 
         /** Command handler fow showing built-in symbols as a virtual document. */
         const showBuiltInSymbolsCommandHandler = async () => {
@@ -67,6 +55,21 @@ export class BuiltInController extends Controller implements vscode.TextDocument
         );
     }
 
+    private loadReferenceBooks(fileUri: vscode.Uri, referenceConfigurations: ReferenceConfiguration[]) {
+        const promisedLoadedFile = (async (fileUri: vscode.Uri) => {
+            const uint8Array = await vscode.workspace.fs.readFile(fileUri);
+            const decodedString = await vscode.workspace.decode(uint8Array, { encoding: 'utf8' });
+            return JSON.parse(decodedString) as lang.ReferenceBookLike;
+        })(fileUri);
+
+        return referenceConfigurations.map(({ uriString, categories }) => {
+            const promise = promisedLoadedFile.then(
+                refBookLike => ({ refBook: lang.flattenRefBook(refBookLike, categories) }));
+            this.updateSessionMap.set(uriString, { promise: promise });
+            return promise;
+        });
+    }
+
     /**
      * Required implementation of vscode.TextDocumentContentProvider.
      */
@@ -86,13 +89,15 @@ export class BuiltInController extends Controller implements vscode.TextDocument
         };
 
         if (lang.BUILTIN_URI === uri.with({ query: '' }).toString()) {
-            const refBookParams = await this.promisedRefBooks;
+            let refBookLike: lang.ReferenceBookLike = {};
+            for (const { uriString, categories } of builtInConfigs) {
+                const refBook = (await this.updateSessionMap.get(uriString)?.promise)?.refBook;
+                if (refBook) {
+                    refBookLike = Object.assign(refBookLike, lang.categorizeRefBook(refBook, categories));
+                }
+            }
 
-            const refBookLike = refBookParams.map(
-                param => param.referenceBook ? lang.categorizeRefBook(param.referenceBook, param.categories) : {}
-            ).reduce(
-                (left, right) => Object.assign(left, right)
-            );
+            if (token.isCancellationRequested) { return; }
 
             let mdText = '# Igor Pro Built-in Symbols\n\n';
             mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) or command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';
