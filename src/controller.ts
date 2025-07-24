@@ -20,6 +20,8 @@ function getShortDescription(item: lang.ReferenceItem, category: lang.ReferenceC
 
     if (itemUriString === lang.BUILTIN_URI || itemUriString === lang.OPERATION_URI || itemUriString === lang.EXTRA_URI) {
         symbolLabel = 'built-in ' + symbolLabel;
+    } else if (itemUriString === lang.EXTERNAL_URI) {
+        symbolLabel = 'external ' + symbolLabel;
     } else if (itemUriString === documentUriString) {
         if (item.location) {
             symbolLabel = `${symbolLabel} defined at l.${item.location.start.line} in this file `;
@@ -214,6 +216,8 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
             if (!suppressDescription) {
                 if (uriString === lang.BUILTIN_URI || uriString === lang.OPERATION_URI || uriString === lang.EXTRA_URI) {
                     description = 'built-in';
+                } else if (uriString === lang.EXTERNAL_URI) {
+                    description = 'external';
                 } else {
                     description = vscode.workspace.asRelativePath(vscode.Uri.parse(uriString));
                 }
@@ -246,7 +250,7 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
                 }
 
                 // *Specific to Igor Pro*: Since an identifier is always small letters, 
-                // use the first word in a signiture as the label for completion item.
+                // use the first word in a signature as the label for completion item.
                 if (!refItem.signature.toLowerCase().startsWith(identifier)) {
                     console.log('Error. mismatch with ID and signature', identifier, refItem.signature);
                     continue;

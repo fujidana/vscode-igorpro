@@ -8,6 +8,7 @@ export const SELECTOR = { language: 'igorpro' };
 export const BUILTIN_URI = 'igorpro://built-in/built-in.md';
 export const OPERATION_URI = 'igorpro://built-in/operation.md';
 export const EXTRA_URI = 'igorpro://built-in/extra.md';
+export const EXTERNAL_URI = 'igorpro://built-in/external.md';
 
 export const AST_URI = 'igorpro://file/ast.json';
 export const ACTIVE_FILE_URI = 'igorpro://file/active-document.md';
@@ -163,21 +164,30 @@ export class CompletionItem extends vscode.CompletionItem {
 /**
  * Convert a flattened map object to a structured database made of a plain object.
  * @param refBook Map object directly containing reference items.
- * @returns Object having categories as childrens and reference items as grandchildren.
+ * @param categories Categories to be converted.
+ * @param excludeStatic Exclude static symbols if true.
+ * @returns Plain object having categories as childrens and reference items as grandchildren.
  */
-export function categorizeRefBook(refBook: ReferenceBook, categories: readonly ReferenceCategory[] = referenceCategoryNames) {
+export function categorizeRefBook(refBook: ReferenceBook, categories: readonly ReferenceCategory[], excludeStatic?: boolean) {
     const refBookLike: ReferenceBookLike = {};
     for (const category of categories) {
         refBookLike[category] = {};
     }
 
     for (const [identifier, refItem] of refBook.entries()) {
-        if (categories.includes(refItem.category)) {
-            const refBookCategory = refBookLike[refItem.category];
-            if (refBookCategory) {
-                // // Simply point (not copy) without deleting "category" property.
-                // refBookCategory[identifier] = refItem;
-                // Copy a new object with "category" property removed. 
+        if (!categories.includes(refItem.category)) {
+            continue;
+        } else if (excludeStatic && refItem.isStatic) {
+            continue;
+        }
+        const refBookCategory = refBookLike[refItem.category];
+        if (refBookCategory) {
+            // // Simply point (not copy) without deleting "category" property.
+            // refBookCategory[identifier] = refItem;
+            // Copy a new object with "category" property removed.
+            if (excludeStatic && refItem.isStatic !== undefined) {
+                refBookCategory[identifier] = (({ category, isStatic, ...rest }) => rest)(refItem);
+            } else {
                 refBookCategory[identifier] = (({ category, ...rest }) => rest)(refItem);
             }
         }
@@ -187,7 +197,7 @@ export function categorizeRefBook(refBook: ReferenceBook, categories: readonly R
 
 /**
  * Convert a structured database made of a plain object to flattened map object.
- * @param refBookLike Object having categories as childrens and reference items as grandchildren.
+ * @param refBookLike Plain object having categories as childrens and reference items as grandchildren.
  * @param categories Categories to be converted.
  * @returns Map object directly containing reference items.
  */

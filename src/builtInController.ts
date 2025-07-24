@@ -15,6 +15,7 @@ const builtInConfigs: ReferenceConfiguration[] = [
  * Provider subclass that manages built-in symbols.
  */
 export class BuiltInController extends Controller implements vscode.TextDocumentContentProvider {
+    public externalOperationIdentifiers: string[] = [];
 
     constructor(context: vscode.ExtensionContext) {
         super(context);
@@ -23,6 +24,68 @@ export class BuiltInController extends Controller implements vscode.TextDocument
         // ['picture', 'macro', 'undefined'] are not used for built-in symbol database.
         const builtInRefUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.builtIns.json');
         this.loadReferenceBooks(builtInRefUri, builtInConfigs);
+
+        const onExternalRefBookLoadFulfilled = (parsedData: { refBook: lang.ReferenceBook }) => {
+            // Collect identifiers of operations.
+            this.externalOperationIdentifiers.splice(0); // Clear array elements.
+            for (const [identifier, refItem] of parsedData.refBook.entries()) {
+                if (refItem.category === 'operation') {
+                    this.externalOperationIdentifiers.push(identifier);
+                }
+            }
+            return parsedData;
+        };
+
+        // Load external symbol database from the JSON file.
+        const externalRefFileUri = getExternalRefBookUri();
+        if (externalRefFileUri) {
+            const externalConfigs: ReferenceConfiguration[] = [
+                { uriString: lang.EXTERNAL_URI, categories: lang.referenceCategoryNames }
+            ];
+            const promises = this.loadReferenceBooks(externalRefFileUri, externalConfigs);
+            promises[0].then(
+                onExternalRefBookLoadFulfilled,
+                _reason => {
+                    vscode.window.showErrorMessage(`Failed to load external symbols: ${externalRefFileUri.toString()}`, 'OK', 'Open Settings').then(
+                        item => {
+                            // Do not return a value so that the return value (promise-like object) of the function
+                            // does not include waiting for an action against the dialog.
+                            if (item === 'Open Settings') {
+                                vscode.commands.executeCommand('workbench.action.openSettings', 'vscode-igorpro.suggest.symbolFile');
+                            }
+                        }
+                    );
+                    this.externalOperationIdentifiers.splice(0); // Clear array elements.
+                    return undefined;
+                }
+            );
+        } else {
+            this.externalOperationIdentifiers.splice(0); // Clear array elements.
+        }
+
+        /** Event listener for configuration changes. */
+        const configurationDidChangeListener = (event: vscode.ConfigurationChangeEvent) => {
+            if (event.affectsConfiguration('vscode-igorpro.suggest.symbolFile')) {
+                const externalRefFileUri = getExternalRefBookUri();
+                if (externalRefFileUri) {
+                    const externalParams: ReferenceConfiguration[] = [
+                        { uriString: lang.EXTERNAL_URI, categories: lang.referenceCategoryNames }
+                    ];
+                    const promises = this.loadReferenceBooks(externalRefFileUri, externalParams);
+                    promises[0].then(
+                        onExternalRefBookLoadFulfilled,
+                        _reason => {
+                            vscode.window.showErrorMessage(`Failed to load external symbols: ${externalRefFileUri.toString()}`);
+                            this.externalOperationIdentifiers.splice(0); // Clear array elements.
+                            return undefined;
+                        }
+                    );
+                } else {
+                    this.externalOperationIdentifiers.splice(0); // Clear array elements.
+                    this.updateSessionMap.delete(lang.EXTERNAL_URI);
+                }
+            }
+        };
 
         /** Command handler fow showing built-in symbols as a virtual document. */
         const showBuiltInSymbolsCommandHandler = async () => {
@@ -37,7 +100,7 @@ export class BuiltInController extends Controller implements vscode.TextDocument
             if (quickPickItem) {
                 const uri = vscode.Uri.parse(lang.BUILTIN_URI).with({ query: quickPickItem.category });
                 const editor = await vscode.window.showTextDocument(uri, { preview: false });
-                const flag = vscode.workspace.getConfiguration('vscode-igorpro').get<boolean>('showReferenceManualInPreview');
+                const flag = vscode.workspace.getConfiguration('vscode-igorpro').get<boolean>('showSymbolsInPreview', true);
                 if (flag) {
                     await vscode.commands.executeCommand('markdown.showPreview');
                     // await vscode.window.showTextDocument(editor.document);
@@ -52,6 +115,8 @@ export class BuiltInController extends Controller implements vscode.TextDocument
             vscode.commands.registerCommand('igorpro.showBuiltInSymbols', showBuiltInSymbolsCommandHandler),
             // Register providers.
             vscode.workspace.registerTextDocumentContentProvider('igorpro', this),
+            // Register event handlers.
+            vscode.workspace.onDidChangeConfiguration(configurationDidChangeListener),
         );
     }
 
@@ -93,7 +158,7 @@ export class BuiltInController extends Controller implements vscode.TextDocument
             for (const { uriString, categories } of builtInConfigs) {
                 const refBook = (await this.updateSessionMap.get(uriString)?.promise)?.refBook;
                 if (refBook) {
-                    refBookLike = Object.assign(refBookLike, lang.categorizeRefBook(refBook, categories));
+                    refBookLike = Object.assign(refBookLike, lang.categorizeRefBook(refBook, categories, false));
                 }
             }
 
@@ -132,5 +197,34 @@ export class BuiltInController extends Controller implements vscode.TextDocument
             }
             return mdText;
         }
+    }
+}
+
+/**
+ * Get an URI object of the external symbol file whose path is specified in the settings.
+ */
+function getExternalRefBookUri() {
+    const path = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<string>('symbolFile', '');
+    if (path === "") {
+        return undefined;
+    } else if (path.startsWith('${workspaceFolder}/')) {
+        if (vscode.workspace.workspaceFile) {
+            return vscode.Uri.joinPath(vscode.workspace.workspaceFile, path.replace('${workspaceFolder}/', '../'));
+        } else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+            return vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, path.replace('${workspaceFolder}/', './'));
+        } else {
+            vscode.window.showErrorMessage('Failed to get the path to the external symbol file because a workspace folder does not exist.');
+            return undefined;
+        }
+    } else if (path.startsWith('${userHome}/')) {
+        const homedir = process.env.HOME || process.env.USERPROFILE; // || os.homedir();
+        if (homedir) {
+            return vscode.Uri.joinPath(vscode.Uri.file(homedir), path.replace('${userHome}/', './'));
+        } else {
+            vscode.window.showErrorMessage('Failed to get the path to the external symbol file. "${userHome}" is unavailable on the web extesion.');
+            return undefined;
+        }
+    } else {
+        return vscode.Uri.file(path);
     }
 }

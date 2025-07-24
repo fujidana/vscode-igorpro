@@ -21,8 +21,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.languages.setLanguageConfiguration('igorpro', configuration)
 	);
 
-	new BuiltInController(context);
-	new FileController(context);
+	const builtInController = new BuiltInController(context);
+	new FileController(context, builtInController.externalOperationIdentifiers);
 }
 
 // This method is called when your extension is deactivated
