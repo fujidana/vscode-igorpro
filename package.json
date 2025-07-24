@@ -67,6 +67,12 @@
         "icon": "$(references)"
       },
       {
+        "command": "igorpro.showWorkspaceSymbolsJson",
+        "title": "Show Workspace Symbols (JSON)",
+        "category": "Igor Pro",
+        "icon": "$(json)"
+      },
+      {
         "command": "igorpro.inspectSyntaxTree",
         "title": "Inspect Syntax Tree (Developer)",
         "category": "Igor Pro",
@@ -77,6 +83,10 @@
       "commandPalette": [
         {
           "command": "igorpro.showBuiltInSymbols"
+        },
+        {
+          "command": "igorpro.showWorkspaceSymbolsJson",
+          "when": "workspaceFolderCount > 0"
         },
         {
           "command": "igorpro.inspectSyntaxTree",
@@ -100,7 +110,7 @@
             "pattern": "^(0|[1-9]\\d*)\\.(\\d)(\\d)(?!\\d)",
             "patternErrorMessage": "The value must start with a number with two decimal places, such as `7.38` and `9.01`."
           },
-          "vscode-igorpro.showReferenceManualInPreview": {
+          "vscode-igorpro.showSymbolsInPreview": {
             "type": "boolean",
             "default": true,
             "markdownDescription": "Shows a preview (Webview created by built-in Markdown extension) in addition to a markdown source after [Show Built-in Symbols](command:igorpro.showBuiltInSymbols) command is invoked."
@@ -143,10 +153,28 @@
               }
             },
             "additionalProperties": false
+          },
+          "vscode-igorpro.suggest.symbolFile": {
+            "type": "string",
+            "default": "",
+            "scope": "window",
+            "markdownDescription": "Specifies the absolute path to a JSON file in which symbols are defined. The following predefined variables are supported for the path: `${userHome}`, `${workspaceFolder}`. See a JSON file created by [Show Workspace Symbols (JSON)](command:igorpro.showWorkspaceSymbolsJson) command for the file format.",
+            "tags": [
+              "experimental"
+            ]
           }
         }
       }
     ]
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "By security reasons, Several configuration properties are disabled in untrusted workspaces.",
+      "restrictedConfigurations": [
+        "vscode-igorpro.suggest.symbolFile"
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run js-yaml && pnpm run package",

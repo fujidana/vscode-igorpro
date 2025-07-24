@@ -929,7 +929,7 @@ AssignExprStmt 'expression statement for assignment' =
   }
 
 OpStmt 'operation statement' =
-  name:_StdName2 &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
+  name:_StdName2 &{ return operationRegExp.test(name) || options?.operationIdentifiers.includes(name.toLowerCase()); } flags:(_0 @Flag)* args:(
     Flag+ / _Word+ / StrLiteral / _1 / !(_Eol / ';' / '//') .
   )* {
     // TODO: object properties

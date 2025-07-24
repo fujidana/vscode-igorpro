@@ -67,6 +67,7 @@ async function findFilesInWorkspaces() {
 export class FileController extends Controller<lang.FileUpdateSession> implements vscode.DefinitionProvider, vscode.DocumentSymbolProvider, vscode.WorkspaceSymbolProvider, vscode.DocumentLinkProvider<IgorproDocumentLink>, vscode.DocumentDropEditProvider, vscode.TextDocumentContentProvider {
 
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
+    public externalOperationIdentifiers: string[];
 
     /**
      * Return the path to a special directory.
@@ -99,10 +100,39 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         }
     }
 
-    constructor(context: vscode.ExtensionContext) {
+    constructor(context: vscode.ExtensionContext, externalOperationIdentifiers: string[]) {
         super(context);
 
+        this.externalOperationIdentifiers = externalOperationIdentifiers;
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('igorpro');
+
+        const showWorkspaceSymbolsJsonCommandHandler = async () => {
+            // When the extension is activated by the command, `updateSessionMap`
+            // is empty at the moment. Wait for a while, and then promise objects
+            //  are added into `updateSessionMap`.
+            if (this.updateSessionMap.size === 0) {
+                await new Promise((resolve) => setTimeout(resolve, 200));
+            }
+
+            const categories = ['constant', 'picture', 'structure', 'macro', 'function'] as const;
+            type Category = typeof categories[number];
+            const obj: { [K in Category]: Required<lang.ReferenceBookLike>[K] } = { constant: {}, picture: {}, structure: {}, macro: {}, function: {}, };
+            for (const [uriString, session] of this.updateSessionMap.entries()) {
+                const refBook = (await session.promise)?.refBook;
+                if (refBook === undefined) { continue; }
+
+                const refBookLike = lang.categorizeRefBook(refBook, categories, true);
+                for (const [category, refSheet] of Object.entries(refBookLike)) {
+                    const category2 = category as keyof typeof refBookLike;
+                    if (category2 === 'constant' || category2 === 'picture' || category2 === 'structure' || category2 === 'macro' || category2 === 'function') {
+                        obj[category2] = Object.assign(obj[category2], refSheet);
+                    }
+                }
+            }
+            const content = JSON.stringify(obj, (key, value) => key === 'location' || key === 'category' ? undefined : value, 2);
+            const document = await vscode.workspace.openTextDocument({ language: 'json', content: content });
+            vscode.window.showTextDocument(document, { preview: false });
+        };
 
         const inspectSyntaxTreeCommandHandler = async () => {
             const editor = vscode.window.activeTextEditor;
@@ -226,6 +256,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         // Register providers and event handlers.
         context.subscriptions.push(
             // Register command handlers.
+            vscode.commands.registerCommand('igorpro.showWorkspaceSymbolsJson', showWorkspaceSymbolsJsonCommandHandler),
             vscode.commands.registerCommand('igorpro.inspectSyntaxTree', inspectSyntaxTreeCommandHandler),
 
             // Register document-event listeners.
@@ -312,8 +343,8 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
             // Create a new update session and start to analyze.
             const tokenSource = new vscode.CancellationTokenSource();
             const promise: Promise<lang.ParsedFileData | undefined> = (query.type === 'Document') ?
-                Promise.resolve().then(() => analyzeDocumentContent(query.document.getText(), true, true, tokenSource.token)) :
-                analyzeContentOfUri(query.uri, false, false, tokenSource.token);
+                Promise.resolve().then(() => analyzeDocumentContent(query.document.getText(), true, true, this.externalOperationIdentifiers, tokenSource.token)) :
+                analyzeContentOfUri(query.uri, false, false, this.externalOperationIdentifiers, tokenSource.token);
             const session: lang.FileUpdateSession = { promise, tokenSource };
             // Attach a callback that will clean the cancellation token when update is finished.
             session.promise.finally(() => {
@@ -501,7 +532,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
             const editor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === docUri.toString());
             if (editor) {
                 try {
-                    const tree = parse(editor.document.getText());
+                    const tree = parse(editor.document.getText(), { operationIdentifiers: this.externalOperationIdentifiers });
                     // const content = JSON.stringify(tree, null, 2);
                     return JSON.stringify(tree, (key, value) => { return key === 'loc' ? undefined : value; }, 2);
                 } catch (error) {
@@ -574,20 +605,20 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
     }
 }
 
-async function analyzeContentOfUri(uri: vscode.Uri, diagnose: boolean, isInEditor: boolean, token: vscode.CancellationToken): Promise<lang.ParsedFileData | undefined> {
+async function analyzeContentOfUri(uri: vscode.Uri, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken): Promise<lang.ParsedFileData | undefined> {
     const uint8Array = await vscode.workspace.fs.readFile(uri);
     const content = await vscode.workspace.decode(uint8Array, { uri });
-    return analyzeDocumentContent(content, diagnose, isInEditor, token);
+    return analyzeDocumentContent(content, diagnose, isInEditor, operationIdentifiers, token);
 }
 
-function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: boolean, token: vscode.CancellationToken) {
-// private parseDocumentContents(contents: string, uri: vscode.Uri, isOpenDocument: boolean, diagnoseProblems: boolean) {
+function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken) {
+    // private parseDocumentContents(contents: string, uri: vscode.Uri, isOpenDocument: boolean, diagnoseProblems: boolean) {
     if (token.isCancellationRequested) { return undefined; }
 
     let tree: tree.Program;
     let diagnostics: vscode.Diagnostic[] | undefined;
     try {
-        tree = parse(content);
+        tree = parse(content, { operationIdentifiers });
     } catch (error) {
         if (error instanceof SyntaxError) {
             if (diagnose) {
