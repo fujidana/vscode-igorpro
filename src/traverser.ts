@@ -182,7 +182,7 @@ export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.Doc
             if (param.type === 'Identifier') {
                 return param.name;
             } else if (param.type === 'VariableDeclaration') {
-                return param.declarations.map(decl => decl.id).join(', ');
+                return param.declarations.map(decl => decl.id.name).join(', ');
             } else {
                 return '';
             }
