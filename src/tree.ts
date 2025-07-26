@@ -255,9 +255,10 @@ export interface StructureDeclaration extends BaseBlock {
     body: InStructureStatement[];
 }
 
+ // Igor Pro 9 does not accepct 'complex' as a member of structure. Instead a user can use 'Variable/C'.
 export interface StructureMemberDeclaration extends BaseStatement {
     type: 'StructureMemberDeclaration';
-    kind: 'char' | 'uchar' | 'int16' | 'uint16' | 'int32' | 'uint32' | 'int64' | 'uint64' | 'float' | 'double' | 'variable' | 'string' | 'nvar' | 'svar' | 'dfref' | 'struct' | 'funcref';
+    kind: 'char' | 'uchar' | 'int16' | 'uint16' | 'int32' | 'uint32' | 'int64' | 'uint64' | 'float' | 'double' | 'variable' | 'string' | 'wave' | 'nvar' | 'svar' | 'dfref' | 'struct' | 'funcref';
     proto?: string; // used for structureName of 'struct' member and protoFunc of 'funcref'
     flags?: Flag[];
     declarations: StructureMemberDeclarator[];
@@ -358,9 +359,9 @@ export interface ReturnStatement extends BaseStatement {
 
 export interface VariableDeclaration extends BaseStatement {
     type: 'VariableDeclaration';
-    kind: string; // TODO: literal types.
+    kind: 'int' | 'int64' | 'uint64' | 'float' | 'double' | 'complex' | 'variable' | 'string' | 'wave' | 'nvar' | 'svar' | 'dfref' | 'struct' | 'funcref';
     proto?: string; // protoFunc for 'funcref' and structureName for 'struct'
-    flags: Flag[];
+    flags?: Flag[];
     declarations: VariableDeclarator[];
 }
 
@@ -376,7 +377,7 @@ export interface OperationStatement extends BaseStatement {
     type: 'OperationStatement';
     name: string;
     flags: Flag[];
-    expression: string;
+    args: Expression[]; // TODO: type not strict.
 }
 
 /**
@@ -431,7 +432,7 @@ export interface EmptyExpression extends BaseExpression {
     type: 'EmptyExpression';
 }
 
-type LValue = BaseExpression; // TODO: limit to more specific types.
+type LValue = Expression; // TODO: limit to more specific types.
 
 // Currently appears only in `init` and `update` of `ForStatement`.
 // Not a member of `Expression`.

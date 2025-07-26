@@ -6,8 +6,10 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Added
 
-- Add `vscode-igorpro.igorVersion` setting. It affects the scope of auto-completion (in short, hides unsupported APIs from the auto-completion list). issue [#39](https://github.com/fujidana/vscode-igorpro/issues/39).
-- Make paths in `#include` statements clickable links. issue [#54](https://github.com/fujidana/vscode-igorpro/issues/54)
+- Make IntelliSense features take the availability of symbols into consideration, based on the targeted Igor Pro version specified at "vscode-igorpro.specVersion" setting (e.g., unsupported APIs at the version are hidden in the auto-completion list). Issue [#39](https://github.com/fujidana/vscode-igorpro/issues/39).
+- Enable to load an external library file in which symbols are defined by specifying the path at "vscode-igorpro.suggest.symbolFile" setting. Issue [#59](https://github.com/fujidana/vscode-igorpro/issues/59).
+- Make paths in `#include` statements clickable links. Issue [#54](https://github.com/fujidana/vscode-igorpro/issues/54).
+- Use local variables in the active editor for IntelliSense features. Issue [#57](https://github.com/fujidana/vscode-igorpro/issues/57).
 
 ### Changed
 

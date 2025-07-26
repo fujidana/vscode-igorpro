@@ -22,7 +22,7 @@ function getShortDescription(item: lang.ReferenceItem, category: lang.ReferenceC
         symbolLabel = 'built-in ' + symbolLabel;
     } else if (itemUriString === lang.EXTERNAL_URI) {
         symbolLabel = 'external ' + symbolLabel;
-    } else if (itemUriString === documentUriString) {
+    } else if (itemUriString === lang.ACTIVE_FILE_URI || itemUriString === documentUriString) {
         if (item.location) {
             symbolLabel = `${symbolLabel} defined at l.${item.location.start.line} in this file `;
         } else {
@@ -218,6 +218,8 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
                     description = 'built-in';
                 } else if (uriString === lang.EXTERNAL_URI) {
                     description = 'external';
+                } else if (uriString === lang.ACTIVE_FILE_URI) {
+                    description = 'local';
                 } else {
                     description = vscode.workspace.asRelativePath(vscode.Uri.parse(uriString));
                 }
