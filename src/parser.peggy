@@ -362,29 +362,44 @@ FuncDecl 'function declaration' =
       if (optParams === null) {
         // Do nothing if neither required parameters or optional parameters are provided
       } else if (optParams.params.length === 0) {
-        // If bracket exists but nothing in it, report an erro.
+        // If bracket exists but nothing in it, report an error.
         addProblem('No optional parameters defined in brackets.', optParams.loc);
       } else {
         // Otherwise, report error if empty element exists.
-        optParams.params.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+        optParams.params.forEach(param => {
+          if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); }
+        });
       }
     } else {
       // In case one or more required parameters exist
       if (optParams === null) {
-        // If no brackets exists, simply check an empty element and report it.
-        reqParams.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-      }  else if (optParams.params.length === 0) {
-        // If brackets exists but nothing in it, simply check an empty element and report it. The last comma outside the bracket is valid.
-        reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-        addProblem('No optional parameters defined in brackets.', optParams.loc);
+        // If no brackets exists, simply check an empty elements in required parameters.
+        reqParams.forEach(param => {
+          if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); }
+        });
       } else {
         // If both required parameters and optional parameters are provided, check the both.
-        reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-        optParams.params.forEach((param, i, params) => { if (i !== 0 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-        if (reqParams[reqParams.length - 1].type === 'EmptyExpression' && optParams.params[0].type === 'EmptyExpression') {
-          addProblem('Duplicated commas.', optParams.params[0].loc, DiagnosticSeverity.Warning);
-        } else if (reqParams[reqParams.length - 1].type !== 'EmptyExpression' && optParams.params[0].type !== 'EmptyExpression') {
-          addProblem('Missing comma between required parameters and optional parameters.', getRange(optParams.loc.source, optParams.loc.start, 1, 0), DiagnosticSeverity.Warning);
+        // Comma between required parameters and optional parameters is optional. E.g.,
+        // `f(a [b])`, `f(a, [b])`, `f(a[, b])` and `f(a, [, b])` are all valid. 
+
+        if (optParams.params.length === 0) {
+        // If brackets exists but nothing in it, simply check an empty element and report it. The last comma outside the bracket is valid.
+          reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
+          addProblem('No optional parameters defined in brackets.', optParams.loc);
+        } else {
+          if (reqParams[reqParams.length - 1].type === 'EmptyExpression' && optParams.params[0].type === 'EmptyExpression') {
+            addProblem('Duplicated commas.', optParams.params[0].loc, DiagnosticSeverity.Information);
+          } else if (reqParams[reqParams.length - 1].type !== 'EmptyExpression' && optParams.params[0].type !== 'EmptyExpression') {
+            addProblem('Missing comma between required parameters and optional parameters.', getRange(optParams.loc.source, optParams.loc.start, 1, 0), DiagnosticSeverity.Information);
+          }
+          // Eliminate empty expressions inserted by the parser.
+          if (reqParams[reqParams.length - 1].type === 'EmptyExpression') { reqParams.pop(); };
+          if (optParams.params[0].type === 'EmptyExpression') { optParams.params.shift(); };
+
+          // Check empty expressions in both required and optional parameters.
+          [...reqParams, ...optParams.params].forEach((param) => {
+            if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); }
+          });
         }
       }
     }

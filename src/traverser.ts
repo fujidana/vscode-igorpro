@@ -1,13 +1,12 @@
 import * as vscode from 'vscode';
 import * as lang from './language';
-import type { LocationRange } from './parser';
 import type * as tree from './tree';
 
 // NOTE: estraverse is patched to support Igor Pro specific node types.
 // import * as estraverse from 'estraverse';
 var estraverse = require('estraverse');
 
-const VisitorKeys = {
+const VISITOR_KEYS = {
     // The following nodes has the same properties for visitor keys.
     // (Other properties can be different between Igor Pro node and estree node.)
     AssignmentExpression: ['left', 'right'],
@@ -21,7 +20,6 @@ const VisitorKeys = {
     ExpressionStatement: ['expression'],
     ForStatement: ['init', 'test', 'update', 'body'],
     ForInStatement: ['left', 'right', 'body'],
-    FunctionDeclaration: ['id', 'params', 'body'], // TODO: optParams
     Identifier: [],
     Literal: [],
     MemberExpression: ['object', 'property'],
@@ -35,6 +33,7 @@ const VisitorKeys = {
 
     // The following nodes have the same name as estree nodes
     // but have different properties for visitor keys.
+    FunctionDeclaration: ['id', 'params', 'optParams', 'body'], // ['id', 'params', 'body']
     BreakStatement: [], // ['label'],
     ContinueStatement: [], // ['label'],
     IfStatement: ['cases'], // ['test', 'consequent', 'alternate'],
@@ -170,7 +169,7 @@ export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.Doc
                 }
             }
         },
-        keys: VisitorKeys,
+        keys: VISITOR_KEYS,
     });
 
     return [refBook, symbols];
@@ -182,18 +181,31 @@ export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.Doc
             if (param.type === 'Identifier') {
                 return param.name;
             } else if (param.type === 'VariableDeclaration') {
-                return param.declarations.map(decl => decl.id.name).join(', ');
+                let tmpStr = param.kind;
+                if (param.flags) {
+                    tmpStr += param.flags.map(flag => '/' + flag.key).join('');
+                }
+                tmpStr += ' ' + param.declarations.map(decl => decl.id.name).join(', ');
+                return tmpStr;
             } else {
                 return '';
             }
         }).join(', ');
 
         if (node.type === 'FunctionDeclaration' && node.optParams) {
+            if (node.params.length > 0) {
+                signature += ', ';
+            }
             signature += '[' + node.optParams.map(param => {
                 if (param.type === 'Identifier') {
                     return param.name;
                 } else if (param.type === 'VariableDeclaration') {
-                    return param.declarations.map(decl => decl.id).join(', ');
+                    let tmpStr = param.kind;
+                    if (param.flags) {
+                        tmpStr += param.flags.map(flag => '/' + flag.key).join('');
+                    }
+                    tmpStr += ' ' + param.declarations.map(decl => decl.id.name).join(', ');
+                    return tmpStr;
                 } else {
                     return '';
                 }
