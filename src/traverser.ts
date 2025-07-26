@@ -67,7 +67,7 @@ const VISITOR_KEYS = {
     Flag: ['value'],
 };
 
-export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.DocumentSymbol[]] {
+export function traverseForGlobals(program: tree.Program): [lang.ReferenceBook, vscode.DocumentSymbol[]] {
     // Create variables to store data.
     const refBook: lang.ReferenceBook = new Map();
     const symbols: vscode.DocumentSymbol[] = [];;
@@ -84,7 +84,7 @@ export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.Doc
                 let symbol: vscode.DocumentSymbol | undefined;
 
                 if (node.type === 'ConstantDeclaration') {
-                    const refItem = makeReferenceItem(node, 'constant', { isStatic: node.static });
+                    const refItem = makeReferenceItem(node, node.id.name, 'constant', node.static);
                     refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Constant)) !== undefined) {
@@ -100,7 +100,7 @@ export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.Doc
                     }
                     return estraverse.VisitorOption.Skip;
                 } else if (node.type === 'PictureDeclaration') {
-                    const refItem = makeReferenceItem(node, 'picture', { isStatic: node.static });
+                    const refItem = makeReferenceItem(node, node.id.name, 'picture', node.static);
                     refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Object)) !== undefined) {
@@ -108,7 +108,7 @@ export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.Doc
                     }
                     return estraverse.VisitorOption.Skip;
                 } else if (node.type === 'StructureDeclaration') {
-                    const refItem = makeReferenceItem(node, 'structure', { isStatic: node.static });
+                    const refItem = makeReferenceItem(node, node.id.name, 'structure', node.static);
                     refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Struct)) !== undefined) {
@@ -122,7 +122,7 @@ export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.Doc
                     return estraverse.VisitorOption.Skip;
                 } else if (node.type === 'MacroDeclaration') {
                     const signature = makeSignatureForMacroAndFunc(node);
-                    const refItem = makeReferenceItem(node, 'macro', { signature });
+                    const refItem = makeReferenceItem(node, signature, 'macro');
                     refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Method)) !== undefined) {
@@ -131,7 +131,7 @@ export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.Doc
                     parentSymbol = symbol;
                 } else if (node.type === 'FunctionDeclaration') {
                     const signature = makeSignatureForMacroAndFunc(node);
-                    const refItem = makeReferenceItem(node, 'function', { signature, isStatic: node.static });
+                    const refItem = makeReferenceItem(node, signature, 'function', node.static);
                     refBook.set(node.id.name.toLowerCase(), refItem);
 
                     if ((symbol = getSymbol(node, vscode.SymbolKind.Function)) !== undefined) {
@@ -268,16 +268,69 @@ export function traverse(program: tree.Program): [lang.ReferenceBook, vscode.Doc
     }
 }
 
-function makeReferenceItem(node: tree.ParentDeclaration, category: lang.ReferenceCategory, option?: { signature?: string, isStatic?: boolean }): lang.ReferenceItem {
-    const signature = option?.signature ?? node.id.name;
-    const isStatic = option?.isStatic ?? undefined;
-    const description =
-        node.leadingComments && node.leadingComments.length > 0 ?
-            node.leadingComments[node.leadingComments.length - 1].value :
-            undefined;
+export function traverseForLocals(program: tree.Program, position: vscode.Position): lang.ReferenceBook {
+    // Create variables to store data.
+    const refBook: lang.ReferenceBook = new Map();
+
+    // Traverse the syntax tree.
+    estraverse.traverse(program, {
+        enter: (node: tree.Node, parent: tree.Node | null) => {
+            // console.log('enter', node.type, parent?.type);
+
+            if (parent === null && node.type === 'Program') {
+                // if it is a top-level, dig in.
+                return;
+            } else if (node.type === 'ConstantDeclaration' || node.type === 'MenuDeclaration' || node.type === 'PictureDeclaration' || node.type === 'StructureDeclaration') {
+                return estraverse.Skip;
+            } else if (!node.loc) {
+                console.log('Statement should have location. This may be a bug in the parser.');
+                return;
+            }
+
+            const nodeRange = lang.convertRange(node.loc);
+
+            if (nodeRange.end.isAfter(position)) {
+                return estraverse.Break;
+            } else if (node.type === 'FunctionDeclaration' || node.type === 'MacroDeclaration') {
+                if (nodeRange.end.isBefore(position)) {
+                    return estraverse.VisitorOption.Skip;
+                } else if (nodeRange.contains(position)) {
+                    refBook.clear();
+                }
+            } else if (node.type === 'VariableDeclaration') {
+                for (const declarator of node.declarations) {
+                    const refItem = makeReferenceItem(declarator, declarator.id.name, 'variable');
+                    refBook.set(declarator.id.name.toLowerCase(), refItem);
+                }
+            } else if (node.type === 'OperationStatement' && node.name.toLowerCase() === 'make') {
+                for (const arg of node.args) {
+                    if (arg.type === 'Identifier') {
+                        const refItem = makeReferenceItem(arg, arg.name, 'variable');
+                        refBook.set(arg.name.toLowerCase(), refItem);
+                    } else if (arg.type === 'AssignmentExpression' && arg.left.type === 'Identifier') {
+                        const refItem = makeReferenceItem(arg, arg.left.name, 'variable');
+                        refBook.set(arg.left.name.toLowerCase(), refItem);
+                    }
+                }
+            }
+        },
+        // leave: (node, parent) => {
+        //     console.log('leave', node.type, parent?.type);
+        // },
+        keys: VISITOR_KEYS,
+    });
+
+    return refBook;
+}
+
+
+function makeReferenceItem(node: tree.Node, signature: string, category: lang.ReferenceCategory, isStatic?: boolean): lang.ReferenceItem {
+    const description = node.leadingComments ?
+        node.leadingComments.map(comment => comment.value).join('\n') :
+        undefined;
     if (isStatic !== undefined) {
-        return { signature, category, description, isStatic, location: node.id.loc, };
+        return { signature, category, description, isStatic, location: node.loc, };
     } else {
-        return { signature, category, description, isStatic, location: node.id.loc, };
+        return { signature, category, description, location: node.loc, };
     }
 }

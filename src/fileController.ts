@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as lang from "./language";
 import { Controller } from "./controller";
 import { SyntaxError, parse } from './parser';
-import { traverse } from './traverser';
+import { traverseForGlobals, traverseForLocals } from './traverser';
 import type * as tree from './tree';
 
 import { existsSync, promises } from 'node:fs';
@@ -120,6 +120,9 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
             for (const [uriString, session] of this.updateSessionMap.entries()) {
                 const refBook = (await session.promise)?.refBook;
                 if (refBook === undefined) { continue; }
+
+                // Local variables are not exported.
+                if (uriString === lang.ACTIVE_FILE_URI) { continue; }
 
                 const refBookLike = lang.categorizeRefBook(refBook, categories, true);
                 for (const [category, refSheet] of Object.entries(refBookLike)) {
@@ -389,6 +392,55 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
     }
 
     /**
+     * Asynchronously update position-sensitive local symbol database.
+     * @param document Text Document
+     * @param position Position
+     * @returns Thenable that resolves to a session container that contains parsed data.
+     */
+    private runLocalUpdateSession(document: vscode.TextDocument, position: vscode.Position) {
+        // Update the database for local variables for the current cursor position.
+        const session = this.updateSessionMap.get(document.uri.toString());
+        if (session) {
+            const promise = session.promise.then(
+                parsedData => {
+                    if (parsedData?.tree) {
+                        return { refBook: traverseForLocals(parsedData.tree, position) };
+                    };
+                }
+            );
+            this.updateSessionMap.set(lang.ACTIVE_FILE_URI, { promise, tokenSource: undefined });
+            return promise;
+        } else {
+            this.updateSessionMap.delete(lang.ACTIVE_FILE_URI);
+            return undefined;
+        }
+    }
+
+    /**
+     * Required implementation of vscode.CompletionItemProvider, overriding the super class.
+     */
+    public override async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionList<lang.CompletionItem> | lang.CompletionItem[] | undefined> {
+        if (token.isCancellationRequested) { return; }
+
+        // Update the database for local variables for the current cursor position.
+        this.runLocalUpdateSession(document, position);
+
+        return super.provideCompletionItems(document, position, token, context);
+    }
+
+    /**
+     * Required implementation of vscode.HoverProvider, overriding the super class.
+     */
+    public override async provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Promise<vscode.Hover | undefined> {
+        if (token.isCancellationRequested) { return; }
+
+        // Update the database for local variables for the current cursor position.
+        this.runLocalUpdateSession(document, position);
+
+        return super.provideHover(document, position, token);
+    }
+
+    /**
      * Required implementation of vscode.CompletionItemProvider, overriding the super class.
      */
     public async provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Promise<vscode.Definition | vscode.DefinitionLink[] | undefined> {
@@ -400,10 +452,13 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         const selectorName = document.getText(range).toLowerCase();
         if (!/^[a-z][a-z0-9_]*$/.test(selectorName)) { return; }
 
+        // Update the database for local variables for the current cursor position.
+        this.runLocalUpdateSession(document, position);
+
         // Seek the identifier.
         const locations: vscode.Location[] = [];
         for (const [uriString, session] of this.updateSessionMap.entries()) {
-            const uri = vscode.Uri.parse(uriString);
+            const uri = (uriString === lang.ACTIVE_FILE_URI) ? document.uri : vscode.Uri.parse(uriString);
 
             // Scan all types of symbols in the database of the respective files.
             const refItem = (await session.promise)?.refBook.get(selectorName);
@@ -443,6 +498,8 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         // seek the identifier
         const symbols: vscode.SymbolInformation[] = [];
         for (const [uriString, session] of this.updateSessionMap.entries()) {
+            // Skip storage for local variables.
+            if (uriString === lang.ACTIVE_FILE_URI) { continue; }
 
             const uri = vscode.Uri.parse(uriString);
             const refBook = (await session.promise)?.refBook;
@@ -647,7 +704,7 @@ function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: 
         );
     }
 
-    const [refBook, symbols] = traverse(tree);
+    const [refBook, symbols] = traverseForGlobals(tree);
 
     if (isInEditor) {
         return { refBook, tree, symbols, diagnostics };

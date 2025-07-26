@@ -28,6 +28,10 @@ const DiagnosticSeverity = require('vscode').DiagnosticSeverity;
 //   Hint: 3,
 // };
 
+const strictOperationRegExp = new RegExp(
+  '^(Make)$', 'i'
+);
+
 const operationRegExp = new RegExp(
   '^('
   + 'Abort|Add(?:FIFO(?:Data|VectData)|Movie(?:Audio|Frame)|WavesTo(?:BoxPlot|ViolinPlot))|AdoptFiles|APMath|Append(?:BoxPlot|Image|LayoutObject|MatrixContour|Text|To(?:Gizmo|Graph|Layout|Table)|ViolinPlot|XYZContour)?|AutoPositionWindow|'
@@ -944,26 +948,25 @@ AssignExprStmt 'expression statement for assignment' =
   }
 
 OpStmt 'operation statement' =
+  name:_StdName2 &{ return strictOperationRegExp.test(name); } flags:(_0 @Flag)* args:(
+    _0 @(
+      // BaseExpr (_0 '=' _0 (BaseExpr / BraceListExpr / ParenListExpr / BracketListExpr+))?
+      AssignExpr
+      /
+      BaseExpr
+      /
+      BraceListExpr
+    )
+  )|.., _Comma| _0 &(_Eol / ';' / '//') {
+    return { type: 'OperationStatement', name, flags, args, loc: location(),};
+  }
+  /
   name:_StdName2 &{ return operationRegExp.test(name) || options?.operationIdentifiers.includes(name.toLowerCase()); } flags:(_0 @Flag)* args:(
-    Flag+ / _Word+ / StrLiteral / _1 / !(_Eol / ';' / '//') .
+    Flag+ / $_Word+ / StrLiteral / _1 / !(_Eol / ';' / '//') .
   )* {
     // TODO: object properties
     return { type: 'OperationStatement', name, flags, args, loc: location(), };
   }
-  // name:_StdName2 &{ return operationRegExp.test(name); } flags:(_0 @Flag)* args:(
-  //   (_0 ',' _0 / _1) @(
-  //     BaseExpr (_0 '=' _0 (BaseExpr / BraceListExpr / ParenListExpr / BracketListExpr+))?
-  //     /
-  //     BraceListExpr
-  //     /
-  //     Word+
-  //   )
-  //   /
-  //   (_0 @Flag)+
-  // )* _0 &(Eol / ';' / '//') {
-  //   // TODO: object properties
-  //   return { type: 'OperationStatement', name, flags, args, };
-  // }
 
 ExprStmt 'expression statement' =
   expression:(UpdateExpr / CallExpr) _0 &(_Eol / ';' / '//') {
