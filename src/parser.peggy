@@ -187,7 +187,7 @@ _Eof = !. {}
 
 Comment 'line comment' =
   @(
-    '//' p:$(!_Eol .)* { return { type: 'Line', value: p, loc: location(), }; }
+    '//' '/'? [ \t]? p:$(!_Eol .)* { return { type: 'Line', value: p, loc: location(), }; }
   ) (_Eol / _Eof)
 
 /** End of line with or without a trailing line comment. */
