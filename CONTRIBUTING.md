@@ -1,11 +1,11 @@
-Contributing
+Contributing Guide
 ====
 
 **Note**: Keyboard shotcuts in this section are for macOS.
 
-The first step to contribute is to open an issue in the repository. The author will discuss with you about the issue and then you can start coding.
+The extension author welcomes contributions from anyone who is interested in improving the extension. Contributions can be in the form of bug reports, feature requests, code changes, or documentation updates.
 
-To send a pull request, follow these steps:
+In case you want to contribute code or documentation, follow the steps below to send a pull request. Unless your fix is trivial, please open an issue to discuss the change before sending a pull request.
 
 1. Fork the repository. Click the "Fork" button on the top right of the repository page on GitHub.
 2. Create a new branch.
@@ -16,18 +16,18 @@ To send a pull request, follow these steps:
 Setup for extension authoring
 ----
 
+Here is a step-by-step guide to set up the development environment for the extension, for those who want to contribute code or debug the extension locally.
+
 1. Install VS Code (`code`), Git (`git`), and Node.js (`node`, `npm`).
-2. Install `pnpm` and `vsce` by the following command (`vsce` is optional): `npm install --global pnpm @vscode/vsce`.
+2. Install `pnpm` by the following command: `npm install --global pnpm`.
 3. Clone the original or forked repository: `git clone https://github.com/your_username/vscode-igorpro.git`. Replace `your_username` with `fujidana` if you want to clone the original repository.
-4. Open the cloned folder with VS Code: `cd vscode-igorpro; code .` (or via GUI). In the following, we assume you are in the `vscode-igorpro` folder. The easiest way to do so is to use the terminal in VS Code (Ctrl+Shift+`).
+4. Open the cloned folder with VS Code: `cd vscode-igorpro; code .` (or via GUI). In the following, we assume your working directory is the `vscode-igorpro` folder. The easiest way to do so is to use the terminal in VS Code (Ctrl+Shift+`).
 5. Install Node.js packages the extension depends on: `pnpm install`
 6. Execute the following command `pnpm run js-yaml` to convert YAML files (.yaml) manually.
 A play button at the right side of "js-yaml" in "NPM SCRIPTS" panel in the "Explorer" viewlet (Cmd+Shift+E) calls the same command. Remember to do the same thing after you modify these files.
 
 Then the setup is complete.
 Push a play button in "Run" View (Cmd+Shift+D) or select the menu bar item "Run / Start Debugging" (F5). Then another instance of VS Code will be launched after compilation of source code. The extension running in this VS Code is what you have in your machine and not the one from the marketplace. You can edit code and then check the behavior.
-
-(Note@2025-05-29: Now a peggy file is compiled during this process and thus, a user does not have to compile it manually.)
 
 To create a `.vsix` file for local distribution, first install `vsce` by the following: `npm install --global @vscode/vsce`, and then run the following: `vsce package --no-dependencies`.
 

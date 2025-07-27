@@ -4,16 +4,19 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [2.0.0] -- 2025-07-27
+
 ### Added
 
 - Make IntelliSense features take the availability of symbols into consideration, based on the targeted Igor Pro version specified at "vscode-igorpro.specVersion" setting (e.g., unsupported APIs at the version are hidden in the auto-completion list). Issue [#39](https://github.com/fujidana/vscode-igorpro/issues/39).
-- Enable to load an external library file in which symbols are defined by specifying the path at "vscode-igorpro.suggest.symbolFile" setting. Issue [#59](https://github.com/fujidana/vscode-igorpro/issues/59).
+- Enable to load an external library file by specifying the path at "vscode-igorpro.suggest.symbolFile" setting. Issue [#59](https://github.com/fujidana/vscode-igorpro/issues/59).
 - Make paths in `#include` statements clickable links. Issue [#54](https://github.com/fujidana/vscode-igorpro/issues/54).
 - Use local variables in the active editor for IntelliSense features. Issue [#57](https://github.com/fujidana/vscode-igorpro/issues/57).
 
 ### Changed
 
-- Change the prefix of the identifiers of the settings from `igorpro` to `vscode-igorpro`.
+- Change the internal architecture to better support asynchronous operations. This change potentially enhances the performance in some situations. Issue [#56](https://github.com/fujidana/vscode-igorpro/issues/56).
+- Change the prefix of the identifiers of the settings from `igorpro` to `vscode-igorpro`. Issue [#41](https://github.com/fujidana/vscode-igorpro/issues/41).
 
 ### Fixed
 
@@ -147,7 +150,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.4...v1.5.0
 [1.4.4]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.3...v1.4.4
 [1.4.3]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.2...v1.4.3
