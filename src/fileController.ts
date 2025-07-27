@@ -140,7 +140,10 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         const inspectSyntaxTreeCommandHandler = async () => {
             const editor = vscode.window.activeTextEditor;
             if (editor && editor.document.languageId === 'igorpro') {
-                const uri = vscode.Uri.parse(lang.AST_URI).with({ query: editor.document.uri.toString() });
+                const uri = vscode.Uri.parse(lang.AST_URI).with({
+                    query: editor.document.uri.toString(),
+                    fragment: editor.document.version.toString()
+                });
                 vscode.window.showTextDocument(uri, { preview: false });
             }
         };
@@ -590,7 +593,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
     public provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
         if (token.isCancellationRequested) { return; }
 
-        if (lang.AST_URI === uri.with({ query: '' }).toString()) {
+        if (lang.AST_URI === uri.with({ query: '', fragment: '' }).toString()) {
             const docUri = vscode.Uri.parse(uri.query);
             const editor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === docUri.toString());
             if (editor) {
