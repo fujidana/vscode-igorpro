@@ -245,7 +245,7 @@ BaseInvalidStmt =
 DirectiveStmt 'directive' =
   // TODO: parse values
   '#' directive:_StdName _0 expression:$(!EolWWOComment .)* trailingComment:EolWWOComment {
-    return { type: 'DirectiveStatement', directive, expression, trailingComment, };
+    return { type: 'DirectiveStatement', directive, expression, loc: location(), trailingComment, };
   }
 
 // top-level declarations, derivatives, and some other invalid statements.
