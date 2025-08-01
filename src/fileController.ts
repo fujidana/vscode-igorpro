@@ -466,7 +466,8 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
             // Scan all types of symbols in the database of the respective files.
             const refItem = (await session.promise)?.refBook.get(selectorName);
             if (token.isCancellationRequested) { return; }
-            if (refItem && refItem.location) {
+            // Static symbols in another file are not used.
+            if (refItem && refItem.location && !(refItem.isStatic && uriString !== document.uri.toString())) {
                 locations.push(new vscode.Location(uri, lang.convertRange(refItem.location)));
             }
         }

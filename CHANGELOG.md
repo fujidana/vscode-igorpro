@@ -4,6 +4,10 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix a bug where "Go to Definition" feature links to static symbols in another file. Issue [#66](https://github.com/fujidana/vscode-igorpro/issues/66).
+
 ## [2.0.0] -- 2025-07-27
 
 ### Added
@@ -20,7 +24,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Fixed
 
-- Fix a problem where restoration of a reference manual document is failed after VS Code is relaunched. issue [#37](https://github.com/fujidana/vscode-igorpro/issues/37).
+- Fix a problem where restoration of a reference manual document is failed after VS Code is relaunched. Issue [#37](https://github.com/fujidana/vscode-igorpro/issues/37).
 
 ## [1.5.0] -- 2025-06-04
 
@@ -147,7 +151,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - compiler directives such as `#prgama` and `#ifdef`
 - Add language configurations.
   - comment toggling (line comment only (`//`). Igor Pro does not support block comments)
-  - bracket definision, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
+  - bracket definition, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
 [Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v2.0.0...HEAD
