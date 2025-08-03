@@ -2,7 +2,7 @@
 //
 // The extension author borrowed the naming convention of nodes from estree.
 // However, owing to the grammatical difference between JavaScript and Igor Pro,
-// the definisions are quit different.
+// the definitions are quit different.
 
 
 
@@ -177,10 +177,23 @@ export interface UnclassifiedStatement extends BaseStatement {
  * TODO: parse the expression.
  * TODO: make subtype for `#if`, `#ifdef` and `#ifndef`.
  */
-export interface DirectiveStatement extends BaseStatement {
+export type DirectiveStatement = IncludeDirectiveStatement | UnclassifiedDirectiveStatement;
+
+interface BaseDirectiveStatement extends BaseStatement {
     type: 'DirectiveStatement';
     directive: string;
     expression?: string;
+}
+
+export interface IncludeDirectiveStatement extends BaseDirectiveStatement {
+    directive: 'include';
+    kind: 'include';
+    builtin: boolean;
+    argument: StringIdentifier;
+}
+
+export interface UnclassifiedDirectiveStatement extends BaseDirectiveStatement {
+    kind: 'unclassified';
 }
 
 // constant

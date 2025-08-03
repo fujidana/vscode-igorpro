@@ -67,9 +67,10 @@ const VISITOR_KEYS = {
     Flag: ['value'],
 };
 
-export function traverseForGlobals(program: tree.Program): [lang.ReferenceBook, vscode.DocumentSymbol[]] {
+export function traverseForGlobals(program: tree.Program): { refBook: lang.ReferenceBook, includes: lang.IncludeArgument[], symbols: vscode.DocumentSymbol[] } {
     // Create variables to store data.
     const refBook: lang.ReferenceBook = new Map();
+    const includes: lang.IncludeArgument[] = [];
     const symbols: vscode.DocumentSymbol[] = [];;
 
     let parentSymbol: vscode.DocumentSymbol | undefined;
@@ -83,7 +84,11 @@ export function traverseForGlobals(program: tree.Program): [lang.ReferenceBook, 
             } else if (parent.type === 'Program') {
                 let symbol: vscode.DocumentSymbol | undefined;
 
-                if (node.type === 'ConstantDeclaration') {
+                if (node.type === 'DirectiveStatement') {
+                    if (node.kind === 'include' && node.argument.loc) {
+                        includes.push({ range: lang.convertRange(node.argument.loc), raw: node.argument.name, builtin: node.builtin });
+                    }
+                } else if (node.type === 'ConstantDeclaration') {
                     const refItem = makeReferenceItem(node, node.id.name, 'constant', node.static);
                     refBook.set(node.id.name.toLowerCase(), refItem);
 
@@ -172,7 +177,7 @@ export function traverseForGlobals(program: tree.Program): [lang.ReferenceBook, 
         keys: VISITOR_KEYS,
     });
 
-    return [refBook, symbols];
+    return { refBook, includes, symbols };
 
     function makeSignatureForMacroAndFunc(node: tree.FunctionDeclaration | tree.MacroDeclaration): string {
         let signature = node.id.name;
