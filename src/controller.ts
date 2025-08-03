@@ -180,6 +180,15 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
     }
 
     /**
+     * Provides an iterable of parser sessions.
+     * This method simply passes all update sessions without filtration.
+     * Subclass can override it to limit the scope.
+     */
+    protected async getUpdateSessionIteable(_document: vscode.TextDocument): Promise<Iterable<[string, T]>> {
+        return this.updateSessionMap;
+    }
+
+    /**
      * Required implementation of vscode.CompletionItemProvider.
      */
     public async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionList<lang.CompletionItem> | lang.CompletionItem[] | undefined> {
@@ -204,8 +213,10 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
         const suppressDetail = config['completionItem.label.detail'] ?? false;
         const suppressDescription = config['completionItem.label.description'] ?? false;
         const completionItems: lang.CompletionItem[] = [];
+        const parserSessionIterable = await this.getUpdateSessionIteable(document);
+        if (token.isCancellationRequested) { return; }
 
-        for (const [uriString, session] of this.updateSessionMap) {
+        for (const [uriString, session] of parserSessionIterable) {
             const refBook = (await session.promise)?.refBook;
 
             // Quit if cancelled and skip if symbol is not found in a file.
@@ -350,8 +361,11 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
 
         // Start to seek if the selection is a proper identifier.
         const contents: vscode.MarkdownString[] = [];
+        const parserSessionIterable = await this.getUpdateSessionIteable(document);
+        if (token.isCancellationRequested) { return; }
 
-        for (const [uriString, session] of this.updateSessionMap.entries()) {
+
+        for (const [uriString, session] of parserSessionIterable) {
             const refItem = (await session.promise)?.refBook.get(selectorName);
 
             // Quit if cancelled and skip if symbol is not found in a file.
@@ -409,8 +423,10 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
 
         const config = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<SuppressMessagesConfig>('suppressMessages', suppressMessagesConfig);
         const truncationLevel = config['signatureHelp.signatures.documentation'] === true ? TruncationLevel.paragraph : TruncationLevel.full;
+        const parserSessionIterable = await this.getUpdateSessionIteable(document);
+        if (token.isCancellationRequested) { return; }
 
-        for (const [uriString, session] of this.updateSessionMap.entries()) {
+        for (const [uriString, session] of parserSessionIterable) {
             const refItem = (await session.promise)?.refBook.get(signatureHint.signature);
 
             // Quit if cancelled and skip if symbol is not found in a file or symbol is not the one for function.

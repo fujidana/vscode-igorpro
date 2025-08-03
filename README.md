@@ -24,7 +24,7 @@ The textual contents of the IntelliSense code hints are cited from [the official
   - __Links__ - link to a file specified in `#include` statements.
 - __Commands__ - the following commands can be invoked from the command pallate (Ctrl+Shit+P):
   - "Show Built-in Symbols"
-  - "Show Workspace Symbols (JSON)": exported file can be used for importing the symbols in another workspace, with "vscode-igorpro.suggest.symbolFile" setting.
+  - "Show User-defined Symbols (JSON)": exported file can be used for importing the symbols in another workspace, with "vscode-igorpro.suggest.symbolFile" setting.
 
 The extension uses the following symbols for the IntelliSSense features:
 

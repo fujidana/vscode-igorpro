@@ -67,8 +67,8 @@
         "icon": "$(references)"
       },
       {
-        "command": "igorpro.showWorkspaceSymbolsJson",
-        "title": "Show Workspace Symbols (JSON)",
+        "command": "igorpro.showUserDefinedSymbolsJson",
+        "title": "Show User-defined Symbols (JSON)",
         "category": "Igor Pro",
         "icon": "$(json)"
       },
@@ -85,8 +85,8 @@
           "command": "igorpro.showBuiltInSymbols"
         },
         {
-          "command": "igorpro.showWorkspaceSymbolsJson",
-          "when": "workspaceFolderCount > 0"
+          "command": "igorpro.showUserDefinedSymbolsJson",
+          "when": "editorLangId == igorpro"
         },
         {
           "command": "igorpro.inspectSyntaxTree",
@@ -154,13 +154,32 @@
             },
             "additionalProperties": false
           },
+          "vscode-igorpro.suggest.scope": {
+            "type": "string",
+            "enum": [
+              "workspace",
+              "openDocuments",
+              "activeEditor"
+            ],
+            "markdownEnumDescriptions": [
+              "Global symbols in workspaces are suggested without being filtered.",
+              "Global symbols defined in open documents and files included by them are suggested.",
+              "Global symbols defined in current document and files included by it are suggested."
+            ],
+            "default": "workspace",
+            "scope": "resource",
+            "markdownDescription": "Limits the scope of global symbols considered in code hinting.",
+           "tags": [
+              "experimental"
+            ]
+          },
           "vscode-igorpro.suggest.symbolFile": {
             "type": "string",
             "default": "",
             "scope": "window",
-            "markdownDescription": "Specifies the absolute path to a JSON file in which symbols are defined. The following predefined variables are supported for the path: `${userHome}`, `${workspaceFolder}`. See a JSON file created by [Show Workspace Symbols (JSON)](command:igorpro.showWorkspaceSymbolsJson) command for the file format.",
+            "markdownDescription": "Specifies the absolute path to a JSON file in which symbols are defined. The following predefined variables are supported for the path: `${userHome}`, `${workspaceFolder}`. See a JSON file created by [Show User Defined Symbols (JSON)](command:igorpro.showUserDefinedSymbolsJson) command for the file format.",
             "tags": [
-              "experimental"
+              "preview"
             ]
           }
         }

@@ -4,16 +4,25 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Added
+
+- Make IntelliSense features limit the scope of global symbols with reference to the `#include` chains. Previously all global symbols were simply suggested. "vscode-igorpro.suggest.scope" setting was added to control this behavior. Issue [#53](https://github.com/fujidana/vscode-igorpro/issues/53).
+
+### Changed
+
+- Rename "Show Workspace Symbols (JSON)" command action "Show User-defined Symbols (JSON)" and now the document exported by this action is affected by the "vscode-igorpro.suggest.scope" setting. Issue [#53](https://github.com/fujidana/vscode-igorpro/issues/53).
+
 ### Fixed
 
-- Fix a bug where "Go to Definition" feature links to static symbols in another file. Issue [#66](https://github.com/fujidana/vscode-igorpro/issues/66).
+- Fix a bug where "Go to Definition" feature linked to static symbols in another file. Issue [#66](https://github.com/fujidana/vscode-igorpro/issues/66).
 
 ## [2.0.0] -- 2025-07-27
 
 ### Added
 
-- Make IntelliSense features take the availability of symbols into consideration, based on the targeted Igor Pro version specified at "vscode-igorpro.specVersion" setting (e.g., unsupported APIs at the version are hidden in the auto-completion list). Issue [#39](https://github.com/fujidana/vscode-igorpro/issues/39).
+- Make IntelliSense features refer to the availability of symbols, based on the targeted Igor Pro version specified at "vscode-igorpro.specVersion" setting (e.g., unsupported APIs at the version are hidden in the auto-completion list). Issue [#39](https://github.com/fujidana/vscode-igorpro/issues/39).
 - Enable to load an external library file by specifying the path at "vscode-igorpro.suggest.symbolFile" setting. Issue [#59](https://github.com/fujidana/vscode-igorpro/issues/59).
+- Add "Show User-defined Symbols (JSON)" command action to export the symbols defined in the workspace. Issue [#59](https://github.com/fujidana/vscode-igorpro/issues/59).
 - Make paths in `#include` statements clickable links. Issue [#54](https://github.com/fujidana/vscode-igorpro/issues/54).
 - Use local variables in the active editor for IntelliSense features. Issue [#57](https://github.com/fujidana/vscode-igorpro/issues/57).
 

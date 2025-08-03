@@ -22,7 +22,13 @@ export function convertRange(range: LocationRange): vscode.Range {
 }
 
 export type ParsedData = { refBook: ReferenceBook };
-export type ParsedFileData = { refBook: ReferenceBook, tree?: tree.Program, symbols?: vscode.DocumentSymbol[], diagnostics?: vscode.Diagnostic[] };
+export type ParsedFileData = { refBook: ReferenceBook, includes: IncludeArgument[], tree?: tree.Program, symbols?: vscode.DocumentSymbol[], diagnostics?: vscode.Diagnostic[] };
+
+export type IncludeArgument = {
+    range: vscode.Range,
+    raw: string,
+    builtin: boolean,
+};
 
 export type UpdateSession<T extends ParsedData = ParsedData> = { promise: Promise<T | undefined> };
 export type FileUpdateSession = { promise: Promise<ParsedFileData | undefined>, tokenSource?: vscode.CancellationTokenSource | undefined, tokenSource1?: vscode.CancellationTokenSource | undefined };

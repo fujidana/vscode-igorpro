@@ -12,20 +12,17 @@ import { relative } from 'node:path';
 type DocumentUpdateQuery = { type: 'Document', document: vscode.TextDocument };
 type FileUpdateQuery = { type: 'File', uri: vscode.Uri };
 
-type IncludeArgument = {
-    range: vscode.Range,
-    raw: string,
-    builtin: boolean,
-    baseUri?: vscode.Uri,
-};
-
 class IgorproDocumentLink extends vscode.DocumentLink {
-    includeArgument: IncludeArgument;
-    constructor(range: vscode.Range, includeArgument: IncludeArgument) {
+    includeArgument: lang.IncludeArgument;
+    baseUri: vscode.Uri;
+    constructor(range: vscode.Range, includeArgument: lang.IncludeArgument, baseUri: vscode.Uri) {
         super(range, undefined);
         this.includeArgument = includeArgument;
+        this.baseUri = baseUri;
     }
 }
+
+type SuggestScopeConfig = 'workspace' | 'openDocuments' | 'activeEditor';
 
 /**
  * Get a set of the URIs of supported files from workspaces.
@@ -106,18 +103,27 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         this.externalOperationIdentifiers = externalOperationIdentifiers;
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('igorpro');
 
-        const showWorkspaceSymbolsJsonCommandHandler = async () => {
+        const showUserDefinedSymbolsJsonCommandHandler = async () => {
             // When the extension is activated by the command, `updateSessionMap`
-            // is empty at the moment. Wait for a while, and then promise objects
-            //  are added into `updateSessionMap`.
+            // is empty at the moment. In such a case, the extension wait for a while
+            // so that promise objects will be added into `updateSessionMap`.
             if (this.updateSessionMap.size === 0) {
                 await new Promise((resolve) => setTimeout(resolve, 200));
+            }
+
+            const igorDocument = vscode.window.activeTextEditor?.document;
+            if (!igorDocument) {
+                vscode.window.showErrorMessage('Active text editor is not found.');
+                return;
+            } else if (vscode.languages.match(lang.SELECTOR, igorDocument) === 0) {
+                vscode.window.showErrorMessage(`The language identifier of the current document is not ${lang.SELECTOR.language}.`);
             }
 
             const categories = ['constant', 'picture', 'structure', 'macro', 'function'] as const;
             type Category = typeof categories[number];
             const obj: { [K in Category]: Required<lang.ReferenceBookLike>[K] } = { constant: {}, picture: {}, structure: {}, macro: {}, function: {}, };
-            for (const [uriString, session] of this.updateSessionMap.entries()) {
+            const parserSessionIterable = await this.getUpdateSessionIteable(igorDocument);
+            for (const [uriString, session] of parserSessionIterable) {
                 const refBook = (await session.promise)?.refBook;
                 if (refBook === undefined) { continue; }
 
@@ -133,8 +139,8 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 }
             }
             const content = JSON.stringify(obj, (key, value) => key === 'location' || key === 'category' ? undefined : value, 2);
-            const document = await vscode.workspace.openTextDocument({ language: 'json', content: content });
-            vscode.window.showTextDocument(document, { preview: false });
+            const jsonDocument = await vscode.workspace.openTextDocument({ language: 'json', content: content });
+            vscode.window.showTextDocument(jsonDocument, { preview: false });
         };
 
         const inspectSyntaxTreeCommandHandler = async () => {
@@ -262,7 +268,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         // Register providers and event handlers.
         context.subscriptions.push(
             // Register command handlers.
-            vscode.commands.registerCommand('igorpro.showWorkspaceSymbolsJson', showWorkspaceSymbolsJsonCommandHandler),
+            vscode.commands.registerCommand('igorpro.showUserDefinedSymbolsJson', showUserDefinedSymbolsJsonCommandHandler),
             vscode.commands.registerCommand('igorpro.inspectSyntaxTree', inspectSyntaxTreeCommandHandler),
 
             // Register document-event listeners.
@@ -407,7 +413,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
             const promise = session.promise.then(
                 parsedData => {
                     if (parsedData?.tree) {
-                        return { refBook: traverseForLocals(parsedData.tree, position) };
+                        return { refBook: traverseForLocals(parsedData.tree, position), includes: [] };
                     };
                 }
             );
@@ -418,6 +424,60 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
             return undefined;
         }
     }
+
+    /**
+     * Filter parser sessions.
+     * If `vscode-igorpro.suggest.scope` setting is not `"workspace"`,
+     * URIs not pointing to existent files defined in `#include` chains are filtered.
+     * @param document Root document of `#include` chains (used when `vscode-igorpro.suggest.scope` setting is set to `"activeEditor"`)
+     * @returns A promise of iterable of filtered parser sessions.
+     */
+    protected override async getUpdateSessionIteable(document: vscode.TextDocument): Promise<Iterable<[string, lang.FileUpdateSession]>> {
+        const scope = vscode.workspace.getConfiguration('vscode-igorpro.suggest', document).get<SuggestScopeConfig>('scope', 'workspace');
+
+        /**
+         * Subroutine to recursivley add URIs of existent files declared in `#include` statements into a set object.
+         * into a specified set.
+         * @param documentUri 
+         * @param uriStringSet 
+         * @returns 
+         */
+        const findIncludedFileUris = async (documentUri: vscode.Uri, uriStringSet: Set<string>) => {
+            const documentUriString = documentUri.toString();
+            if (!uriStringSet.has(documentUriString)) {
+                uriStringSet.add(documentUriString);
+
+                const includes = (await this.updateSessionMap.get(documentUri.toString())?.promise)?.includes;
+                if (!includes) { return; }
+
+                const baseUri = vscode.Uri.joinPath(documentUri, '..');
+                const urisIfExist = await Promise.all(includes.map(include => this.convertIncludeArgumentToUri(include, baseUri)));
+                for (const uriIfExist of urisIfExist) {
+                    if (!uriIfExist) { continue; }    
+                    await findIncludedFileUris(uriIfExist, uriStringSet);
+                }
+                return;
+            } else {
+                return;
+            }
+        };
+
+        if (scope === 'workspace') {
+            return this.updateSessionMap;
+        } else if (scope === 'openDocuments') {
+            const includedFileSet: Set<string> = new Set([lang.ACTIVE_FILE_URI]);
+            const documents = vscode.workspace.textDocuments.filter(document => vscode.languages.match(lang.SELECTOR, document));
+            for (const document of documents) {
+                await findIncludedFileUris(document.uri, includedFileSet);
+            }
+            return [...this.updateSessionMap].filter(([uriString, _session]) => includedFileSet.has(uriString));
+        } else { // if (scope === 'activeEditor')
+            const includedFileSet: Set<string> = new Set([lang.ACTIVE_FILE_URI]);
+            await findIncludedFileUris(document.uri, includedFileSet);
+            return [...this.updateSessionMap].filter(([uriString, _session]) => includedFileSet.has(uriString));
+        }
+    }
+
 
     /**
      * Required implementation of vscode.CompletionItemProvider, overriding the super class.
@@ -444,7 +504,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
     }
 
     /**
-     * Required implementation of vscode.CompletionItemProvider, overriding the super class.
+     * Required implementation of vscode.DefinitionProvider.
      */
     public async provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Promise<vscode.Definition | vscode.DefinitionLink[] | undefined> {
         if (token.isCancellationRequested) { return; }
@@ -460,7 +520,10 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
 
         // Seek the identifier.
         const locations: vscode.Location[] = [];
-        for (const [uriString, session] of this.updateSessionMap.entries()) {
+        const parserSessionIterable = await this.getUpdateSessionIteable(document);
+        if (token.isCancellationRequested) { return; }
+
+        for (const [uriString, session] of parserSessionIterable) {
             const uri = (uriString === lang.ACTIVE_FILE_URI) ? document.uri : vscode.Uri.parse(uriString);
 
             // Scan all types of symbols in the database of the respective files.
@@ -528,11 +591,14 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
     /**
      * Required implementation of `vscode.DocumentLinkProvider`.
      */
-    public provideDocumentLinks(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<IgorproDocumentLink[] | undefined> {
+    public async provideDocumentLinks(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<IgorproDocumentLink[] | undefined> {
         if (token.isCancellationRequested) { return; }
 
-        const includeArguments = parseIncludeStatements(document.getText(), vscode.Uri.joinPath(document.uri, '..'));
-        return includeArguments.map(arg => new IgorproDocumentLink(arg.range, arg));
+        const baseUri = vscode.Uri.joinPath(document.uri, '..');
+        const includes = (await this.updateSessionMap.get(document.uri.toString())?.promise)?.includes;
+
+        if (token.isCancellationRequested) { return; }
+        return includes?.map(arg => new IgorproDocumentLink(arg.range, arg, baseUri));
     }
 
     /**
@@ -541,7 +607,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
     public resolveDocumentLink(link: IgorproDocumentLink, token: vscode.CancellationToken): vscode.ProviderResult<IgorproDocumentLink> {
         if (token.isCancellationRequested) { return; }
 
-        return this.findUriForIncludeArgument(link.includeArgument).then(
+        return this.convertIncludeArgumentToUri(link.includeArgument, link.baseUri).then(
             uri => { link.target = uri; return link; }
         );
     }
@@ -613,11 +679,21 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         }
     }
 
-    async findUriForIncludeArgument(incArg: IncludeArgument): Promise<vscode.Uri | undefined> {
+    /**
+     * Find a file specified in `#include` statement.
+     * In several cases, Igor Pro looks for a file of specified name from 
+     * different folders and use the first one found in one of the folders.
+     * To follow this behavior, the method checks the file existence and 
+     * asynchronously returns the URI of a found file.
+     * @param incArg Include argument object.
+     * @param baseUri Base URI. This URI is used only when the include argument is a relative path.
+     * @returns URI if the file exists and undefined if not.
+     */
+    async convertIncludeArgumentToUri(incArg: lang.IncludeArgument, baseUri: vscode.Uri): Promise<vscode.Uri | undefined> {
         if (incArg.builtin) {
-            // In case the path is enclosed with brackets, like
-            // `#include <ipffile>`, then the file should be somewhere
-            // in "WaveMetrics Procedures" folder or its subfolder.
+            // In case the statement is like `#include <ipffile>`, the file
+            // should be placed in "WaveMetrics Procedures" folder or its
+            // subfolder.
             const basePath = this.getSpecialDirPath('app', 'WaveMetrics Procedures');
             if (basePath !== undefined) {
                 for await (const path of promises.glob(`**/${incArg.raw}.ipf`, { cwd: basePath })) {
@@ -625,9 +701,8 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 }
             }
         } else if (!incArg.raw.includes(':')) {
-            // In case the path does not contain path separator and is
-            // enclosed with quotation marks, like `#include "ipffile"`,
-            // then the file should be somewhere in "User Procedures" 
+            // In case the statement is like `#include "ipffile"` (no path
+            // separator), the file should be placed in "User Procedures" 
             // or its subfolder.
             // There are two "User Procedures" folders. One is in
             // "Igor Pro Folder" and the other is in "Igor Pro User Files".
@@ -641,20 +716,19 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 }
             }
         } else if (!incArg.raw.startsWith(':')) {
-            // In case the path is an aboslute path, like
-            // #include "Hard Drive:absolute:path:to:ipffile",
+            // In case the statement uses an aboslute path, like
+            // #include "Hard Drive:absolute:path:to:ipffile".
             const path = convertHfsPathToPosixPath(incArg.raw + '.ipf');
             const uri2 = path ? vscode.Uri.file(path) : undefined;
             return uri2 && existsSync(uri2.path) ? uri2 : undefined;
             // return (uri2 && (await vscode.workspace.fs.stat(uri2)).type & vscode.FileType.File) ? uri2 : undefined;
         } else {
-            // In case the path is a relative path, like
-            // `#include ":relative:path:to:ipffile"`,
-            // then the relative path should be revolved to either 
-            // the Igor Pro Folder, the Igor Pro User Files folder,
-            // or the folder containing the procedure file that
-            // contains the `#include` statement.
-            const basePaths = [this.getSpecialDirPath('app'), this.getSpecialDirPath('user'), incArg.baseUri?.path];
+            // In case the statement uses a relative path, like
+            // `#include ":relative:path:to:ipffile"`, the relative is revolved
+            // to either the Igor Pro Folder, the Igor Pro User Files folder,
+            // or the folder containing the procedure file that contains the
+            // `#include` statement.
+            const basePaths = [this.getSpecialDirPath('app'), this.getSpecialDirPath('user'), baseUri.path];
             const path = convertHfsPathToPosixPath(incArg.raw + '.ipf');
             if (path) {
                 for (const basePath of basePaths) {
@@ -678,7 +752,7 @@ async function analyzeContentOfUri(uri: vscode.Uri, diagnose: boolean, isInEdito
     return analyzeDocumentContent(content, diagnose, isInEditor, operationIdentifiers, token);
 }
 
-function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken) {
+function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken): lang.ParsedFileData | undefined {
     // private parseDocumentContents(contents: string, uri: vscode.Uri, isOpenDocument: boolean, diagnoseProblems: boolean) {
     if (token.isCancellationRequested) { return undefined; }
 
@@ -697,7 +771,7 @@ function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: 
                 diagnostics = [new vscode.Diagnostic(new vscode.Range(0, 0, 0, 0), 'Unknown error in parsing', vscode.DiagnosticSeverity.Error)];
             }
         }
-        return { refBook: new Map(), diagnostics };
+        return { refBook: new Map(), includes: [], diagnostics };
     }
 
     if (token.isCancellationRequested) { return undefined; }
@@ -708,36 +782,32 @@ function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: 
         );
     }
 
-    const [refBook, symbols] = traverseForGlobals(tree);
+    const { refBook, includes, symbols } = traverseForGlobals(tree);
 
     if (isInEditor) {
-        return { refBook, tree, symbols, diagnostics };
+        return { refBook, includes, tree, symbols, diagnostics };
     } else {
-        return { refBook, diagnostics };
+        return { refBook, includes, diagnostics };
     }
 }
 
 
-function parseIncludeStatements(content: string, baseUri: vscode.Uri): IncludeArgument[] {
-    const lines = content.split(/\n|\r\n?/);
+// function parseIncludeStatements(content: string, baseUri: vscode.Uri): lang.IncludeArgument[] {
+//     const lines = content.split(/\n|\r\n?/);
 
-    const includeRegExp: RegExp = /^(#include\b\s*)(<([^"<>]+)>|"([^"<>]+)")/;
-    const includeArguments: IncludeArgument[] = [];
+//     const includeRegExp: RegExp = /^(#include\b\s*)(<([^"<>]+)>|"([^"<>]+)")/;
+//     const includeArguments: lang.IncludeArgument[] = [];
 
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-        const lineText = lines[lineIndex];
-        const matches = lineText.match(includeRegExp);
-        if (matches !== null) {
-            const range = new vscode.Range(lineIndex, matches[1].length + 1, lineIndex, matches[1].length + matches[2].length - 1);
-            if (matches[2].startsWith('<')) {
-                includeArguments.push({ range, raw: matches[3], builtin: true });
-            } else {
-                includeArguments.push({ range, raw: matches[4], builtin: false, baseUri });
-            }
-        }
-    }
-    return includeArguments;
-}
+//     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+//         const lineText = lines[lineIndex];
+//         const matches = lineText.match(includeRegExp);
+//         if (matches !== null) {
+//             const range = new vscode.Range(lineIndex, matches[1].length + 1, lineIndex, matches[1].length + matches[2].length - 1);
+//             includeArguments.push({ range, raw: matches[3], builtin: matches[2].startsWith('<') });
+//         }
+//     }
+//     return includeArguments;
+// }
 
 /**
  * Convert a classic Mac OS path (also known as HFS path) to a POSIX path.
