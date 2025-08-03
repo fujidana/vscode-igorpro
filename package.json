@@ -154,6 +154,25 @@
             },
             "additionalProperties": false
           },
+          "vscode-igorpro.suggest.scope": {
+            "type": "string",
+            "enum": [
+              "workspace",
+              "openDocuments",
+              "activeEditor"
+            ],
+            "markdownEnumDescriptions": [
+              "Global symbols in workspaces are suggested without being filtered.",
+              "Global symbols defined in open documents and files included by them are suggested.",
+              "Global symbols defined in current document and files included by it are suggested."
+            ],
+            "default": "workspace",
+            "scope": "resource",
+            "markdownDescription": "Limits the scope of global symbols considered in code hinting.",
+           "tags": [
+              "experimental"
+            ]
+          },
           "vscode-igorpro.suggest.symbolFile": {
             "type": "string",
             "default": "",

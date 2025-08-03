@@ -22,6 +22,8 @@ class IgorproDocumentLink extends vscode.DocumentLink {
     }
 }
 
+type SuggestScopeConfig = 'workspace' | 'openDocuments' | 'activeEditor';
+
 /**
  * Get a set of the URIs of supported files from workspaces.
  * 
@@ -415,6 +417,60 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
     }
 
     /**
+     * Filter parser sessions.
+     * If `vscode-igorpro.suggest.scope` setting is not `"workspace"`,
+     * URIs not pointing to existent files defined in `#include` chains are filtered.
+     * @param document Root document of `#include` chains (used when `vscode-igorpro.suggest.scope` setting is set to `"activeEditor"`)
+     * @returns A promise of iterable of filtered parser sessions.
+     */
+    protected override async getUpdateSessionIteable(document: vscode.TextDocument): Promise<Iterable<[string, lang.FileUpdateSession]>> {
+        const scope = vscode.workspace.getConfiguration('vscode-igorpro.suggest', document).get<SuggestScopeConfig>('scope', 'workspace');
+
+        /**
+         * Subroutine to recursivley add URIs of existent files declared in `#include` statements into a set object.
+         * into a specified set.
+         * @param documentUri 
+         * @param uriStringSet 
+         * @returns 
+         */
+        const findIncludedFileUris = async (documentUri: vscode.Uri, uriStringSet: Set<string>) => {
+            const documentUriString = documentUri.toString();
+            if (!uriStringSet.has(documentUriString)) {
+                uriStringSet.add(documentUriString);
+
+                const includes = (await this.updateSessionMap.get(documentUri.toString())?.promise)?.includes;
+                if (!includes) { return; }
+
+                const baseUri = vscode.Uri.joinPath(documentUri, '..');
+                const urisIfExist = await Promise.all(includes.map(include => this.convertIncludeArgumentToUri(include, baseUri)));
+                for (const uriIfExist of urisIfExist) {
+                    if (!uriIfExist) { continue; }    
+                    await findIncludedFileUris(uriIfExist, uriStringSet);
+                }
+                return;
+            } else {
+                return;
+            }
+        };
+
+        if (scope === 'workspace') {
+            return this.updateSessionMap;
+        } else if (scope === 'openDocuments') {
+            const includedFileSet: Set<string> = new Set([lang.ACTIVE_FILE_URI]);
+            const documents = vscode.workspace.textDocuments.filter(document => vscode.languages.match(lang.SELECTOR, document));
+            for (const document of documents) {
+                await findIncludedFileUris(document.uri, includedFileSet);
+            }
+            return [...this.updateSessionMap].filter(([uriString, _session]) => includedFileSet.has(uriString));
+        } else { // if (scope === 'activeEditor')
+            const includedFileSet: Set<string> = new Set([lang.ACTIVE_FILE_URI]);
+            await findIncludedFileUris(document.uri, includedFileSet);
+            return [...this.updateSessionMap].filter(([uriString, _session]) => includedFileSet.has(uriString));
+        }
+    }
+
+
+    /**
      * Required implementation of vscode.CompletionItemProvider, overriding the super class.
      */
     public override async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionList<lang.CompletionItem> | lang.CompletionItem[] | undefined> {
@@ -455,7 +511,10 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
 
         // Seek the identifier.
         const locations: vscode.Location[] = [];
-        for (const [uriString, session] of this.updateSessionMap.entries()) {
+        const parserSessionIterable = await this.getUpdateSessionIteable(document);
+        if (token.isCancellationRequested) { return; }
+
+        for (const [uriString, session] of parserSessionIterable) {
             const uri = (uriString === lang.ACTIVE_FILE_URI) ? document.uri : vscode.Uri.parse(uriString);
 
             // Scan all types of symbols in the database of the respective files.
@@ -684,7 +743,7 @@ async function analyzeContentOfUri(uri: vscode.Uri, diagnose: boolean, isInEdito
     return analyzeDocumentContent(content, diagnose, isInEditor, operationIdentifiers, token);
 }
 
-function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken) {
+function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken): lang.ParsedFileData | undefined {
     // private parseDocumentContents(contents: string, uri: vscode.Uri, isOpenDocument: boolean, diagnoseProblems: boolean) {
     if (token.isCancellationRequested) { return undefined; }
 
