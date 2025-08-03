@@ -103,18 +103,27 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         this.externalOperationIdentifiers = externalOperationIdentifiers;
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('igorpro');
 
-        const showWorkspaceSymbolsJsonCommandHandler = async () => {
+        const showUserDefinedSymbolsJsonCommandHandler = async () => {
             // When the extension is activated by the command, `updateSessionMap`
-            // is empty at the moment. Wait for a while, and then promise objects
-            //  are added into `updateSessionMap`.
+            // is empty at the moment. In such a case, the extension wait for a while
+            // so that promise objects will be added into `updateSessionMap`.
             if (this.updateSessionMap.size === 0) {
                 await new Promise((resolve) => setTimeout(resolve, 200));
+            }
+
+            const igorDocument = vscode.window.activeTextEditor?.document;
+            if (!igorDocument) {
+                vscode.window.showErrorMessage('Active text editor is not found.');
+                return;
+            } else if (vscode.languages.match(lang.SELECTOR, igorDocument) === 0) {
+                vscode.window.showErrorMessage(`The language identifier of the current document is not ${lang.SELECTOR.language}.`);
             }
 
             const categories = ['constant', 'picture', 'structure', 'macro', 'function'] as const;
             type Category = typeof categories[number];
             const obj: { [K in Category]: Required<lang.ReferenceBookLike>[K] } = { constant: {}, picture: {}, structure: {}, macro: {}, function: {}, };
-            for (const [uriString, session] of this.updateSessionMap.entries()) {
+            const parserSessionIterable = await this.getUpdateSessionIteable(igorDocument);
+            for (const [uriString, session] of parserSessionIterable) {
                 const refBook = (await session.promise)?.refBook;
                 if (refBook === undefined) { continue; }
 
@@ -130,8 +139,8 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 }
             }
             const content = JSON.stringify(obj, (key, value) => key === 'location' || key === 'category' ? undefined : value, 2);
-            const document = await vscode.workspace.openTextDocument({ language: 'json', content: content });
-            vscode.window.showTextDocument(document, { preview: false });
+            const jsonDocument = await vscode.workspace.openTextDocument({ language: 'json', content: content });
+            vscode.window.showTextDocument(jsonDocument, { preview: false });
         };
 
         const inspectSyntaxTreeCommandHandler = async () => {
@@ -259,7 +268,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         // Register providers and event handlers.
         context.subscriptions.push(
             // Register command handlers.
-            vscode.commands.registerCommand('igorpro.showWorkspaceSymbolsJson', showWorkspaceSymbolsJsonCommandHandler),
+            vscode.commands.registerCommand('igorpro.showUserDefinedSymbolsJson', showUserDefinedSymbolsJsonCommandHandler),
             vscode.commands.registerCommand('igorpro.inspectSyntaxTree', inspectSyntaxTreeCommandHandler),
 
             // Register document-event listeners.
