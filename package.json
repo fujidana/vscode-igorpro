@@ -3,9 +3,9 @@
   "name": "vscode-igorpro",
   "displayName": "Igor Pro",
   "description": "Igor Pro support for VS Code",
-  "version": "2.0.0",
+  "version": "2.0.1-alpha.1",
   "engines": {
-    "vscode": "^1.101.0"
+    "vscode": "^1.102.0"
   },
   "categories": [
     "Programming Languages",
@@ -226,22 +226,22 @@
     "@types/assert": "^1.5.11",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "@types/semver": "^7.7.0",
-    "@types/vscode": "^1.101.0",
-    "@typescript-eslint/eslint-plugin": "^8.31.1",
-    "@typescript-eslint/parser": "^8.31.1",
+    "@types/semver": "^7.7.1",
+    "@types/vscode": "^1.102.0",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/test-web": "^0.0.71",
+    "@vscode/test-web": "^0.0.73",
     "assert": "^2.1.0",
-    "esbuild": "^0.25.3",
+    "esbuild": "^0.25.9",
     "esbuild-plugin-polyfill-node": "^0.3.0",
-    "eslint": "^9.25.1",
-    "glob": "^11.0.2",
+    "eslint": "^9.34.0",
+    "glob": "^11.0.3",
     "js-yaml": "^4.1.0",
-    "mocha": "^11.1.0",
+    "mocha": "^11.7.2",
     "npm-run-all": "^4.1.5",
-    "peggy": "^5.0.3",
-    "typescript": "^5.8.3"
+    "peggy": "^5.0.6",
+    "typescript": "^5.9.2"
   }
 }
