@@ -1229,6 +1229,24 @@ function:
     available:
       range: '>=9.0.0'
 
+  # Added in 10.0.0
+  graphemelength:
+    signature: graphemeLength(str, startByte)
+    available:
+      range: '>=10.0.0'
+  interp4d:
+    signature: Interp4D(srcWave, x, y, z, t)
+    available:
+      range: '>=10.0.0'
+  stringisnull:
+    signature: stringIsNull(str)
+    available:
+      range: '>=10.0.0'
+  utf8charlength:
+    signature: UTF8CharLength(str, startByte)
+    available:
+      range: '>=10.0.0'
+
 operation:
   abort:
     signature: Abort [errorMessageStr]
@@ -2493,6 +2511,28 @@ operation:
     signature: Prompt variableName, titleStr[, popup, menuListStr]
   waveclear:
     signature: WAVEClear localName0[, localName1...]
+
+  # Added in 10.0.0
+  interp4dpath:
+    signature: Interp4DPath 4dWave, pathWave
+    available:
+      range: '>=10.0.0'
+  python:
+    signature: Python [/Z] execute=codeStr[, var={pyVarStr, igorVar}, array={pyArrayStr, igorWave}]
+    available:
+      range: '>=10.0.0'
+  pythonenv:
+    signature: PythonEnv [/P=pathName /Z[=z]] [activate=envPathStr, venv=argumentStr]
+    available:
+      range: '>=10.0.0'
+  pythonfile:
+    signature: PythonFile [/Z] file=fileStr [, var={pyVarStr, igorVar}, array={pyArrayStr, igorWave}, args=argListStr]
+    available:
+      range: '>=10.0.0'
+  say:
+    signature: Say [/A[=async] /PTCH=pitch /RATE=rate /VCE=voiceStr /VOL=volume /XML[=isXML]] [sayThisStr]
+    available:
+      range: '>=10.0.0'
 
 keyword:
   # Declarative operations
