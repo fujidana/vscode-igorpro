@@ -26,12 +26,13 @@ patterns:
     endCaptures:
       "1": { name: storage.type.end-menu.igorpro }
     contentName: meta.menu-body.igorpro
-    patterns: [{ include: "#menu-body" }]
+    patterns:
+      - include: "#menu-body"
   - begin: (?i)^\s*(Static)?\s*\b(Structure)\s+(\w+)\s*(?=;|//|$)
     beginCaptures:
       "1": { name: storage.modifier.scope.igorpro }
       "2": { name: storage.type.structure.igorpro }
-      "3": { name: entity.name.type.structure.igorpro, patterns: [include: "#validate-structure"] }
+      "3": { name: entity.name.type.structure.igorpro, patterns: [{ include: "#validate-structure" }] }
     end: (?i)^\s*(EndStructure)\s*(?=;|//|$)
     endCaptures:
       "1": { name: storage.type.end-structure.igorpro }
@@ -172,7 +173,8 @@ repository:
         endCaptures:
           "1": { name: storage.type.end-menu.igorpro }
         contentName: meta.menu-body.igorpro
-        patterns: [{ include: "#menu-body" }]
+        patterns:
+          - include: "#menu-body"
       - include: "#operation"
       - include: "#optional-flag"
       - include: "#expression"
@@ -184,13 +186,15 @@ repository:
           "1": { name: storage.type.funcref.igorpro }
           "2": { name: entity.name.type.funcref.igorpro, patterns: [{ include: "#validate-parameter" }]}
         end: (?=;|//|$)
-        patterns: [{ include: "#list-structure-member" }]
+        patterns:
+          - include: "#list-structure-member"
       - begin: (?i)^\s*(STRUCT)\s+(\w+)\b
         beginCaptures:
           "1": { name: storage.type.structure.igorpro }
           "2": { name: entity.name.type.structure.igorpro, patterns: [{ include: "#validate-structure" }]}
         end: (?=;|//|$)
-        patterns: [{ include: "#list-structure-member" }]
+        patterns:
+          - include: "#list-structure-member"
       - begin: (?i)^\s*(\w+)\s*((?:/\w+\s*)*)\b
         beginCaptures:
           "1": { name: storage.type.structure-member.igorpro, patterns: [{ include: "#validate-structure-member-type" }]}
@@ -244,7 +248,8 @@ repository:
       #         "3": { name: variable.parameter.funcref.igorpro, patterns: [{ include: "#validate-parameter" }]}
       #         "4": { name: operator.assignment.igorpro }
       #       end: (?=;|//|$)
-      #       patterns: [{ include: "#expression" }]
+      #       patterns:
+      #         - include: "#expression"
       #     - match: (?i)(?<=^|;)\s*(STRUCT)\s+(\w+)\s+(&)?(\w+)\s*(?=;|//|$)
       #       captures:
       #         "1": { name: storage.type.struct.igorpro }
@@ -256,7 +261,8 @@ repository:
       #         "1": { name: storage.type.common.igorpro }
       #         "2": { patterns: [{ include: "#optional-flag" }]}
       #       end: (?=;|//|$)
-      #       patterns: [{ include: "#expression" }]
+      #       patterns:
+      #.        - include: "#expression"
       #     - begin: (?i)(?<=^|;)\s*(\[)\s*([^\]]*)(\])\s*([-+*/:]?=)\s*
       #       beginCaptures:
       #         "1": { name: punctuation.bracket.begin.igorpro }
@@ -264,10 +270,14 @@ repository:
       #         "3": { name: punctuation.bracket.end.igorpro }
       #         "4": { name: keyword.operator.assignment.arithmetic.igorpro }
       #       end: (?=;|//|$)
-      #       patterns: [{ include: "#expression" }]
+      #       patterns:
+      #         - include: "#expression"
 
   expression:
     patterns:
+      - match: \\$
+        name: punctuation.separator.continuation.line.igorpro
+      - include: "#line-comment"
       - include: "#bracket"
       - include: "#liberal-object-name"
       - include: "#literal-string"
@@ -297,7 +307,7 @@ repository:
       - match: (?i)\b(e|gammaEuler|Pi)\b
         name: support.constant.igorpro
   line-comment:
-    match: (//).*$
+    match: (//).*?(?=\\?$)
     name: comment.line.double-slash.igorpro
     captures:
       "1": { name: punctuation.comment.line.igorpro }
@@ -385,7 +395,8 @@ repository:
       - begin: \{
         beginCaptures:
           "0": { name: punctuation.brace.begin.igorpro }
-        end: \}|(?=//|$)
+        end: \}
+        # end: \}|(?<!\\)$
         endCaptures:
           "0": { name: punctuation.brace.end.igorpro }
         patterns:
@@ -393,7 +404,8 @@ repository:
       - begin: \(
         beginCaptures:
           "0": { name: punctuation.parenthesis.begin.igorpro }
-        end: \)|(?=//|$)
+        end: \)
+        # end: \)|(?<!\\)$
         endCaptures:
           "1": { name: punctuation.parenthesis.end.igorpro }
         patterns:
@@ -401,7 +413,8 @@ repository:
       - begin: \[
         beginCaptures:
           "0": { name: punctuation.bracket.begin.igorpro }
-        end: \]|(?://|$s)
+        end: \]
+        # end: \]|(?<!\\)$
         endCaptures:
           "0": { name: punctuation.bracket.end.igorpro }
         patterns:
@@ -426,44 +439,46 @@ repository:
         captures:
           "1": { name: variable.parameter.igorpro, patterns: [{ include: "#validate-parameter" }]}
   operation:
-    match: "\
-    (?i)(?<=^|;|,)\\s*\\b(?:(\
-    Abort|Add(?:FIFO(?:Data|VectData)|Movie(?:Audio|Frame)|WavesTo(?:BoxPlot|ViolinPlot))|AdoptFiles|APMath|Append(?:BoxPlot|Image|LayoutObject|MatrixContour|Text|To(?:Gizmo|Graph|Layout|Table)|ViolinPlot|XYZContour)?|AutoPositionWindow|\
-    BackgroundInfo|Beep|BezierToPolygon|BoundingBall|BoxSmooth|BrowseURL|BuildMenu|Button|\
-    cd|Chart|Check(?:Box|Displayed)|ChooseColor|Close(?:Help|Movie|Proc)?|Color(?:Scale|Tab2Wave)|Concatenate|Control(?:Bar|Info|Update)|ConvertGlobalStringTextEncoding|ConvexHull|Convolve|Copy(?:DimLabels|File|Folder|Scales)|Correlate|Create(?:AliasShortcut|Browser)|Cross|Ctrl(?:Background|FIFO|NamedBackground)|Cursor|CurveFit|CustomControl|CWT|\
-    Debugger(?:Options)?|Default(?:Font|Gui(?:Controls|Font)|TextEncoding)|DefineGuide|DelayUpdate|Delete(?:Annotations|File|Folder|Points)|Differentiate|dir|Display(?:HelpTopic|Procedure)?|Do(?:Alert|IgorMenu|Update|Window|XOPIdle)|DPSS|Draw(?:Action|Arc|Bezier|Line|Oval|PICT|Poly|Rect|RRect|Text|UserShape)|DSP(?:Detrend|Periodogram)|Duplicate(?:DataFolder)?|DWT|\
-    EdgeStats|Edit|ErrorBars|EstimatePeakSizes|Execute(?:ScriptText)?|Experiment(?:Info|Modified)|ExportGizmo|Extract|\
-    Fast(?:GaussTransform|Op)|FBin(?:Read|Write)|FFT|FGetPos|FIFO(?:2Wave|Status)|Filter(?:FIR|IIR)|Find(?:APeak|Contour|Duplicates|Levels?|Peak|PointsInPoly|Roots|Sequence|Value)|FMaxFlat|FPClustering|fprintf|FReadLine|FSetPos|FStatus|FTP(?:CreateDirectory|Delete|Download|Upload)|FuncFit(?:MD)?|\
-    GBLoadWave|Get(?:Axis|Camera|FileFolderInfo|Gizmo|LastUserMenuInfo|Marquee|Mouse|Selection|Window)|Graph(?:Normal|Wave(?:Draw|Edit))|Grep|GroupBox|\
-    Hanning|HCluster|HDF5(?:Close(?:File|Group)|Control|Create(?:File|Group|Link)|DimensionScale|Dump(?:Errors)?|FlushFile|List(?:Attributes|Group)|Load(?:Data|Group|Image)|Open(?:File|Group)|Save(?:Data|Group|Image)|UnlinkObject)|Hide(?:IgorMenus|Info|Procedures|Tools)|HilbertTransform|Histogram|\
-    ICA|IFFT|Image(?:AnalyzeParticles|Blend|BoundaryToMask|Composite|EdgeDetection|FileInfo|Filter|Focus|FromXYZ|GenerateROIMask|GLCM|HistModification|Histogram|Interpolate|LineProfile|Load|Morphology|Registration|RemoveBackground|Restore|Rotate|Save|SeedFill|Skeleton3d|Snake|Stats|Threshold|Transform|UnwrapPhase|Window)|IndexSort|InsertPoints|InstantFrequency|Integrate(?:2D|ODE)?|Interp(?:olate(?:2|3D)|3DPath|4DPath)|\
-    JCAMPLoadWave|JointHistogram|\
-    Kill(?:Background|Control|DataFolder|FIFO|FreeAxis|Path|PICTs|Strings|Variables|Waves|Window)|KMeans|\
-    Label|Layout(?:PageAction|SlideShow)?|Legend|LinearFeedbackShiftRegister|ListBox|Load(?:Data|PackagePreferences|PICT|Wave)|Loess|LombPeriodogram|\
-    Make(?:Index)?|MarkPerfTestTime|Matrix(?:Balance|Convolve|Corr|EigenV|Factor|Filter|GaussJ|GLM|Inverse|LinearSolve(?:TD)?|LLS|LUBkSub|LUD(?:TD)?|Multiply(?:Add)?|OP|ReverseBalance|Schur|Solve|Sparse|SVBkSub|SVD|Transpose)|MeasureStyledText|MLLoadWave|Modify(?:BoxPlot|Browser|Camera|Contour|Control(?:List)?|FreeAxis|Gizmo|Graph|Image|Layout|Panel|Procedure|Table|ViolinPlot|Waterfall)?|Move(?:DataFolder|File|Folder|String|Subwindow|Variable|Wave|Window)|MultiTaperPSD|MultiThreadingControl|\
-    NeuralNetwork(?:Run|Train)|New(?:Camera|DataFolder|FIFO(?:Chan)?|FreeAxis|Gizmo|Image|Layout|Movie|Notebook|Panel|Path|Waterfall)|Note(?:book(?:Action)?)?|\
-    Open(?:Help|Notebook)?|Optimize|\
-    ParseOperationTemplate|PathInfo|Pause(?:ForUser|Update)|PCA|Play(?:Movie(?:Action)?|Sound)|PolygonOp|Popup(?:ContextualMenu|Menu)|Preferences|PrimeFactors|Print(?:f|Graphs|Layout|Notebook|Settings|Table)?|Project|PulseStats|PutScrapText|Python(?:Env|File)?|pwd|\
-    Quit|\
-    RatioFromNumber|Redimension|Remez|Remove(?:Contour|From(?:Gizmo|Graph|Layout|Table)|Image|LayoutObjects|Path)?|Rename(?:DataFolder|Path|PICT|Window)?|Reorder(?:Images|Traces)|Replace(?:Text|Wave)|Resample|ResumeUpdate|Reverse|Rotate|\
-    Save(?:Data|Experiment|GizmoCopy|GraphCopy|Notebook|PackagePreferences|PICT|TableCopy)?|Say|Set(?:ActiveSubwindow|Axis|Background|DashPattern|DataFolder|DimLabel|Draw(?:Env|Layer)|FileFolderInfo|Formula|IdlePeriod|Igor(?:Hook|MenuMode|Option)|Marquee|ProcessSleep|RandomSeed|Scale|Variable|Wave(?:Lock|TextEncoding)|Window)|Show(?:IgorMenus|Info|Tools)|Silent|Sleep|Slider|Smooth(?:Custom)?|Sort(?:Columns)?|Sound(?:In(?:Record|Set|StartChart|Status|StopChart)|LoadWave|SaveWave)|Spherical(?:Interpolate|Triangulate)|Split(?:String|Wave)|sprintf|sscanf|Stack(?:Windows)?|Stats(?:AngularDistanceTest|ANOVA(?:1|2(?:NR|RM)?)Test|ChiTest|Circular(?:CorrelationTest|Means|Moments|TwoSampleTest)|CochranTest|ContingencyTable|DIPTest|DunnettTest|FriedmanTest|FTest|HodgesAjneTest|JBTest|KDE|KendallTauTest|KSTest|KWTest|Linear(?:CorrelationTest|Regression)|MultiCorrelationTest|NP(?:MCTest|NominalSRTest)|Quantiles|RankCorrelationTest|Resample|Sample|ScheffeTest|ShapiroWilkTest|SignTest|SRTest|TTest|TukeyTest|VariancesTest|Watson(?:USquaredTest|WilliamsTest)|WheelerWatsonTest|WilcoxonRankTest|WRCorrelationTest)|STFT|String|Struct(?:Fill|Get|Put)|Sum(?:Dimension|Series)|\
-    TabControl|Tag|Text(?:2Bezier|Box|Histogram)|Thread(?:GroupPutDF|Start)|TickWavesFromAxis|Tile(?:Windows)?|TitleBox|ToCommandLine|ToolsGrid|Triangulate3d|\
-    Unwrap|UnzipFile|URLRequest|\
-    ValDisplay|Variable|\
-    Wave(?:MeanStdv|Stats|Tracking|Transform)|wfprintf|WignerTransform|WindowFunction|\
-    XLLoadWave\
-    )|DoPrompt|MultiThread|Prompt|WaveClear)\\b\
-    "
+    match: (?<=^|;)\s*\b(\w+)\b(?!\s*[-+*:=\[(\{])
     captures:
-      "1": { name: support.function.operation.igorpro }
-      "2": { name: support.function.misc.igorpro }    
+      "1": { name: entity.name.function.operation.igorpro, patterns: [{ include: "#builtin-operation" }]}
+  builtin-operation:
+    patterns:
+      - match: "(?i)\
+          Abort|Add(?:FIFO(?:Data|VectData)|Movie(?:Audio|Frame)|WavesTo(?:BoxPlot|ViolinPlot))|AdoptFiles|APMath|Append(?:BoxPlot|Image|LayoutObject|MatrixContour|Text|To(?:Gizmo|Graph|Layout|Table)|ViolinPlot|XYZContour)?|AutoPositionWindow|\
+          BackgroundInfo|Beep|BezierToPolygon|BoundingBall|BoxSmooth|BrowseURL|BuildMenu|Button|\
+          cd|Chart|Check(?:Box|Displayed)|ChooseColor|Close(?:Help|Movie|Proc)?|Color(?:Scale|Tab2Wave)|Concatenate|Control(?:Bar|Info|Update)|ConvertGlobalStringTextEncoding|ConvexHull|Convolve|Copy(?:DimLabels|File|Folder|Scales)|Correlate|Create(?:AliasShortcut|Browser)|Cross|Ctrl(?:Background|FIFO|NamedBackground)|Cursor|CurveFit|CustomControl|CWT|\
+          Debugger(?:Options)?|Default(?:Font|Gui(?:Controls|Font)|TextEncoding)|DefineGuide|DelayUpdate|Delete(?:Annotations|File|Folder|Points)|Differentiate|dir|Display(?:HelpTopic|Procedure)?|Do(?:Alert|IgorMenu|Update|Window|XOPIdle)|DPSS|Draw(?:Action|Arc|Bezier|Line|Oval|PICT|Poly|Rect|RRect|Text|UserShape)|DSP(?:Detrend|Periodogram)|Duplicate(?:DataFolder)?|DWT|\
+          EdgeStats|Edit|ErrorBars|EstimatePeakSizes|Execute(?:ScriptText)?|Experiment(?:Info|Modified)|ExportGizmo|Extract|\
+          Fast(?:GaussTransform|Op)|FBin(?:Read|Write)|FFT|FGetPos|FIFO(?:2Wave|Status)|Filter(?:FIR|IIR)|Find(?:APeak|Contour|Duplicates|Levels?|Peak|PointsInPoly|Roots|Sequence|Value)|FMaxFlat|FPClustering|fprintf|FReadLine|FSetPos|FStatus|FTP(?:CreateDirectory|Delete|Download|Upload)|FuncFit(?:MD)?|\
+          GBLoadWave|Get(?:Axis|Camera|FileFolderInfo|Gizmo|LastUserMenuInfo|Marquee|Mouse|Selection|Window)|Graph(?:Normal|Wave(?:Draw|Edit))|Grep|GroupBox|\
+          Hanning|HCluster|HDF5(?:Close(?:File|Group)|Control|Create(?:File|Group|Link)|DimensionScale|Dump(?:Errors)?|FlushFile|List(?:Attributes|Group)|Load(?:Data|Group|Image)|Open(?:File|Group)|Save(?:Data|Group|Image)|UnlinkObject)|Hide(?:IgorMenus|Info|Procedures|Tools)|HilbertTransform|Histogram|\
+          ICA|IFFT|Image(?:AnalyzeParticles|Blend|BoundaryToMask|Composite|EdgeDetection|FileInfo|Filter|Focus|FromXYZ|GenerateROIMask|GLCM|HistModification|Histogram|Interpolate|LineProfile|Load|Morphology|Registration|RemoveBackground|Restore|Rotate|Save|SeedFill|Skeleton3d|Snake|Stats|Threshold|Transform|UnwrapPhase|Window)|IndexSort|InsertPoints|InstantFrequency|Integrate(?:2D|ODE)?|Interp(?:olate(?:2|3D)|3DPath|4DPath)|\
+          JCAMPLoadWave|JointHistogram|\
+          Kill(?:Background|Control|DataFolder|FIFO|FreeAxis|Path|PICTs|Strings|Variables|Waves|Window)|KMeans|\
+          Label|Layout(?:PageAction|SlideShow)?|Legend|LinearFeedbackShiftRegister|ListBox|Load(?:Data|PackagePreferences|PICT|Wave)|Loess|LombPeriodogram|\
+          Make(?:Index)?|MarkPerfTestTime|Matrix(?:Balance|Convolve|Corr|EigenV|Factor|Filter|GaussJ|GLM|Inverse|LinearSolve(?:TD)?|LLS|LUBkSub|LUD(?:TD)?|Multiply(?:Add)?|OP|ReverseBalance|Schur|Solve|Sparse|SVBkSub|SVD|Transpose)|MeasureStyledText|MLLoadWave|Modify(?:BoxPlot|Browser|Camera|Contour|Control(?:List)?|FreeAxis|Gizmo|Graph|Image|Layout|Panel|Procedure|Table|ViolinPlot|Waterfall)?|Move(?:DataFolder|File|Folder|String|Subwindow|Variable|Wave|Window)|MultiTaperPSD|MultiThreadingControl|\
+          NeuralNetwork(?:Run|Train)|New(?:Camera|DataFolder|FIFO(?:Chan)?|FreeAxis|Gizmo|Image|Layout|Movie|Notebook|Panel|Path|Waterfall)|Note(?:book(?:Action)?)?|\
+          Open(?:Help|Notebook)?|Optimize|\
+          ParseOperationTemplate|PathInfo|Pause(?:ForUser|Update)|PCA|Play(?:Movie(?:Action)?|Sound)|PolygonOp|Popup(?:ContextualMenu|Menu)|Preferences|PrimeFactors|Print(?:f|Graphs|Layout|Notebook|Settings|Table)?|Project|PulseStats|PutScrapText|Python(?:Env|File)?|pwd|\
+          Quit|\
+          RatioFromNumber|Redimension|Remez|Remove(?:Contour|From(?:Gizmo|Graph|Layout|Table)|Image|LayoutObjects|Path)?|Rename(?:DataFolder|Path|PICT|Window)?|Reorder(?:Images|Traces)|Replace(?:Text|Wave)|Resample|ResumeUpdate|Reverse|Rotate|\
+          Save(?:Data|Experiment|GizmoCopy|GraphCopy|Notebook|PackagePreferences|PICT|TableCopy)?|Say|Set(?:ActiveSubwindow|Axis|Background|DashPattern|DataFolder|DimLabel|Draw(?:Env|Layer)|FileFolderInfo|Formula|IdlePeriod|Igor(?:Hook|MenuMode|Option)|Marquee|ProcessSleep|RandomSeed|Scale|Variable|Wave(?:Lock|TextEncoding)|Window)|Show(?:IgorMenus|Info|Tools)|Silent|Sleep|Slider|Smooth(?:Custom)?|Sort(?:Columns)?|Sound(?:In(?:Record|Set|StartChart|Status|StopChart)|LoadWave|SaveWave)|Spherical(?:Interpolate|Triangulate)|Split(?:String|Wave)|sprintf|sscanf|Stack(?:Windows)?|Stats(?:AngularDistanceTest|ANOVA(?:1|2(?:NR|RM)?)Test|ChiTest|Circular(?:CorrelationTest|Means|Moments|TwoSampleTest)|CochranTest|ContingencyTable|DIPTest|DunnettTest|FriedmanTest|FTest|HodgesAjneTest|JBTest|KDE|KendallTauTest|KSTest|KWTest|Linear(?:CorrelationTest|Regression)|MultiCorrelationTest|NP(?:MCTest|NominalSRTest)|Quantiles|RankCorrelationTest|Resample|Sample|ScheffeTest|ShapiroWilkTest|SignTest|SRTest|TTest|TukeyTest|VariancesTest|Watson(?:USquaredTest|WilliamsTest)|WheelerWatsonTest|WilcoxonRankTest|WRCorrelationTest)|STFT|String|Struct(?:Fill|Get|Put)|Sum(?:Dimension|Series)|\
+          TabControl|Tag|Text(?:2Bezier|Box|Histogram)|Thread(?:GroupPutDF|Start)|TickWavesFromAxis|Tile(?:Windows)?|TitleBox|ToCommandLine|ToolsGrid|Triangulate3d|\
+          Unwrap|UnzipFile|URLRequest|\
+          ValDisplay|Variable|\
+          Wave(?:MeanStdv|Stats|Tracking|Transform)|wfprintf|WignerTransform|WindowFunction|\
+          XLLoadWave"
+        name: support.function.operation.igorpro
+      - match: (?i)DoPrompt|MultiThread|Prompt|WaveClear
+        name: support.function.misc.igorpro
   function-call:
     begin: \b((?:\w+\s*#\s*)*)(\w+)\s*(\()
     beginCaptures:
       "1": { patterns: [{ include: "#function-call-module"}] }
       "2": { name: entity.name.function.igorpro, patterns: [{ include: "#validate-function"}] }
       "3": { name: punctuation.function-parameter.begin.igorpro }
-    end: \)|(?=//|$)
+    end: \) # \)|(?=//|$)
     endCaptures:
       "0": { name: punctuation.function-parameter.end.igorpro }
     patterns:
@@ -481,52 +496,52 @@ repository:
   validate-function:
     patterns:
       - match: "(?i)\\b(\
-        abs|acos(?:)h?|AddListItem|Airy(?:AD?|BD?)|alog|Annotation(?:Info|List)|area(?:XY)?|asinh?|atan(?:2|h)?|Axis(?:Info|Label|List|ValFromPixel)|\
-        Base64(?:Decode|Encode)|Bessel(?:i|j|k|y)|Bess(?:i|j|k|y)|betai?|BinarySearch(?:Interp)?|binomial(?:ln|Noise)?|\
-        cabs|CaptureHistory(?:Start)?|ceil|centerOfMass(?:XY)?|cequal|char2num|chebyshevU?|CheckName|ChildWindowList|CleanupName|cmplx|cmpstr|conj|Contour(?:Info|Name(?:List|ToWaveRef)|Z)|ControlNameList|ConvertTextEncoding|cos(?:h|Integral)?|coth?|CountObjects(?:DFR)?|cpowi|CreateDataObjectName|CreationDate|csch?|Csr(?:Info|Wave(?:Ref)?|XWave(?:Ref)?)|CTabList|\
-        DataFolder(?:Dir|Exists|List|Ref(?:Changes|sEqual|Status))|date(?:2secs|ToJulian)?|Dawson|defined|deltax|digamma|dilogarithm|Dim(?:Delta|Offset|Size)|\
-        ei|elliptic(?:E|K)|enoise|equalWaves|erf(?:c(?:w|x)?)?|exists|exp(?:Int(?:egralE1)?|Noise)?|\
-        factorial|Faddeeva|fakedata|faverage(?:XY)?|FetchURL|Find(?:DimLabel|ListItem)|floor|Font(?:List|Size(?:Height|StringWidth))|Fresnel(?:Cos|CS|Sin)|FuncRefInfo|Function(?:Info|List|Path)|\
-        gamma(?:Inc|Noise)?|gamm(?:ln|p|q)|Gauss(?:1D|2D)?|gcd|GeometricMean|Get(?:Browser(?:Line|Selection)|DataFolder(?:DFR)?|DefaultFont(?:Size|Style)?|DimLabel|EnvironmentVariable|ErrMessage|Formula|IndependentModuleName|IndexedObjName(?:DFR)?|KeyState|RT(?:Err(?:Message|or)|Loc(?:ation|Info)|StackInfo)|ScrapText|UserData|WavesDataFolder(?:DFR)?|WindowBrowserSelection)|Gizmo(?:Info|Scale)|gnoise|graphemeLength|Grep(?:List|String)|Guide(?:Info|NameList)|\
-        Hash|hcsr|HDF5(?:Attribute|Dataset|Library|Link|Type)Info|hermite(?:Gauss)?|HyperG(?:0F1|1F1|2F1|Noise|PFQ)|\
-        Igor(?:Info|Version)|imag|Image(?:Info|Name(?:List|ToWaveRef))|IndependentModuleList|Index(?:ed(?:Dir|File)|ToScale)|Integrate1D|interp(?:2D|3D|4D)?|inverseERFC?|ItemsInList|\
-        Jacobi(?:Cn|Sn)|JulianToDate|Laguerre(?:A|Gauss)|LambertW|LayoutInfo|leftx|LegendreA|limit|List(?:Match|To(?:Text|WaveRef)Wave)|ln|log(?:NormalNoise)?|\
-        lorentzianNoise|LowerStr|\
-        Macro(?:Info|List|Path)|magsqr|MandelbrotPoint|MarcumQ|Matrix(?:Condition|Det|Dot|Rank|Trace)|max|mean|median|min|mod(?:Date)?|MPFX(?:EMG|ExpConvExp|Gauss|Lorenzian|Voigt)Peak|\
-        NameOfWave|NewFree(?:DataFolder|Wave)|norm|NormalizeUnicode|note|num(?:2(?:char|istr|str)|berByKey|pnts|type|VarOrDefault)|NVAR_Exists|\
-        OperationList|\
-        p2rect|PadString|PanelResolution|ParamIsDefault|ParseFilePath|PathList|pcsr|PICT(?:Info|List)|PixelFromAxisVal|pnt2x|poissonNoise|poly(?:2D|gonArea)?|PossiblyQuoteName|ProcedureText|ProcedureVersion|\
-        qcsr|\
-        r2polar|real|Remove(?:ByKey|Ending|FromList|ListItem)|Replace(?:NumberByKey|String(?:ByKey)?)|ReplicateString|rightx|round|\
-        sawtooth|scaleToIndex|sech?|Secs2(?:Date|Time)|Select(?:Number|String)|SetEnvironmentVariable|sign|sin(?:c|h|Integral)?|SortList|Special(?:Character(?:Info|List)|DirPath)|Spherical(?:Bess(?:JD?|YD?)|Harmonics)|sqrt|Stats(?:Beta(?:CDF|PDF)|Binomial(?:CDF|PDF)|Cauchy(?:CDF|PDF)|Chi(?:CDF|PDF)|CMSSDCDF|Correlation|DExp(?:CDF|PDF)|Erlang(?:CDF|PDF)|ErrorPDF|EValue(?:CDF|PDF)|Exp(?:CDF|PDF)|F(?:CDF|PDF)|FriedmanCDF|Gamma(?:CDF|PDF)|Geometric(?:CDF|PDF)|GEV(?:CDF|PDF)|HyperG(?:CDF|PDF)|Inv(?:Beta|Binomial|Cauchy|Chi|CMSSD|DExp|EValue|Exp|F|Friedman|Gamma|Geometric|Kuiper|Logistic|LogNormal|Maxwell|Moore|NBinomial|NCChi|NCF|Normal|Pareto|Poisson|Power|Q|Qp|Rayleigh|Rectangular|Spearman|Student|TopDown|Triangular|Usquared|VonMises|Weibull)CDF|KuiperCDF|Logistic(?:CDF|PDF)|LogNormal(?:CDF|PDF)|Maxwell(?:CDF|PDF)|Median|MooreCDF|NBinomial(?:CDF|PDF)|NCChi(?:CDF|PDF)|NCF(?:CDF|PDF)|NCT(?:CDF|PDF)|Normal(?:CDF|PDF)|Pareto(?:CDF|PDF)|Permute|Poisson(?:CDF|PDF)|Power(?:CDF|Noise|PDF)|QCDF|QpCDF|Rayleigh(?:CDF|PDF)|Rectangular(?:CDF|PDF)|RunsCDF|SpearmanRhoCDF|Student(?:CDF|PDF)|TopDownCDF|Triangular(?:CDF|PDF)|TrimmedMean|USquaredCDF|VonMises(?:CDF|Noise|PDF)|Wald(?:CDF|PDF)|Weibull(?:CDF|PDF))|StopMSTimer|str(?:2num|ing(?:ByKey|CRC|FromList|IsNull|List|match|ToUnsignedByteWave)|len|search|VarOrDefault)|Student(?:A|T)|sum|SVAR_Exists|\
-        TableInfo|Tag(?:Val|WaveRef)|tanh?|Text(?:Encoding(?:Code|Name)|File)|Thread(?:Group(?:Create|GetDFR?|Release|Wait)|ReturnValue)|time|Trace(?:FromPixel|Info|Name(?:List|ToWaveRef))|TrimString|trunc|\
-        Un(?:iqueName|PadString|setEnvironmentVariable)|UpperStr|URL(?:Decode|Encode)|UTF8CharLength|\
-        VariableList|Variance|vcsr|Voigt(?:Func|Peak)|\
-        Wave(?:CRC|DataToString|Dims|Exists|Hash|Info|List|Max|Min(?:AndMax)?|ModCount|Name|RefIndexed(?:DFR)?|Ref(?:sEqual|WaveToList)|TextEncoding|Type|Units)|WhichListItem|Win(?:List|Name|Recreation|Type)|wnoise|\
-        x2pnt|xcsr|XWave(?:Name|RefFromTrace)|\
-        zcsr|ZernikeR|zeta\
-        )\\b"
+          abs|acos(?:)h?|AddListItem|Airy(?:AD?|BD?)|alog|Annotation(?:Info|List)|area(?:XY)?|asinh?|atan(?:2|h)?|Axis(?:Info|Label|List|ValFromPixel)|\
+          Base64(?:Decode|Encode)|Bessel(?:i|j|k|y)|Bess(?:i|j|k|y)|betai?|BinarySearch(?:Interp)?|binomial(?:ln|Noise)?|\
+          cabs|CaptureHistory(?:Start)?|ceil|centerOfMass(?:XY)?|cequal|char2num|chebyshevU?|CheckName|ChildWindowList|CleanupName|cmplx|cmpstr|conj|Contour(?:Info|Name(?:List|ToWaveRef)|Z)|ControlNameList|ConvertTextEncoding|cos(?:h|Integral)?|coth?|CountObjects(?:DFR)?|cpowi|CreateDataObjectName|CreationDate|csch?|Csr(?:Info|Wave(?:Ref)?|XWave(?:Ref)?)|CTabList|\
+          DataFolder(?:Dir|Exists|List|Ref(?:Changes|sEqual|Status))|date(?:2secs|ToJulian)?|Dawson|defined|deltax|digamma|dilogarithm|Dim(?:Delta|Offset|Size)|\
+          ei|elliptic(?:E|K)|enoise|equalWaves|erf(?:c(?:w|x)?)?|exists|exp(?:Int(?:egralE1)?|Noise)?|\
+          factorial|Faddeeva|fakedata|faverage(?:XY)?|FetchURL|Find(?:DimLabel|ListItem)|floor|Font(?:List|Size(?:Height|StringWidth))|Fresnel(?:Cos|CS|Sin)|FuncRefInfo|Function(?:Info|List|Path)|\
+          gamma(?:Inc|Noise)?|gamm(?:ln|p|q)|Gauss(?:1D|2D)?|gcd|GeometricMean|Get(?:Browser(?:Line|Selection)|DataFolder(?:DFR)?|DefaultFont(?:Size|Style)?|DimLabel|EnvironmentVariable|ErrMessage|Formula|IndependentModuleName|IndexedObjName(?:DFR)?|KeyState|RT(?:Err(?:Message|or)|Loc(?:ation|Info)|StackInfo)|ScrapText|UserData|WavesDataFolder(?:DFR)?|WindowBrowserSelection)|Gizmo(?:Info|Scale)|gnoise|graphemeLength|Grep(?:List|String)|Guide(?:Info|NameList)|\
+          Hash|hcsr|HDF5(?:Attribute|Dataset|Library|Link|Type)Info|hermite(?:Gauss)?|HyperG(?:0F1|1F1|2F1|Noise|PFQ)|\
+          Igor(?:Info|Version)|imag|Image(?:Info|Name(?:List|ToWaveRef))|IndependentModuleList|Index(?:ed(?:Dir|File)|ToScale)|Integrate1D|interp(?:2D|3D|4D)?|inverseERFC?|ItemsInList|\
+          Jacobi(?:Cn|Sn)|JulianToDate|Laguerre(?:A|Gauss)|LambertW|LayoutInfo|leftx|LegendreA|limit|List(?:Match|To(?:Text|WaveRef)Wave)|ln|log(?:NormalNoise)?|\
+          lorentzianNoise|LowerStr|\
+          Macro(?:Info|List|Path)|magsqr|MandelbrotPoint|MarcumQ|Matrix(?:Condition|Det|Dot|Rank|Trace)|max|mean|median|min|mod(?:Date)?|MPFX(?:EMG|ExpConvExp|Gauss|Lorenzian|Voigt)Peak|\
+          NameOfWave|NewFree(?:DataFolder|Wave)|norm|NormalizeUnicode|note|num(?:2(?:char|istr|str)|berByKey|pnts|type|VarOrDefault)|NVAR_Exists|\
+          OperationList|\
+          p2rect|PadString|PanelResolution|ParamIsDefault|ParseFilePath|PathList|pcsr|PICT(?:Info|List)|PixelFromAxisVal|pnt2x|poissonNoise|poly(?:2D|gonArea)?|PossiblyQuoteName|ProcedureText|ProcedureVersion|\
+          qcsr|\
+          r2polar|real|Remove(?:ByKey|Ending|FromList|ListItem)|Replace(?:NumberByKey|String(?:ByKey)?)|ReplicateString|rightx|round|\
+          sawtooth|scaleToIndex|sech?|Secs2(?:Date|Time)|Select(?:Number|String)|SetEnvironmentVariable|sign|sin(?:c|h|Integral)?|SortList|Special(?:Character(?:Info|List)|DirPath)|Spherical(?:Bess(?:JD?|YD?)|Harmonics)|sqrt|Stats(?:Beta(?:CDF|PDF)|Binomial(?:CDF|PDF)|Cauchy(?:CDF|PDF)|Chi(?:CDF|PDF)|CMSSDCDF|Correlation|DExp(?:CDF|PDF)|Erlang(?:CDF|PDF)|ErrorPDF|EValue(?:CDF|PDF)|Exp(?:CDF|PDF)|F(?:CDF|PDF)|FriedmanCDF|Gamma(?:CDF|PDF)|Geometric(?:CDF|PDF)|GEV(?:CDF|PDF)|HyperG(?:CDF|PDF)|Inv(?:Beta|Binomial|Cauchy|Chi|CMSSD|DExp|EValue|Exp|F|Friedman|Gamma|Geometric|Kuiper|Logistic|LogNormal|Maxwell|Moore|NBinomial|NCChi|NCF|Normal|Pareto|Poisson|Power|Q|Qp|Rayleigh|Rectangular|Spearman|Student|TopDown|Triangular|Usquared|VonMises|Weibull)CDF|KuiperCDF|Logistic(?:CDF|PDF)|LogNormal(?:CDF|PDF)|Maxwell(?:CDF|PDF)|Median|MooreCDF|NBinomial(?:CDF|PDF)|NCChi(?:CDF|PDF)|NCF(?:CDF|PDF)|NCT(?:CDF|PDF)|Normal(?:CDF|PDF)|Pareto(?:CDF|PDF)|Permute|Poisson(?:CDF|PDF)|Power(?:CDF|Noise|PDF)|QCDF|QpCDF|Rayleigh(?:CDF|PDF)|Rectangular(?:CDF|PDF)|RunsCDF|SpearmanRhoCDF|Student(?:CDF|PDF)|TopDownCDF|Triangular(?:CDF|PDF)|TrimmedMean|USquaredCDF|VonMises(?:CDF|Noise|PDF)|Wald(?:CDF|PDF)|Weibull(?:CDF|PDF))|StopMSTimer|str(?:2num|ing(?:ByKey|CRC|FromList|IsNull|List|match|ToUnsignedByteWave)|len|search|VarOrDefault)|Student(?:A|T)|sum|SVAR_Exists|\
+          TableInfo|Tag(?:Val|WaveRef)|tanh?|Text(?:Encoding(?:Code|Name)|File)|Thread(?:Group(?:Create|GetDFR?|Release|Wait)|ReturnValue)|time|Trace(?:FromPixel|Info|Name(?:List|ToWaveRef))|TrimString|trunc|\
+          Un(?:iqueName|PadString|setEnvironmentVariable)|UpperStr|URL(?:Decode|Encode)|UTF8CharLength|\
+          VariableList|Variance|vcsr|Voigt(?:Func|Peak)|\
+          Wave(?:CRC|DataToString|Dims|Exists|Hash|Info|List|Max|Min(?:AndMax)?|ModCount|Name|RefIndexed(?:DFR)?|Ref(?:sEqual|WaveToList)|TextEncoding|Type|Units)|WhichListItem|Win(?:List|Name|Recreation|Type)|wnoise|\
+          x2pnt|xcsr|XWave(?:Name|RefFromTrace)|\
+          zcsr|ZernikeR|zeta\
+          )\\b"
         name: support.function.function.igorpro
-      - match: \b([A-Za-z][0-9A-Za-z_]{,254})\b
+      - match: \b[A-Za-z][0-9A-Za-z_]{,254}\b
       - match: \b.+\b
         name: invalid.illegal.naming-rule.igorpro
   validate-structure:
     patterns:
       - match: (?i)\b(?:HDF5(?:Data(?:type)?Info|LinkInfoStruct|SaveDataHookStruct)|PointF?|RectF?|RGBA?Color|WM(?:AxisHookStruct|BackgroundStruct|ButtonAction|CheckboxAction|CustomControlAction|DrawUserShapeStruct|FitInfoStruct|GizmoHookStruct|ListboxAction|MarkerHookStruct|PopupAction|SetVariableAction|SliderAction|TabControlAction|TooltipHookStruct|WinHookStruct))\b
         name: support.variable.structure.igorpro
-      - match: \b([A-Za-z][0-9A-Za-z_]{,254})\b
+      - match: \b[A-Za-z][0-9A-Za-z_]{,254}\b
       - match: \b.+\b
         name: invalid.illegal.naming-rule.igorpro
   validate-subtype:
     patterns:
       - match: (?i)\b(?:ButtonControl|CheckboxControl|CursorStyle|FitFunc|Graph(?:Marquee|Style)?|GridStyle|Layout(?:Marquee|Style)?|Panel|PopupMenuControl|SetVariableControl|Table(?:Style)?)\b
         name: support.type.procedure-subtype.igorpro
-      - match: \b([A-Za-z][0-9A-Za-z_]{,254})\b
+      - match: \b[A-Za-z][0-9A-Za-z_]{,254}\b
       - match: \b.+\b
         name: invalid.illegal.naming-rule.igorpro
   validate-parameter:
     patterns:
-      - match: \b([A-Za-z][0-9A-Za-z_]{,254})\b
+      - match: \b[A-Za-z][0-9A-Za-z_]{,254}\b
       - match: \b.+\b
         name: invalid.illegal.naming-rule.igorpro
   # validate-unreserved:

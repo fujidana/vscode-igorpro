@@ -172,10 +172,12 @@ Program = body:ParentStmt* {
   return { type: 'Program', body, problems, };
 }
 
+/** a whitespace, horizontal tab or line-continuation. */
+_Space = [ \t] / ('//' (!(_Eol / '\\' _Eol) .)* )? '\\' _Eol
 /** Zero or more whitespaces, horizontal tabs and line-continuations. */
-_0 = ([ \t] / '\\' _Eol)* { return text(); }
+_0 = _Space* { return text(); }
 /** One or more whitespaces, horizontal tabs and line-continuations. */
-_1 = ([ \t] / '\\' _Eol)+ { return text(); }
+_1 = _Space+ { return text(); }
 
 _Comma = _0 ',' _0
 _CommaWLoc = _0 ',' _0 { return location(); }
