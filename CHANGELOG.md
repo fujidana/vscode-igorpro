@@ -4,12 +4,16 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+## [2.1.0] -- 2025-12-03
+
 ### Added
 
+- Add functions and operations added in Igor Pro 10 into the extension's IntelliSense database. Issue [#72](https://github.com/fujidana/vscode-igorpro/issues/72). The default value of `vscode-igorpro.igorVersion` setting is also changed from `"9.01"` to `"10.00"`.
 - Make IntelliSense features limit the scope of global symbols with reference to the `#include` chains. Previously all global symbols were simply suggested. "vscode-igorpro.suggest.scope" setting was added to control this behavior. Issue [#53](https://github.com/fujidana/vscode-igorpro/issues/53).
 
 ### Changed
 
+- Make syntax parser and syntax highlighting rules accept line continuation (a backslash followed by a line break) in more places, for better compatiblity with Igor Pro 10 (not perfectly the same as Igor Pro 10's compiler). Issue [#74](https://github.com/fujidana/vscode-igorpro/issues/74)
 - Rename "Show Workspace Symbols (JSON)" command action "Show User-defined Symbols (JSON)" and now the document exported by this action is affected by the "vscode-igorpro.suggest.scope" setting. Issue [#53](https://github.com/fujidana/vscode-igorpro/issues/53).
 
 ### Fixed
@@ -163,7 +167,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definition, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/fujidana/vscode-igorpro/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.4...v1.5.0
 [1.4.4]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.3...v1.4.4

@@ -26,7 +26,7 @@ The textual contents of the IntelliSense code hints are cited from [the official
   - "Show Built-in Symbols"
   - "Show User-defined Symbols (JSON)": exported file can be used for importing the symbols in another workspace, with "vscode-igorpro.suggest.symbolFile" setting.
 
-The extension uses the following symbols for the IntelliSSense features:
+The extension uses the following symbols for the IntelliSense features:
 
 - local variables in the active editor
 - global constants, structure, macros, and functions in workspaces
