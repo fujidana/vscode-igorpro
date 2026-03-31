@@ -4,6 +4,10 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Changed
+
+- Raise the minimum VS Code version to 1.110.0.
+
 ## [2.1.0] -- 2025-12-03
 
 ### Added
@@ -15,6 +19,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 - Make syntax parser and syntax highlighting rules accept line continuation (a backslash followed by a line break) in more places, for better compatiblity with Igor Pro 10 (not perfectly the same as Igor Pro 10's compiler). Issue [#74](https://github.com/fujidana/vscode-igorpro/issues/74)
 - Rename "Show Workspace Symbols (JSON)" command action "Show User-defined Symbols (JSON)" and now the document exported by this action is affected by the "vscode-igorpro.suggest.scope" setting. Issue [#53](https://github.com/fujidana/vscode-igorpro/issues/53).
+- Raise the minimum VS Code version to 1.102.0.
 
 ### Fixed
 
@@ -34,6 +39,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 - Change the internal architecture to better support asynchronous operations. This change potentially enhances the performance in some situations. Issue [#56](https://github.com/fujidana/vscode-igorpro/issues/56).
 - Change the prefix of the identifiers of the settings from `igorpro` to `vscode-igorpro`. Issue [#41](https://github.com/fujidana/vscode-igorpro/issues/41).
+- Raise the minimum VS Code version to 1.101.0.
 
 ### Fixed
 
