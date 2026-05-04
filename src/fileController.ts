@@ -268,8 +268,8 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         // Register providers and event handlers.
         context.subscriptions.push(
             // Register command handlers.
-            vscode.commands.registerCommand('igorpro.showUserDefinedSymbolsJson', showUserDefinedSymbolsJsonCommandHandler),
-            vscode.commands.registerCommand('igorpro.inspectSyntaxTree', inspectSyntaxTreeCommandHandler),
+            vscode.commands.registerCommand('vscode-igorpro.showUserDefinedSymbolsJson', showUserDefinedSymbolsJsonCommandHandler),
+            vscode.commands.registerCommand('vscode-igorpro.inspectSyntaxTree', inspectSyntaxTreeCommandHandler),
 
             // Register document-event listeners.
             vscode.workspace.onDidChangeTextDocument(textDocumentDidChangeListener),

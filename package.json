@@ -61,20 +61,20 @@
     ],
     "commands": [
       {
-        "command": "igorpro.showBuiltInSymbols",
-        "title": "Show Built-in Symbols",
+        "command": "vscode-igorpro.showBuiltInSymbols",
+        "title": "%command.vscode-igorpro.showBuiltInSymbols.title%",
         "category": "Igor Pro",
         "icon": "$(references)"
       },
       {
-        "command": "igorpro.showUserDefinedSymbolsJson",
-        "title": "Show User-defined Symbols (JSON)",
+        "command": "vscode-igorpro.showUserDefinedSymbolsJson",
+        "title": "%command.vscode-igorpro.showUserDefinedSymbolsJson.title%",
         "category": "Igor Pro",
         "icon": "$(json)"
       },
       {
-        "command": "igorpro.inspectSyntaxTree",
-        "title": "Inspect Syntax Tree (Developer)",
+        "command": "vscode-igorpro.inspectSyntaxTree",
+        "title": "%command.vscode-igorpro.inspectSyntaxTree.title%",
         "category": "Igor Pro",
         "icon": "$(json)"
       }
@@ -82,14 +82,14 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "igorpro.showBuiltInSymbols"
+          "command": "vscode-igorpro.showBuiltInSymbols"
         },
         {
-          "command": "igorpro.showUserDefinedSymbolsJson",
+          "command": "vscode-igorpro.showUserDefinedSymbolsJson",
           "when": "editorLangId == igorpro"
         },
         {
-          "command": "igorpro.inspectSyntaxTree",
+          "command": "vscode-igorpro.inspectSyntaxTree",
           "when": "editorLangId == igorpro"
         }
       ]
@@ -106,18 +106,18 @@
           "vscode-igorpro.igorVersion": {
             "type": "string",
             "default": "10.00",
-            "markdownDescription": "Specifies the target version of Igor Pro. This affects code completion.",
+            "markdownDescription": "%configuration.vscode-igorpro.igorVersion.description%",
             "pattern": "^(0|[1-9]\\d*)\\.(\\d)(\\d)(?!\\d)",
-            "patternErrorMessage": "The value must start with a number with two decimal places, such as `7.38` and `9.01`."
+            "patternErrorMessage": "%configuration.vscode-igorpro.specVersion.patternErrorMessage%"
           },
           "vscode-igorpro.showSymbolsInPreview": {
             "type": "boolean",
             "default": true,
-            "markdownDescription": "Shows a preview (Webview created by built-in Markdown extension) in addition to a markdown source after [Show Built-in Symbols](command:igorpro.showBuiltInSymbols) command is invoked."
+            "markdownDescription": "%configuration.vscode-igorpro.showSymbolsInPreview.description%"
           },
           "vscode-igorpro.suggest.suppressMessages": {
             "type": "object",
-            "markdownDescription": "Suppresses messages shown in code completion.",
+            "markdownDescription": "%configuration.vscode-igorpro.suggest.suppressMessages.description%",
             "default": {
               "completionItem.label.detail": false,
               "completionItem.label.description": false,
@@ -129,46 +129,46 @@
               "completionItem.label.detail": {
                 "type": "boolean",
                 "default": false,
-                "description": "Hides the detail of unresolved completion item labels, where parameters of functions are typically shown."
+                "description": "%configuration.vscode-igorpro.suggest.suppressMessages.completionItem.label.detail.description%"
               },
               "completionItem.label.description": {
                 "type": "boolean",
                 "default": false,
-                "description": "Hides the description of unresolved completion item labels, where file paths are typically shown."
+                "description": "%configuration.vscode-igorpro.suggest.suppressMessages.completionItem.label.description.description%"
               },
               "completionItem.documentation": {
                 "type": "boolean",
                 "default": false,
-                "description": "Truncates explanatory text of a selected item of auto completion suggestions to a sentence."
+                "description": "%configuration.vscode-igorpro.suggest.suppressMessages.completionItem.documentation.description%"
               },
               "hover.contents": {
                 "type": "boolean",
                 "default": false,
-                "description": "Truncates explanatory text in a hover, which is shown when the mouse cursor is on a symbol, to a paragraph."
+                "description": "%configuration.vscode-igorpro.suggest.suppressMessages.hover.contents.description%"
               },
               "signatureHelp.signatures.documentation": {
                 "type": "boolean",
                 "default": false,
-                "description": "Truncates explanatory text in a signature help, which is shown when the user edits function arguments, to a paragraph."
+                "description": "%configuration.vscode-igorpro.suggest.suppressMessages.signatureHelp.signatures.documentation.description%"
               }
             },
             "additionalProperties": false
           },
           "vscode-igorpro.suggest.scope": {
             "type": "string",
+            "default": "workspace",
+            "scope": "resource",
+            "markdownDescription": "%configuration.vscode-igorpro.suggest.scope.description%",
             "enum": [
               "workspace",
               "openDocuments",
               "activeEditor"
             ],
             "markdownEnumDescriptions": [
-              "Global symbols in workspaces are suggested without being filtered.",
-              "Global symbols defined in open documents and files included by them are suggested.",
-              "Global symbols defined in current document and files included by it are suggested."
+              "%configuration.vscode-igorpro.suggest.scope.workspace.enumDescription%",
+              "%configuration.vscode-igorpro.suggest.scope.openDocuments.enumDescription%",
+              "%configuration.vscode-igorpro.suggest.scope.activeEditor.enumDescription%"
             ],
-            "default": "workspace",
-            "scope": "resource",
-            "markdownDescription": "Limits the scope of global symbols considered in code hinting.",
             "tags": [
               "experimental"
             ]
@@ -177,7 +177,7 @@
             "type": "string",
             "default": "",
             "scope": "window",
-            "markdownDescription": "Specifies the absolute path to a JSON file in which symbols are defined. The following predefined variables are supported for the path: `${userHome}`, `${workspaceFolder}`. See a JSON file created by [Show User Defined Symbols (JSON)](command:igorpro.showUserDefinedSymbolsJson) command for the file format.",
+            "markdownDescription": "%configuration.vscode-igorpro.suggest.symbolFile.description%",
             "tags": [
               "preview"
             ]
@@ -189,7 +189,7 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "By security reasons, Several configuration properties are disabled in untrusted workspaces.",
+      "description": "%capabilities.untrustedWorkspaces.description%",
       "restrictedConfigurations": [
         "vscode-igorpro.suggest.symbolFile"
       ]

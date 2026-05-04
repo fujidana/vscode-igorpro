@@ -112,7 +112,7 @@ export class BuiltInController extends Controller implements vscode.TextDocument
         // Register command and event handlers.
         context.subscriptions.push(
             // Register command handlers.
-            vscode.commands.registerCommand('igorpro.showBuiltInSymbols', showBuiltInSymbolsCommandHandler),
+            vscode.commands.registerCommand('vscode-igorpro.showBuiltInSymbols', showBuiltInSymbolsCommandHandler),
             // Register providers.
             vscode.workspace.registerTextDocumentContentProvider('igorpro', this),
             // Register event handlers.
