@@ -225,7 +225,7 @@ export interface MenuDeclaration extends BaseMenu {
     type: 'MenuDeclaration';
     dynamic?: boolean;
     hideable?: boolean;
-    contextualmenu?: boolean;
+    contextualMenu?: boolean;
 }
 
 export interface SubmenuDeclaration extends BaseMenu {
@@ -408,6 +408,8 @@ export interface ExpressionStatement extends BaseStatement {
 export interface BaseExpression extends BaseNode { }
 
 export interface ExpressionMap {
+    EmptyExpression: EmptyExpression;
+    SequenceExpression: SequenceExpression;
     AssignmentExpression: AssignmentExpression;
     ArrayExpression: ArrayExpression;
     ReferenceExpression: ReferenceExpression;
@@ -420,6 +422,7 @@ export interface ExpressionMap {
     PathExpression: PathExpression;
     ArrayElementExpression: ArrayElementExpression;
     ArrayElement: ArrayElement;
+    Literal: Literal;
     Identifier: Identifier;
     // WaveRange: WaveRange;
     // WaveIndex: WaveIndex;

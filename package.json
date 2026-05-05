@@ -29,6 +29,7 @@
   ],
   "main": "./dist/node/extension.js",
   "browser": "./dist/web/extension.js",
+	"l10n": "./l10n",
   "extensionKind": [
     "workspace"
   ],
@@ -216,7 +217,8 @@
     "js-yaml": "npm-run-all js-yaml:*",
     "js-yaml:snippets": "js-yaml syntaxes/igorpro.snippets.yaml > syntaxes/igorpro.snippets.json",
     "js-yaml:tmLanguage": "js-yaml syntaxes/igorpro.tmLanguage.yaml > syntaxes/igorpro.tmLanguage.json",
-    "js-yaml:builtIns": "js-yaml syntaxes/igorpro.builtIns.yaml > syntaxes/igorpro.builtIns.json"
+    "js-yaml:builtIns": "js-yaml syntaxes/igorpro.builtIns.yaml > syntaxes/igorpro.builtIns.json",
+		"l10n-export": "pnpm dlx @vscode/l10n-dev export -o ./l10n ./src"
   },
   "dependencies": {
     "estraverse": "^5.3.0",

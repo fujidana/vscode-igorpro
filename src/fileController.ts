@@ -113,10 +113,10 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
 
             const igorDocument = vscode.window.activeTextEditor?.document;
             if (!igorDocument) {
-                vscode.window.showErrorMessage('Active text editor is not found.');
+                vscode.window.showErrorMessage(vscode.l10n.t('Active text editor is not found.'));
                 return;
             } else if (vscode.languages.match(lang.SELECTOR, igorDocument) === 0) {
-                vscode.window.showErrorMessage(`The language identifier of the current document is not ${lang.SELECTOR.language}.`);
+                vscode.window.showErrorMessage(vscode.l10n.t('The language of the current document must be {0}.', lang.SELECTOR.language));
             }
 
             const categories = ['constant', 'picture', 'structure', 'macro', 'function'] as const;
@@ -453,7 +453,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 const baseUri = vscode.Uri.joinPath(documentUri, '..');
                 const urisIfExist = await Promise.all(includes.map(include => this.convertIncludeArgumentToUri(include, baseUri)));
                 for (const uriIfExist of urisIfExist) {
-                    if (!uriIfExist) { continue; }    
+                    if (!uriIfExist) { continue; }
                     await findIncludedFileUris(uriIfExist, uriStringSet);
                 }
                 return;
@@ -670,9 +670,11 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                     return JSON.stringify(tree, (key, value) => { return key === 'loc' ? undefined : value; }, 2);
                 } catch (error) {
                     if (error instanceof SyntaxError) {
-                        vscode.window.showErrorMessage('Failed to parse the editor contents.');
+                        vscode.window.showErrorMessage(vscode.l10n.t('Syntax error in parsing: {0}', error.message));
+                    } else if (error instanceof Error) {
+                        vscode.window.showErrorMessage(vscode.l10n.t('Error in parsing: {0}', error.message));
                     } else {
-                        vscode.window.showErrorMessage('Unknown error.');
+                        vscode.window.showErrorMessage(vscode.l10n.t('Unknown error in parsing: {0}', String(error)));
                     }
                 }
             }
@@ -761,14 +763,13 @@ function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: 
     try {
         tree = parse(content, { operationIdentifiers });
     } catch (error) {
-        if (error instanceof SyntaxError) {
-            if (diagnose) {
-                diagnostics = [new vscode.Diagnostic(lang.convertRange(error.location), error.message, vscode.DiagnosticSeverity.Error)];
-            }
-        } else {
-            console.log('Unknown error in parsing', error);
-            if (diagnose) {
-                diagnostics = [new vscode.Diagnostic(new vscode.Range(0, 0, 0, 0), 'Unknown error in parsing', vscode.DiagnosticSeverity.Error)];
+        if (diagnose) {
+            if (error instanceof SyntaxError) {
+                diagnostics = [new vscode.Diagnostic(lang.convertRange(error.location), vscode.l10n.t('Syntax error in parsing: {0}', error.message))];
+            } else if (error instanceof Error) {
+                diagnostics = [new vscode.Diagnostic(new vscode.Range(0, 0, 0, 0), vscode.l10n.t('Error in parsing: {0}', error.message))];
+            } else {
+                diagnostics = [new vscode.Diagnostic(new vscode.Range(0, 0, 0, 0), vscode.l10n.t('Unknown error in parsing: {0}', String(error)))];
             }
         }
         return { refBook: new Map(), includes: [], diagnostics };

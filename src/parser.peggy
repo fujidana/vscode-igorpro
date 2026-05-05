@@ -1,24 +1,20 @@
 {{
-// A JavaScript file is type-checked when the following line is
-// at the first line of the file.
+// This file defines the rules for parsing Igor procedure files in Peggy.js (https://peggyjs.org) syntax.
+
 // @ts-check
+// The line above is a special line that lets the JavaScript file be 
+// type-checked. However, it seems Peppy.js does not allow to insert this line
+// at the top of an output JavaScript file.
+// To let the code be type-checked, instead one can use `checkJs` compiler
+// option to true typically via tsconfig.json.
 
 /**
- * JSDoc-style type definitions.
- * @typedef { import('./parser').LocationRange } LocationRange
- * @typedef { import('./parser').Location } Location
- * @typedef { import('./parser').GrammarSource } GrammarSource
-
- * @typedef { import('./tree').BaseStatement } BaseStatement
- * @typedef { import('./tree').BaseBlock } BaseBlock
- * @typedef { import('./tree').Comment } Comment
+ * Import types used in JSDoc-style type annotations.
+ * @import {LocationRange, Location, GrammarSource} from './parser'
+ * @import {BaseStatement, BaseBlock, Comment, Expression} from './tree'
  */
 
-// The author is not sure whether the following is a proper way to 
-// import `DiagnosticSeverity` from `vscode` in JavaScript.
-
-// import { DiagnosticSeverity } from 'vscode';
-const DiagnosticSeverity = require('vscode').DiagnosticSeverity;
+import { DiagnosticSeverity, l10n } from 'vscode';
 
 // /** @enum {number} */
 // const DiagnosticSeverity = {
@@ -63,9 +59,42 @@ const operationRegExp = new RegExp(
   + 'STRUCT|FUNCREF)$', 'i'
 );
 // MultiThread|return
+
+const MENU_DECL_LABEL = l10n.t('"Menu" declaration');
+const PICTURE_DECL_LABEL = l10n.t('"Picture" declaration');
+const STRUCTURE_DECL_LABEL = l10n.t('"Structure" declaration');
+const MACRO_DECL_LABEL = l10n.t('"Macro" declaration');
+const FUNCTION_DECL_LABEL = l10n.t('"Function" declaration');
+const SUBMENU_DECL_LABEL = l10n.t('"Submenu" declaration');
+const ASCII85_BLOCK_LABEL = l10n.t('ASCII85 block');
+const IF_BLOCK_LABEL = l10n.t('"if" block');
+const SWITCH_BLOCK_LABEL = l10n.t('"switch" block');
+const TRY_BLOCK_LABEL = l10n.t('"try" block');
+const DO_WHILE_BLOCK_LABEL = l10n.t('"do-while" block');
+const FOR_BLOCK_LABEL = l10n.t('"for" block');
+
+/** @typedef { 'string' | 'number' | 'complex' | 'unknown' } ConstantType */
+
+/**
+ * Return a localized label for a constant type.
+ * @param {ConstantType} kind - The type of the constant.
+ * @return {string} A localized label for the constant type.
+ */
+function getConstantTypeLabel(kind) {
+  if (kind === 'string') {
+    return l10n.t('string');
+  } else if (kind === 'number') {
+    return l10n.t('real number');
+  } else if (kind === 'complex') {
+    return l10n.t('complex number');
+  } else {
+    return l10n.t('unknown type');
+  }
+}
 }}
 
 {
+  /** @type {{ message: string, loc: LocationRange, severity: DiagnosticSeverity }[]} */
   const problems = [];
 
   /**
@@ -83,7 +112,7 @@ const operationRegExp = new RegExp(
   }
 
   /**
-   * Add a trailing comment to a node, it it exists.
+   * Add a trailing comment to the node, if it exists.
    * @template {BaseStatement} T
    * @param {T} node - The node to which the comments are added.
    * @param {Comment | null | undefined} comment - The comments to be added.
@@ -97,12 +126,13 @@ const operationRegExp = new RegExp(
   }
 
   /**
-   * Throw an error with a message and location.
+   * Modify the node range using the end pattern and add comments if they exist.
+   * If the end pattern is not found, report a problem.
    * @template {BaseBlock} T
    * @param {T} node - The node to which the comments are added.
-   * @param {{label: string, comment: Comment | null, loc: LocationRange } | null} end - The end pattern of the node. `null` if not found.
-   * @param {string} expectedEndLabel - The expected label to close block.
-   * @param {string} blockLabel - The expected label to close block.
+   * @param {{label: string, comment: Comment | null, loc: LocationRange} | null} end - The end pattern of the node. `null` if not found.
+   * @param {string} expectedEndLabel - The expected label to close block. Only used for error message.
+   * @param {string} blockLabel - The expected label to close block. Only used for error message.
    * @param {Comment | null | undefined} innerComment - inner comment to be added to the node.
    * @returns {T} - The modified node with the end pattern applied.
    */
@@ -114,7 +144,7 @@ const operationRegExp = new RegExp(
         node.trailingComment = end.comment;
       }
       // Adjust the `end` location of the node.
-      const endLoc = { line: end.loc.start.line, column: end.loc.start.column + end.label.length, offset: end.loc.start.offset + end.label.length };
+      const endLoc = shiftLocationColumn(end.loc.start, end.label.length);
       node.loc = { source: nodeLoc.source, start: nodeLoc.start, end: endLoc };
       // Add inner comment if it exists.
       if (innerComment) {
@@ -122,24 +152,24 @@ const operationRegExp = new RegExp(
       }
     } else {
       // Report a problem if the end label is not found.
-      addProblem(`Expected ${expectedEndLabel} for ${blockLabel} but not found.`, nodeLoc);
+      addProblem(l10n.t('Expected {0} for closing {1}.', expectedEndLabel, blockLabel), nodeLoc);
     }
     return node;
   }
 
   /**
-   * Add a problem to the problems array.
-   * @param {string} message - The error message.
-   * @param {LocationRange} loc - The location of the error.
-   * @param {number} severity - The severity of the error (default: DiagnosticSeverity.Error).
+   * create diagnostic object and store it.
+   * @param {string} message - error message
+   * @param {LocationRange} loc - location range
+   * @param {number} severity - error severity
+   * @returns {void}
    */
   function addProblem(message, loc, severity = DiagnosticSeverity.Error) {
     problems.push({ message, loc, severity });
   }
 
-
   /**
-   * Return a new range object.
+   * Return a new LocationRange object.
    * @param {GrammarSource} source - The source of the grammar.
    * @param {Location} baseLoc - The base location to be referenced.
    * @param {number} length - The length of the range (default: 0).
@@ -147,12 +177,22 @@ const operationRegExp = new RegExp(
    * @returns {LocationRange} - The modified location range.
    */
   function getRange(source, baseLoc, length = 0, offset = 0) {
-    const start = { line: baseLoc.line, column: baseLoc.column + offset, offset: baseLoc.offset + offset };
-    const end = { line: start.line, column: start.column + length, offset: start.offset + offset };
+    const start = shiftLocationColumn(baseLoc, offset);
+    const end = shiftLocationColumn(start, length);
     return { source, start, end };
   }
 
   /**
+   * Return a new Location object.
+   * @param {Location} loc - The base location to be referenced.
+   * @param {number} shift - how many columns to shift.
+   * @returns {Location} - The modified location.
+   */
+  function shiftLocationColumn(loc, shift) {
+    return { line: loc.line, column: loc.column + shift, offset: loc.offset + shift };
+  }
+
+/**
    * Add a problem if the increment is empty or '*'.
    * @param {any} inc - The node to check.
    * @returns {void}
@@ -160,17 +200,21 @@ const operationRegExp = new RegExp(
   function checkWaveElemInc(inc) {
     if (inc && inc.type === 'Literal') {
       if (inc.raw === '') {
-        addProblem('Empty value not allowed at increment of wave subrange.', inc.loc);
+        addProblem(l10n.t('Empty value not allowed at increment of wave subrange.'), inc.loc);
       } else if (inc.raw === '*') {
-        addProblem('"*" not allowed at increment of wave subrange.', inc.loc);
+        addProblem(l10n.t('"*" not allowed at increment of wave subrange.'), inc.loc);
       }
     }
   }
 }
 
+// # MAIN
+
 Program = body:ParentStmt* {
-  return { type: 'Program', body, problems, };
+  return { type: 'Program', body, problems };
 }
+
+// # AUXILIARIES
 
 /** a whitespace, horizontal tab or line-continuation. */
 _Space = [ \t] / ('//' (!(_Eol / '\\' _Eol) .)* )? '\\' _Eol
@@ -189,7 +233,7 @@ _Eof = !. {}
 
 Comment 'line comment' =
   @(
-    '//' '/'? [ \t]? p:$(!_Eol .)* { return { type: 'Line', value: p, loc: location(), }; }
+    '//' '/'? [ \t]? p:$(!_Eol .)* { return { type: 'Line', value: p, loc: location() }; }
   ) (_Eol / _Eof)
 
 /** End of line with or without a trailing line comment. */
@@ -197,15 +241,18 @@ EolWWOComment = (';' _0)? p:(_Eol / _Eof / Comment) { return p ? p : undefined; 
 /** Simplified version of end of statement for lookahead ('&' and '!'). */
 _EosLA = _Eol / _Eof / Comment / ';' {}
 
-// commonly used statements
+// # STATEMENTS AND DECLARATIONS
 
 /** Empty statement that ends with EOL. */
 EmptyEolStmt 'empty statement that ends with EOL' =
-  _Eol { const loc = location(); loc.end = loc.start; return { type: 'EmptyStatement', loc, }; }
+  _Eol {
+    const loc = location();
+    return { type: 'EmptyStatement', loc: getRange(loc.source, loc.start, 0, 0) };
+  }
 
 /** Empty statement that ends with EOF. */
 EmptyEofStmt 'empty statement that ends with EOF' =
-  _Eof { return { type: 'EmptyStatement', loc: location(), }; }
+  _Eof { return { type: 'EmptyStatement', loc: location() }; }
 
 // top-level statements
 ParentStmt 'top-level statement' =
@@ -229,7 +276,7 @@ _CommonEnd =
  * line comments just above the end of the block.
  */
 BaseEmptyStmt =
-  &{ return true; } { return { type: 'EmptyStatement', loc: location(), }; }
+  &{ return true; } { return { type: 'EmptyStatement', loc: location() }; }
 
 /**
  * Empty statement created with any text until the end of line consumed.
@@ -239,41 +286,46 @@ BaseEmptyStmt =
  */
 BaseInvalidStmt =
   value:$(!EolWWOComment .)+ trailingComment:EolWWOComment {
-    const node = { type: 'UnclassifiedStatement', value, loc: location(), trailingComment, };
-    addProblem('Invalid statement.', node.loc);
+    const node = { type: 'UnclassifiedStatement', value, loc: location(), trailingComment };
+    addProblem(l10n.t('Invalid statement.'), node.loc);
     return node;
   }
 
 DirectiveStmt 'directive' =
-  // TODO: parse values
+  // TODO: Parse the directive.
+  // Currently only `include` directive is parsed with its argument.
   '#' directive:'include'i _0 arg:(
     '"' str:$('\\' . / [^"])* '"' { return [false, str, location()]; }
     /
     '<' str:$('\\' . / [^>])* '>' { return [true, str, location()]; }
   ) trailingComment:EolWWOComment {
     const strId = { type: 'Identifier', name: arg[1], kind: 'string', loc: arg[2] };
-    return { type: 'DirectiveStatement', directive: 'include', kind: 'include', builtin: arg[0], argument: strId, loc: location(), trailingComment, };
+    return { type: 'DirectiveStatement', directive: 'include', kind: 'include', builtin: arg[0], argument: strId, loc: location(), trailingComment };
   }
   /
   '#' directive:_StdName _0 expression:$(!EolWWOComment .)* trailingComment:EolWWOComment {
-    return { type: 'DirectiveStatement', directive, kind: 'unclassified', expression, loc: location(), trailingComment, };
+    return { type: 'DirectiveStatement', directive, kind: 'unclassified', expression, loc: location(), trailingComment };
   }
 
 // top-level declarations, derivatives, and some other invalid statements.
 ParentStmtBase =
   DirectiveStmt / ConstDecl / MenuDecl / PictDecl / StructDecl / MacroDecl / FuncDecl / EmptyEolStmt
   /
-  node: InFuncStmt { addProblem('Invalid as top-level context. Move into function declaration.', node.loc, DiagnosticSeverity.Warning); return node; }
+  node: InFuncStmt {
+    addProblem(l10n.t('Invalid as top-level context. Move into function declaration.'), node.loc, DiagnosticSeverity.Warning);
+    return node;
+  }
   /
   BaseInvalidStmt
 
 ConstDecl 'constant declaration' =
   // TODO: parse a value
   or:('Override'i _1)? s0:('Static'i _1)? kind:$('Str'i ? 'Constant'i) flag:(_0 @FlagWOValue)? _1 id:StdId _0 '=' _0 rValue:_ConstDeclValue trailingComment:EolWWOComment {
+    /** @type ConstantType */
     let kindInDecl;
     if (kind.toLowerCase() === 'strconstant') {
       if (flag) {
-        addProblem('Flag not allowed in StrConstant declaration.', location());
+        addProblem(l10n.t('Unknown flag in {0} declaration.', 'StrConstant'), flag.loc);
       }
       kindInDecl = 'string';
     } else {
@@ -281,7 +333,7 @@ ConstDecl 'constant declaration' =
         if (flag.key.toUpperCase() === 'C') {
           kindInDecl = 'complex';
         } else {
-          addProblem(`Unknown flag "/${flag.key}" in Constant declaration.`, flag.loc);
+          addProblem(l10n.t('Unknown flag in {0} declaration.', 'Constant'), flag.loc);
           kindInDecl = 'number';
         }
       } else {
@@ -289,7 +341,7 @@ ConstDecl 'constant declaration' =
       }
     }
     if (rValue.kind !== kindInDecl) {
-      addProblem(`Invalid value format: declared as ${kindInDecl} but assigned ${rValue.kind}.`, rValue.loc);
+      addProblem(l10n.t('Type mismatch: declared as {0} but assigned {1}.', getConstantTypeLabel(kindInDecl), getConstantTypeLabel(rValue.kind)), rValue.loc);
     }
     return { type: 'ConstantDeclaration', id, override: !!or, static: !!s0, kind: kindInDecl, value: rValue.value, raw: rValue.raw, trailingComment, loc: location() };
   }
@@ -309,8 +361,9 @@ MenuDecl 'menu declaration' =
   'Menu'i _1 id:StrId _0 options:(',' _0 @StdId _0 )* iComment:EolWWOComment
   body:InMenuStmt*
   _0 end:(_Eof / _CommonEnd) {
-    const node = { type: 'MenuDeclaration', id, body, loc: location(), };
-    options.forEach((option) => {
+    /** @type {import('./tree').MenuDeclaration} */
+    const node = { type: 'MenuDeclaration', id, body, loc: location() };
+    options.forEach((/** @type {import('./tree').Identifier} */ option) => {
       if (option.name.toLowerCase() === 'dynamic') {
         node.dynamic = true;
       } else if (option.name.toLowerCase() === 'hideable') {
@@ -318,38 +371,43 @@ MenuDecl 'menu declaration' =
       } else if (option.name.toLowerCase() === 'contextualmenu') {
         node.contextualMenu = true;
       } else {
-        addProblem(`Unknown menu option "${option.name}".`, option.loc);
+        addProblem(l10n.t('Unknown menu option.'), option.loc ?? location());
       }
     });
-    return modifyNodeUsingEndPattern(node, end, '"End"', '"Menu" declaration', iComment);
+    return modifyNodeUsingEndPattern(node, end, '"End"', MENU_DECL_LABEL, iComment);
 }
 
 PictDecl 'picture declaration' =
   s0:('Static'i _1)? 'Picture'i _1 id:StdId _0 iComment:EolWWOComment
   body:InPictStmt*
   _0 end:(_Eof / _CommonEnd) {
-    const ascii85Blocks = body.filter((stmt) => stmt.type === 'Ascii85Block');
-    if (ascii85Blocks.length === 0) { addProblem('Expected ASCII85 block but not found.', location()); }
-    else if (ascii85Blocks.length > 1) { addProblem('Expected only one ASCII85 block but found more.', location()); }
+    /** @type {Array<import('./tree').Ascii85Block>} */
+    const ascii85Blocks = body.filter((/** @type {BaseStatement} */ stmt) => stmt.type === 'Ascii85Block');
+    if (ascii85Blocks.length === 0) {
+      addProblem(l10n.t('Expected ASCII85 block.'), location());
+    } else if (ascii85Blocks.length > 1) {
+      addProblem(l10n.t('Expected only one ASCII85 block but found more.'), location());
+    }
 
-    const node = { type: 'PictureDeclaration', id, static: !!s0, body, loc: location(), };
-    return modifyNodeUsingEndPattern(node, end, '"End"', '"Picture" declaration', iComment);
+    const node = { type: 'PictureDeclaration', id, static: !!s0, body, loc: location() };
+    return modifyNodeUsingEndPattern(node, end, '"End"', PICTURE_DECL_LABEL, iComment);
   }
- 
+
 StructDecl 'structure declaration' =
   s0:('Static'i _1)? 'Structure'i _1 id:StdId _0 iComment:EolWWOComment
   body:InStructStmt*
   _0 end:(_Eof / _StructEnd) {
-    const node = { type: 'StructureDeclaration', id, static: !!s0, body, loc: location(), };
-    return modifyNodeUsingEndPattern(node, end, '"EndStructure"', '"Structure" declaration', iComment);
+    const node = { type: 'StructureDeclaration', id, static: !!s0, body, loc: location() };
+    return modifyNodeUsingEndPattern(node, end, '"EndStructure"', STRUCTURE_DECL_LABEL, iComment);
   }
 
 MacroDecl 'macro declaration' =
   kind:('Window'i / 'Macro'i / 'Proc'i) _1 id:StdId _0 '(' _0 params:VariableList _0 ')' _0 subtype:(':' _0 @_StdName _0)? iComment:EolWWOComment
   body:InFuncStmt*
   _0 end:(_Eof / _FuncEnd) {
-    const node = { type: 'MacroDeclaration', id, kind: kind.toLowerCase(), params, body, subtype, loc: location(), };
-    return modifyNodeUsingEndPattern(node, end, '"End" or "EndMacro"', '"Macro" declaration', iComment);
+    const node = { type: 'MacroDeclaration', id, kind: kind.toLowerCase(), params, body, subtype, loc: location() };
+    // Note: Although a macro definition can be closed with either `End` or `EndMacro`, this error message suggests use of `End`.
+    return modifyNodeUsingEndPattern(node, end, '"End"', MACRO_DECL_LABEL, iComment);
   }
 
 FuncDecl 'function declaration' =
@@ -358,16 +416,17 @@ FuncDecl 'function declaration' =
   ts:('ThreadSafe'i _1)? or:('Override'i _1)? s0:('Static'i _1)? 'Function'i !_Word flag:(_0 @Flag)* _0 multiReturn:(
     _0 '[' _0 @VariableList _0 ']' _0
   )? id:StdId _0 '(' _0 reqParams:VariableList _0 optParams:(
-    '[' _0 params:VariableList _0 ']' { return { params, loc: location(), }; }
+    '[' _0 params:VariableList _0 ']' { return { params, loc: location() }; }
   )? _0 ')' _0 subtype:(':' _0 @_StdName _0)? iComment:EolWWOComment
   body:InFuncStmt*
   _0 end:(_Eof / _FuncEnd) {
-    // Check multi-return syntax
     if (multiReturn !== null) {
       if (multiReturn.length === 0) {
-
+        // TODO: Is empty multi-return allowed?
       } else {
-        multiReturn.forEach(param => { if (param.type === 'EmptyExpression') { addProblem('Return variable not defined.', param.loc); } });
+        multiReturn.filter(param => param.type === 'EmptyExpression').forEach(param => {
+          addProblem(l10n.t('Return variable not defined.'), param.loc);
+        });
       }
     }
 
@@ -378,19 +437,19 @@ FuncDecl 'function declaration' =
         // Do nothing if neither required parameters or optional parameters are provided
       } else if (optParams.params.length === 0) {
         // If bracket exists but nothing in it, report an error.
-        addProblem('No optional parameters defined in brackets.', optParams.loc);
+        addProblem(l10n.t('No optional parameters defined in brackets.'), optParams.loc);
       } else {
         // Otherwise, report error if empty element exists.
-        optParams.params.forEach(param => {
-          if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); }
+        optParams.params.filter(param => param.type === 'EmptyExpression').forEach(param => {
+          addProblem(l10n.t('Parameter not defined.'), param.loc);
         });
       }
     } else {
       // In case one or more required parameters exist
       if (optParams === null) {
         // If no brackets exists, simply check an empty elements in required parameters.
-        reqParams.forEach(param => {
-          if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); }
+        reqParams.filter(param => param.type === 'EmptyExpression').forEach(param => {
+          addProblem(l10n.t('Parameter not defined.'), param.loc);
         });
       } else {
         // If both required parameters and optional parameters are provided, check the both.
@@ -399,26 +458,28 @@ FuncDecl 'function declaration' =
 
         if (optParams.params.length === 0) {
         // If brackets exists but nothing in it, simply check an empty element and report it. The last comma outside the bracket is valid.
-          reqParams.forEach((param, i, params) => { if (i !== params.length - 1 && param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); } });
-          addProblem('No optional parameters defined in brackets.', optParams.loc);
+          reqParams.filter((param, i, params) => i !== params.length - 1 && param.type === 'EmptyExpression').forEach(param => {
+            addProblem(l10n.t('Parameter not defined.'), param.loc);
+          });
+          addProblem(l10n.t('No optional parameters defined in brackets.'), optParams.loc);
         } else {
           if (reqParams[reqParams.length - 1].type === 'EmptyExpression' && optParams.params[0].type === 'EmptyExpression') {
-            addProblem('Duplicated commas.', optParams.params[0].loc, DiagnosticSeverity.Information);
+            addProblem(l10n.t('Duplicated commas.'), optParams.params[0].loc, DiagnosticSeverity.Information);
           } else if (reqParams[reqParams.length - 1].type !== 'EmptyExpression' && optParams.params[0].type !== 'EmptyExpression') {
-            addProblem('Missing comma between required parameters and optional parameters.', getRange(optParams.loc.source, optParams.loc.start, 1, 0), DiagnosticSeverity.Information);
+            addProblem(l10n.t('Missing comma between required parameters and optional parameters.'), getRange(optParams.loc.source, optParams.loc.start, 1, 0), DiagnosticSeverity.Information);
           }
           // Eliminate empty expressions inserted by the parser.
           if (reqParams[reqParams.length - 1].type === 'EmptyExpression') { reqParams.pop(); };
           if (optParams.params[0].type === 'EmptyExpression') { optParams.params.shift(); };
 
           // Check empty expressions in both required and optional parameters.
-          [...reqParams, ...optParams.params].forEach((param) => {
-            if (param.type === 'EmptyExpression') { addProblem('Parameter not defined.', param.loc); }
+          reqParams.concat(optParams.params).filter(param => param.type === 'EmptyExpression').forEach((param) => {
+            addProblem(l10n.t('Parameter not defined.'), param.loc);
           });
         }
       }
     }
-    const node = { type: 'FunctionDeclaration', id, threadsafe: !!ts, override: !!or, static: !!s0, params: reqParams, optParams: optParams?.params, return: multiReturn, body, subtype, loc: location(), };
+    const node = { type: 'FunctionDeclaration', id, threadsafe: !!ts, override: !!or, static: !!s0, params: reqParams, optParams: optParams?.params, return: multiReturn, body, subtype, loc: location() };
 
     // Use of `EndMacro` for `Function` can be found in several IPF files
     // WaveMetrics bundled with Igor Pro 9.
@@ -427,9 +488,9 @@ FuncDecl 'function declaration' =
     // To the contrary, it is clearly written in the official document 
     // that a `Macro` definition ends with either `End` or `EndMacro`.
     if (end && end.label.toLowerCase() === 'endmacro') {
-      addProblem(`Expected "End" but "EndMacro" found.`, end.loc, DiagnosticSeverity.Warning);
+      addProblem(l10n.t('Expected "End" but "EndMacro" found.'), end.loc, DiagnosticSeverity.Warning);
     }
-    return modifyNodeUsingEndPattern(node, end, '"End" or "EndMacro"', '"Function" declaration', iComment);
+    return modifyNodeUsingEndPattern(node, end, '"End"', FUNCTION_DECL_LABEL, iComment);
   }
 
 // body of top-level statements
@@ -498,8 +559,8 @@ SubmenuDecl 'submenu declaration' =
   'Submenu'i _1 id:StrId _0 iComment:EolWWOComment
   body:InMenuStmt*
   _0 end:(_Eof / _CommonEnd) {
-    const node = { type: 'SubmenuDeclaration', id, body, loc: location(), };
-    return modifyNodeUsingEndPattern(node, end, '"End"', '"Submenu" declaration', iComment);
+    const node = { type: 'SubmenuDeclaration', id, body, loc: location() };
+    return modifyNodeUsingEndPattern(node, end, '"End"', SUBMENU_DECL_LABEL, iComment);
   }
 
 /**
@@ -516,12 +577,12 @@ MenuItemStmt 'menu item statement' =
     /
     comment:EolWWOComment { return { key: 'comment', comment }; }
   ) {
-    const node = { type: 'MenuItemStatement', label, loc: location(), };
+    const node = { type: 'MenuItemStatement', label, loc: location() };
     flags?.forEach(flag => {
       if (flag.key.toUpperCase() === 'Q') {
         node.quite = true;
       } else {
-        addProblem(`Unknown menu item flag "/${flag.key}".`, flag.loc);
+        addProblem(l10n.t('Unknown menu item flag.'), flag.loc);
       }
     });
     if (option.key === 'execution') {
@@ -534,7 +595,7 @@ MenuItemStmt 'menu item statement' =
 
 MenuHelpStmt 'menu help statement' =
   !_CommonEnd _0 'help'i _0 '=' _0 '{' _0 messages:(BaseExpr|.., _Comma|) _0 '}' _0 comment:EolWWOComment {
-    const node = { type: 'MenuHelpStatement', messages, loc: location(), };
+    const node = { type: 'MenuHelpStatement', messages, loc: location() };
     return addTrailingCommentToNode(node, comment);
   }
 
@@ -544,8 +605,8 @@ Ascii85Block 'ASCII85 block' =
   'ASCII85Begin'i _0 iComment:EolWWOComment
   raw:(_0 !_Ascii85BlockEnd @$[^ \r\n]+ _0 _Eol)*
   _0 end:(_Eof / _Ascii85BlockEnd) {
-  const node = { type: 'Ascii85Block', raw, loc: location(), };
-  return modifyNodeUsingEndPattern(node, end, '"ASCII85End"', 'ASCII85 block', iComment);
+  const node = { type: 'Ascii85Block', raw, loc: location() };
+  return modifyNodeUsingEndPattern(node, end, '"ASCII85End"', ASCII85_BLOCK_LABEL, iComment);
 }
 
 _Ascii85BlockEnd =
@@ -556,19 +617,19 @@ _Ascii85BlockEnd =
 // statements in Structure declarations
 
 // TODO: Array element is not checked. It may be a literal number, constant, or mathematical operation of them.
-StructMemberDecl 'structure member declaration'=
+StructMemberDecl 'structure member declaration' =
   stmtNode:(
     node0:(
       kind:$('u'i? ('char'i / 'int'i ('16' / '32' / '64')) / 'float'i / 'double'i) {
-        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), loc: location(), };
+        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), loc: location() };
       }
       / 
       kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) flags:(_0 @FlagWOValue)* {
-        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), flags, loc: location(), };
+        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), flags, loc: location() };
       }
       /
       kind:$('FUNCREF'i / 'STRUCT'i) _1 proto:_StdName {
-        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), proto, loc: location(), };
+        return { type: 'StructureMemberDeclaration', kind: kind.toLowerCase(), proto, loc: location() };
       }
     ) _1 declarations:StructMemberDeclr|1.., _Comma| {
         node0.declarations = declarations;
@@ -581,7 +642,7 @@ StructMemberDecl 'structure member declaration'=
 
 StructMemberDeclr 'structure member declarator' =
   id:(StdId / LiberalId) size:(_0 '[' _0 @$(!_EosLA [^\]])* _0 ']')? {
-    return { type: 'StructureMemberDeclarator', id, size: size ? size : undefined, loc: location(), };
+    return { type: 'StructureMemberDeclarator', id, size: size ? size : undefined, loc: location() };
   }
 
 // flow control
@@ -592,7 +653,7 @@ IfStmt 'if statement' =
   ifCase:(
     'if'i _0 '(' _0 test:BaseExpr _0 ')' _0 iComment:EolWWOComment
     consequent:InFuncInIfStmt* {
-      const node = { type: 'IfCase', test, consequent, loc: location(), };
+      const node = { type: 'IfCase', test, consequent, loc: location() };
       if (iComment) {
         node.innerComments = [iComment];
       }
@@ -601,7 +662,7 @@ IfStmt 'if statement' =
   ) otherCases:(
     _0 elseifOrElse:(_IfElseIf / _IfElse)
     consequent:InFuncInIfStmt* {
-      const node = { type: 'IfCase', consequent, loc: location(), };
+      const node = { type: 'IfCase', consequent, loc: location() };
       if (elseifOrElse.label.toLowerCase() === 'elseif') {
         node.test = elseifOrElse.test;
       }
@@ -616,19 +677,19 @@ IfStmt 'if statement' =
     otherCases.forEach(case0 => {
       if (case0.test) {
         if (elseDidAppear) {
-          addProblem('"elseif" appears after "else".', case0.loc, DiagnosticSeverity.Warning);
+          addProblem(l10n.t('"elseif" appears after "else".'), case0.loc, DiagnosticSeverity.Warning);
         }
       } else {
         if (elseDidAppear) {
-          addProblem('Duplicated "else".', case0.loc);
+          addProblem(l10n.t('Duplicated "else".'), case0.loc);
         }
         elseDidAppear = true;
       }
     });
 
-    const node = { type: 'IfStatement', cases: [ifCase].concat(otherCases), loc: location(), };
+    const node = { type: 'IfStatement', cases: [ifCase].concat(otherCases), loc: location() };
     // Comment at `if (...)` line is added to the first `IfCase`, not to the `IfStatement`.
-    return modifyNodeUsingEndPattern(node, end, '"endif"', '"if" block', null);
+    return modifyNodeUsingEndPattern(node, end, '"endif"', IF_BLOCK_LABEL, null);
   }
 
 InFuncInIfStmt =
@@ -656,7 +717,7 @@ SwitchStmt 'switch statement' =
   stmtsBeforeCase:InFuncInSwitchStmt*
   cases:(
     _0 case0:_SwitchCase consequent:InFuncInSwitchStmt* {
-      const node = { type: 'SwitchCase', test:case0.test, consequent, loc: location(), };
+      const node = { type: 'SwitchCase', test:case0.test, consequent, loc: location() };
       if (case0.comment) {
         node.innerComments = [case0.comment];
       }
@@ -664,7 +725,7 @@ SwitchStmt 'switch statement' =
     }
     /
     _0 default0:_SwitchDefault consequent:InFuncInSwitchStmt* {
-      const node = { type: 'SwitchCase', test: null, consequent, loc: location(), };
+      const node = { type: 'SwitchCase', test: null, consequent, loc: location() };
       if (default0.comment) {
         node.innerComments = [default0.comment];
       }
@@ -674,29 +735,31 @@ SwitchStmt 'switch statement' =
     const loc = location();
     // check if statements exist before the first case.
     if (stmtsBeforeCase) {
-      stmtsBeforeCase.forEach(stmt => { if (stmt.type !== 'EmptyStatement') { addProblem('Statement not allowed here.', stmt.loc); } });
+      stmtsBeforeCase.filter(stmt => stmt.type !== 'EmptyStatement').forEach(stmt => {
+        addProblem(l10n.t('Statement not allowed here.'), stmt.loc);
+      });
     }
     // check the order or "case" and "default" cases
     let defaultDidAppear = false;
     if (!cases.some(case0 => !!case0.test)) {
-      addProblem('At least one "case" required.', loc, DiagnosticSeverity.Warning);
+      addProblem(l10n.t('At least one "case" required.'), loc, DiagnosticSeverity.Warning);
     }
     cases.forEach(case0 => {
       if (case0.test) {
         if (defaultDidAppear) {
-          addProblem('"case" appears after "default".', case0.loc, DiagnosticSeverity.Warning);
+          addProblem(l10n.t('"case" appears after "default".'), case0.loc, DiagnosticSeverity.Warning);
         }
       } else {
         if (defaultDidAppear) {
-          addProblem('Duplicated "default".', case0.loc, DiagnosticSeverity.Warning);
+          addProblem(l10n.t('Duplicated "default".'), case0.loc, DiagnosticSeverity.Warning);
         }
         defaultDidAppear = true;
       }
     });
 
     const kind = stmtName.toLowerCase() === 'strswitch' ? 'string' : 'number';
-    const node = { type: 'SwitchStatement', discriminant, kind, cases, loc, };
-    return modifyNodeUsingEndPattern(node, end, '"endswitch"', '"switch" block', iComment);
+    const node = { type: 'SwitchStatement', discriminant, kind, cases, loc };
+    return modifyNodeUsingEndPattern(node, end, '"endswitch"', SWITCH_BLOCK_LABEL, iComment);
   }
 
 InFuncInSwitchStmt =
@@ -711,11 +774,17 @@ InFuncInSwitchStmt =
 _SwitchBlock =
   _FuncEnd / _SwitchCase / _SwitchDefault / _SwitchEnd
 _SwitchCase =
-  label:'case'i _1 test:(StrLiteral / SignedNumLiteral / StdId) ':' _0 comment:EolWWOComment { return { label, test, comment, loc: location(), }; }
+  label:'case'i _1 test:(StrLiteral / SignedNumLiteral / StdId) ':' _0 comment:EolWWOComment {
+    return { label, test, comment, loc: location() };
+  }
 _SwitchDefault =
-  label:'default'i _0 ':'_0 comment:EolWWOComment { return { label, comment, loc: location(), }; }
+  label:'default'i _0 ':'_0 comment:EolWWOComment {
+    return { label, comment, loc: location() };
+  }
 _SwitchEnd =
-  label:'endswitch'i _0 comment:EolWWOComment { return { label, comment, loc: location(), }; }
+  label:'endswitch'i _0 comment:EolWWOComment {
+    return { label, comment, loc: location() };
+  }
 
 // - try
 
@@ -725,8 +794,8 @@ TryStmt 'try statement' =
   _0 catchHeader:_TryCatch
   handler:InFuncInTryStmt*
   _0 end:(_Eof / &_FuncEnd / _TryEnd) {
-    const node = { type: 'TryStatement', block, handler, loc: location(), };
-    modifyNodeUsingEndPattern(node, end, '"endtry"', '"try" block', iComment);
+    const node = { type: 'TryStatement', block, handler, loc: location() };
+    modifyNodeUsingEndPattern(node, end, '"endtry"', TRY_BLOCK_LABEL, iComment);
       // TODO: create `CatchClause` node.
     if (catchHeader.comment) {
       node.innerComments = node.innerComments ?
@@ -748,9 +817,13 @@ InFuncInTryStmt =
 _TryBlock =
   _FuncEnd / _TryCatch / _TryEnd
 _TryCatch =
-  label:'catch'i _0 comment:EolWWOComment { return { label, comment, loc: location(), }; }
+  label:'catch'i _0 comment:EolWWOComment {
+    return { label, comment, loc: location() };
+  }
 _TryEnd =
-  label:'endtry'i _0 comment:EolWWOComment { return { label, comment, loc: location(), }; }
+  label:'endtry'i _0 comment:EolWWOComment {
+    return { label, comment, loc: location() };
+  }
 
 // - do-while
 
@@ -758,8 +831,8 @@ DoWhileStmt 'do-while statement' =
   'do'i _0 iComment:EolWWOComment
   body:InFuncInDoWhileStmt*
   _0 end:(_Eof / &_FuncEnd / _DoWhileEnd) {
-    const node = { type: 'DoWhileStatement', body, test: end?.test, loc: location(), };
-    return modifyNodeUsingEndPattern(node, end, '"while(...)"', '"do-while" block', iComment);
+    const node = { type: 'DoWhileStatement', body, test: end?.test, loc: location() };
+    return modifyNodeUsingEndPattern(node, end, '"while(...)"', DO_WHILE_BLOCK_LABEL, iComment);
   }
 
 InFuncInDoWhileStmt =
@@ -776,7 +849,7 @@ _DoWhileBlock =
   _FuncEnd / _DoWhileEnd
 
 _DoWhileEnd =
-  label:'while'i _0 '(' _0 test:BaseExpr _0 ')' _0 comment:EolWWOComment { return { label, test, comment, loc: location(), }; }
+  label:'while'i _0 '(' _0 test:BaseExpr _0 ')' _0 comment:EolWWOComment { return { label, test, comment, loc: location() }; }
 
 // - for
 
@@ -785,8 +858,8 @@ ForStmt 'for-loop' =
   'for'i _0 '(' _0 init:AssignUpdateSeqExpr? _0 ';' _0 test:BaseExpr? _0 ';' _0 update:AssignUpdateSeqExpr? _0 ')'_0 iComment:EolWWOComment
   body:InFuncInForStmt*
   _0 end:(_Eof / &_FuncEnd / _ForEnd) {
-    const node = { type: 'ForStatement', init, test, update, body, loc: location(), };
-    return modifyNodeUsingEndPattern(node, end, '"endfor"', 'for-loop', iComment);
+    const node = { type: 'ForStatement', init, test, update, body, loc: location() };
+    return modifyNodeUsingEndPattern(node, end, '"endfor"', FOR_BLOCK_LABEL, iComment);
   }
 
 ForInStmt 'range-based for-loop' =
@@ -794,8 +867,8 @@ ForInStmt 'range-based for-loop' =
   'for'i _0 '(' _0 left:VariableWWOType? _0 ':' _0 right:BaseExpr _0 ')' _0 iComment:EolWWOComment
   body:InFuncInForStmt*
   _0 end:(_Eof / &_FuncEnd / _ForEnd) {
-    const node = { type: 'ForInStatement', left: left, right: right, loc: location(), };
-    return modifyNodeUsingEndPattern(node, end, '"endfor"', 'for-loop', iComment);
+    const node = { type: 'ForInStatement', left: left, right: right, loc: location() };
+    return modifyNodeUsingEndPattern(node, end, '"endfor"', FOR_BLOCK_LABEL, iComment);
   }
 
 InFuncInForStmt =
@@ -810,7 +883,9 @@ InFuncInForStmt =
 _ForBlock =
   _FuncEnd / _ForEnd
 _ForEnd =
-  label:'endfor'i _0 comment:EolWWOComment { return { label, comment, loc: location() }; }
+  label:'endfor'i _0 comment:EolWWOComment {
+    return { label, comment, loc: location() };
+  }
 
 
 
@@ -847,29 +922,31 @@ VariableWWOType 'variable with or without type' =
  */
 VariableList =
   heads:(VariableWWOType? _CommaWLoc)|..| tail:VariableWWOType? {
+    /** @type {Array<import('./tree').VariableDeclaration | import('./tree').Identifier | import('./tree').EmptyExpression> } */
     const nodesList = [];
     for (let i = 0; i < heads.length; i++) {
       const [node, commaLoc] = heads[i];
-      nodesList.push(node ?? { type: 'EmptyExpression', loc: commaLoc, });
+      nodesList.push(node ?? { type: 'EmptyExpression', loc: getRange(commaLoc.source, commaLoc.start, 0, 0) });
     }
     if (tail) {
       nodesList.push(tail);
     } else if (heads.length > 0) {
-      nodesList.push({ type: 'EmptyExpression', loc: heads[heads.length - 1][1], });
+      const prevCommaLoc = heads[heads.length - 1][1];
+      nodesList.push({ type: 'EmptyExpression', loc: getRange(prevCommaLoc.source, prevCommaLoc.end, 0, 0) });
     }
     return nodesList;
   }
 
 BreakStmt 'braek statement' =
   node:(
-    'break'i { return { type: 'BreakStatement', loc: location(), }; }
+    'break'i { return { type: 'BreakStatement', loc: location() }; }
   ) _0 tComment:EolWWOComment {
     return addTrailingCommentToNode(node, tComment);
   }
 
 ContinueStmt 'continue statement' =
   node:(
-    'continue'i { return { type: 'ContinueStatement', loc: location(), }; }
+    'continue'i { return { type: 'ContinueStatement', loc: location() }; }
   ) _0 tComment:EolWWOComment {
     return addTrailingCommentToNode(node, tComment);
   }
@@ -878,19 +955,21 @@ ContinueStmt 'continue statement' =
 OneLineCmndStmt 'statement for a command or multiple commands' =
   node:(
     body:(
-      ';' { return { type: 'EmptyStatement', loc: location(), }; }
+      ';' { return { type: 'EmptyStatement', loc: location() }; }
       /
       @(ReturnStmt / VarDeclStmt / AssignExprStmt / OpStmt / ExprStmt) (_0 ';')?
     )|1.., _0| {
-      // return (args.length === 1) ? args[0] : { type: 'BundledStatement', args, loc: location(), };
+      // return (args.length === 1) ? args[0] : { type: 'BundledStatement', args, loc: location() };
       if (body.length === 1) {
-        if (body[0].type === 'EmptyStatement') { addProblem('Empty statement.', body[0].loc, DiagnosticSeverity.Information); }
+        if (body[0].type === 'EmptyStatement') {
+          addProblem(l10n.t('Empty statement.'), body[0].loc, DiagnosticSeverity.Information);
+        }
         return body[0];
       } else {
-        body.forEach(node => {
-          if (node.type === 'EmptyStatement') { addProblem('Empty statement.', node.loc, DiagnosticSeverity.Information); }
+        body.filter(node => node.type === 'EmptyStatement').forEach(node => {
+          addProblem(l10n.t('Empty statement.'), node.loc, DiagnosticSeverity.Information);
         });
-        return { type: 'BundledStatement', body, loc: location(), };
+        return { type: 'BundledStatement', body, loc: location() };
       }
     }
   ) _0 tComment:EolWWOComment {
@@ -903,31 +982,35 @@ ReturnStmt 'return statement' =
     BaseExpr
     /
     '[' _0 elements:BaseExpr|.., _Comma| exComma:_CommaWLoc? _0 ']' {
-      if (exComma) { addProblem('Trailing comma not allowed.', exComma); };
-      return { type: 'ArrayExpression', elements, kind: 'bracket', loc: location(), };
+      if (exComma) {
+        addProblem(l10n.t('Trailing comma not allowed.'), exComma);
+      };
+      return { type: 'ArrayExpression', elements, kind: 'bracket', loc: location() };
     } 
   )? _0 &(_Eol / ';' / '//')
 ) {
-    return { type: 'ReturnStatement', argument: args, loc: location(), };
+    return { type: 'ReturnStatement', argument: args, loc: location() };
   }
 
 VarDeclStmt 'declaration statement' =
   node0:(
     kind:$('u'i? ('char'i / 'int'i ('16' / '32' / '64')?) / 'float'i / 'double'i) {
-      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location(), };
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), loc: location() };
     }
     /
     kind:$('Variable'i / 'String'i / 'Wave'i / 'NVAR'i / 'SVAR'i / 'DFREF'i) flags:(_0 @Flag)* {
-      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), flags, loc: location(), };
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), flags, loc: location() };
     }
     /
     kind:$('FUNCREF'i / 'STRUCT'i) flags:(_0 @Flag)* _1 proto:_StdName {
-      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), proto, flags, loc: location(), };
+      return { type: 'VariableDeclaration', kind: kind.toLowerCase(), proto, flags, loc: location() };
     }
   ) _1 elements:DeclaratorWWOInit|1.., _Comma| exComma:_CommaWLoc? _0 &(_Eol / ';' / '//') {
-    if (exComma) { addProblem('Trailing comma not allowed.', exComma); };
+    if (exComma) {
+      addProblem(l10n.t('Trailing comma not allowed.'), exComma);
+    }
     if (/^(?:char|uchar|int(?:16|32)|uint(?:16|32)?)$/.test(node0.kind)) {
-      addProblem('This type is available only for structure, not for function.', node0.loc);
+      addProblem(l10n.t('This type is available only for structure, not for function.') , node0.loc);
     }
     node0.declarations = elements;
     node0.loc = location();
@@ -936,21 +1019,21 @@ VarDeclStmt 'declaration statement' =
 
 Declarator 'variable delarator' =
   pbr:(@'&' _0)? id:StdId {
-    return { type: 'VariableDeclarator', id, init: null, pbr: !!pbr, loc: location(), };
+    return { type: 'VariableDeclarator', id, init: null, pbr: !!pbr, loc: location() };
   }
 
 DeclaratorWWOInit 'variable delarator with or without initialization' =
-  '&' id:StdId { return { type: 'VariableDeclarator', id, init: null, pbr: true, loc: location(), }; }
+  '&' id:StdId { return { type: 'VariableDeclarator', id, init: null, pbr: true, loc: location() }; }
   /
   // id:PathExpr init:(_0 '=' _0 @BaseExpr)? {
   id:StdId init:(_0 '=' _0 @BaseExpr)? {
-    return { type: 'VariableDeclarator', id, init, pbr: false, loc: location(), };
+    return { type: 'VariableDeclarator', id, init, pbr: false, loc: location() };
   }
 
 AssignExprStmt 'expression statement for assignment' =
   // Assignment statement does not exist in the original AST.
   multiThread:('MultiThread'i flags:(_0 @Flag)* _1 { return { flags }; } )? expression:AssignExpr {
-    const node = { type: 'ExpressionStatement', expression, loc: location(), };
+    const node = { type: 'ExpressionStatement', expression, loc: location() };
     if (multiThread) {
       node.multiThread = true;
       node.flags = multiThread.flags;
@@ -969,43 +1052,43 @@ OpStmt 'operation statement' =
       BraceListExpr
     )
   )|.., _Comma| _0 &(_Eol / ';' / '//') {
-    return { type: 'OperationStatement', name, flags, args, loc: location(),};
+    return { type: 'OperationStatement', name, flags, args, loc: location() };
   }
   /
   name:_StdName2 &{ return operationRegExp.test(name) || options?.operationIdentifiers.includes(name.toLowerCase()); } flags:(_0 @Flag)* args:(
     Flag+ / $_Word+ / StrLiteral / _1 / !(_Eol / ';' / '//') .
   )* {
     // TODO: object properties
-    return { type: 'OperationStatement', name, flags, args, loc: location(), };
+    return { type: 'OperationStatement', name, flags, args, loc: location() };
   }
 
 ExprStmt 'expression statement' =
   expression:(UpdateExpr / CallExpr) _0 &(_Eol / ';' / '//') {
-    return { type: 'ExpressionStatement', expression, loc: location(), };
+    return { type: 'ExpressionStatement', expression, loc: location() };
   }
 
 // list of values surrounded with braces ('{}')
 BraceListExpr 'list of values' =
   '{' _0 elements:(BraceListExpr / BaseExpr)|1.., _Comma| _0 '}' {
-    return { type: 'ArrayExpression', elements, kind: 'brace', loc: location(), };
+    return { type: 'ArrayExpression', elements, kind: 'brace', loc: location() };
   }
 
 // list of values surrounded with parentheses ('()')
 ParenListExpr 'list of values' =
   '(' _0 elements:(BraceListExpr / BaseExpr)|1.., _Comma| _0 ')' {
-    return { type: 'ArrayExpression', elements, kind: 'parenthesis', loc: location(), };
+    return { type: 'ArrayExpression', elements, kind: 'parenthesis', loc: location() };
   }
 
 // list of values surrounded with brackets ('[]')
 BracketListExpr 'list of values' =
   '[' _0 elements:(BraceListExpr / BaseExpr / '')|.., _Comma| _0 ']' {
-    return { type: 'ArrayExpression', elements, kind: 'bracket', loc: location(), };
+    return { type: 'ArrayExpression', elements, kind: 'bracket', loc: location() };
   }
 
 //
 RefExpr 'reference expression' =
   '$' _0 arg:Factor {
-    return { type: 'ReferenceExpression', argument: arg, loc: location(), };
+    return { type: 'ReferenceExpression', argument: arg, loc: location() };
   }
 
 BaseExpr =
@@ -1018,9 +1101,9 @@ Order8 =
   head:Order7 tails:(_0 ('&&' / '||') _0 Order7 / _0 '?' _0 Order7 _0 ':' _0 Order7)* {
     return tails.reduce((accumulator, currentValue) => {
       if (currentValue[1] === '&&' || currentValue[1] === '||') {
-        return { type: 'BinaryExpression', operator: currentValue[1], left: accumulator, right: currentValue[3], loc: location(), };
+        return { type: 'BinaryExpression', operator: currentValue[1], left: accumulator, right: currentValue[3], loc: location() };
       } else {
-        return { type: 'ConditionalExpression', test: accumulator, consequent: currentValue[3], alternative: currentValue[7], loc: location(), };
+        return { type: 'ConditionalExpression', test: accumulator, consequent: currentValue[3], alternative: currentValue[7], loc: location() };
       }
     }, head);
   }
@@ -1035,15 +1118,15 @@ Order7 =
         if ('loc' in currentValue[0]) {
           loc = getRange(loc.source, loc.start, 2, currentValue[0].loc.end.offset - currentValue[0].loc.start.offset + currentValue[1].length);
         }
-        addProblem('Obsolete bit-wise binary operator.', loc, DiagnosticSeverity.Information);
+        addProblem(l10n.t('Obsolete bit-wise binary operator.'), loc, DiagnosticSeverity.Information);
       }
-      return { type: 'BinaryExpression', operator: currentValue[2], left: currentValue[0], right: accumulator, loc: location(), };
+      return { type: 'BinaryExpression', operator: currentValue[2], left: currentValue[0], right: accumulator, loc: location() };
     }, tail);
   }
 
 // ObsoleteBitwiseBinary =
 //   a: $('%&' / '%|') {
-//     addProblem('Obsolete bit-wise binary operator.', location(), DiagnosticSeverity.Information);
+//     addProblem(l10n.t('Obsolete bit-wise binary operator.'), location(), DiagnosticSeverity.Information);
 //     return a;
 //   }
 
@@ -1053,7 +1136,7 @@ Order7 =
 Order6 =
   heads:(Order5 _0 $('==' / '!=' / '>' !'>' '='? / '<' !'<' '='?) _0)* tail:Order5 {
     return heads.reduceRight((accumulator, currentValue) => {
-      return { type: 'BinaryExpression', operator: currentValue[2], left: currentValue[0], right: accumulator, loc: location(), };
+      return { type: 'BinaryExpression', operator: currentValue[2], left: currentValue[0], right: accumulator, loc: location() };
     }, tail);
   }
 
@@ -1062,7 +1145,7 @@ Order6 =
 Order5 =
   head:Order4 tails:(_0 $('+' / '-') _0 Order4)* {
     return tails.reduce((accumulator, currentValue) => {
-      return { type: 'BinaryExpression', operator: currentValue[1], left: accumulator, right: currentValue[3], loc: location(), };
+      return { type: 'BinaryExpression', operator: currentValue[1], left: accumulator, right: currentValue[3], loc: location() };
     }, head);
   }
 
@@ -1071,7 +1154,7 @@ Order5 =
 Order4 =
   head:Order3 tails:(_0 $('*' / '/') _0 !(_Word+ _0 '=') Order3)* {
     return tails.reduce((accumulator, currentValue) => {
-      return { type: 'BinaryExpression', operator: currentValue[1], left: accumulator, right: currentValue[4], loc: location(), };
+      return { type: 'BinaryExpression', operator: currentValue[1], left: accumulator, right: currentValue[4], loc: location() };
     }, head);
   }
 
@@ -1083,9 +1166,9 @@ Order3 =
     return heads.reduceRight((accumulator, currentValue) => {
       if (currentValue[0] === '%~') {
         const loc = location();
-        addProblem('Obsolete bit-wise unary operator.', getRange(loc.source, loc.start, 2, 0), DiagnosticSeverity.Information);
+        addProblem(l10n.t('Obsolete bit-wise unary operator.'), getRange(loc.source, loc.start, 2, 0), DiagnosticSeverity.Information);
       }
-      return { type: 'UnaryExpression', operator: currentValue[0], argument: accumulator, loc: location(), };
+      return { type: 'UnaryExpression', operator: currentValue[0], argument: accumulator, loc: location() };
     }, tail);
   }
 
@@ -1098,22 +1181,22 @@ Order3 =
 Order2 =
   head:Order1 tails:(
     _0 operator:('^' / '<<' / '>>') _0 right:Order1 {
-      return { operator, right, };
+      return { operator, right };
     }
     /
     _0 operator:'^' _0 uos2:(@$('!' / '~' / '-' ! '-'/ '+' ! '+' / '%~') _0)+ right2:Order1 {
       const right = uos2.reduceRight((accumulator, currentValue) => {
         if (currentValue[0] === '%~') {
           const loc = location();
-          addProblem('Obsolete bit-wise unary operator.', getRange(loc.source, loc.start, 2, 0), DiagnosticSeverity.Information);
+          addProblem(l10n.t('Obsolete bit-wise unary operator.'), getRange(loc.source, loc.start, 2, 0), DiagnosticSeverity.Information);
         }
-        return { type: 'UnaryExpression', operator: currentValue, arg: accumulator,   loc: location(), };
+        return { type: 'UnaryExpression', operator: currentValue, arg: accumulator, loc: location() };
       }, right2);
-      return { operator, right, };
+      return { operator, right };
     }
   )* {
     return tails.reduce((accumulator, currentValue) => {
-      return { type: 'BinaryExpression', operator: currentValue.operator, left: accumulator, right: currentValue.right, loc: location(), };
+      return { type: 'BinaryExpression', operator: currentValue.operator, left: accumulator, right: currentValue.right, loc: location() };
     }, head);
   }
 
@@ -1133,29 +1216,29 @@ _AssignOp = $('=' !'=' / '+=' / '-=' / '*=' / '/=' / ':=')
 
 AssignExpr 'assignment expression' =
   left:LValue _0 operator:_AssignOp _0 right:(BraceListExpr / BaseExpr) {
-    return { type: 'AssignmentExpression', operator, left, right, multiThread: false, loc: location(), };
+    return { type: 'AssignmentExpression', operator, left, right, multiThread: false, loc: location() };
   }
 
 UpdateExpr =
   operator:('++' / '--') _0 argument:(StdId / LiberalId) {
-    return { type: 'UpdateExpression', operator, argument, prefix: true, loc: location(), };
+    return { type: 'UpdateExpression', operator, argument, prefix: true, loc: location() };
   }
   /
   argument:(StdId / LiberalId) _0 operator:('++' / '--') {
-    return { type: 'UpdateExpression', operator, argument, prefix: false, loc: location(), };
+    return { type: 'UpdateExpression', operator, argument, prefix: false, loc: location() };
   }
 
 CallExpr 'function call' =
   callees:(@(StdId / LiberalId) _0)|1.., '#' _0| '(' _0 args:_FuncParam|.., _Comma| _0')' !(_0 ('[' / '(')) {
     if (callees.length > 3) {
-      addProblem('Too many "#"s.', location());
+      addProblem(l10n.t('Too many "#"s.'), location());
     }
-    return { type: 'CallExpression', callee:callees[callees.length - 1], modules: callees.slice(0, -1), arguments: args, loc: location(), };
+    return { type: 'CallExpression', callee:callees[callees.length - 1], modules: callees.slice(0, -1), arguments: args, loc: location() };
   }
 
 _FuncParam 'function parameter' =
   left:StdId _0 '=' _0 right:BaseExpr {
-    return { type: 'AssignmentExpression', operator: '=', left, right, loc: location(), };
+    return { type: 'AssignmentExpression', operator: '=', left, right, loc: location() };
   }
   /
   BaseExpr
@@ -1164,7 +1247,7 @@ Variable =
   object:(
     heads:(@ArrayElement _0 '.' _0)+ tail:ArrayElement _0 {
       return heads.reduce((accumulator, currentValue) => {
-        return { type: 'MemberExpression', object: accumulator, property: currentValue, loc: location(),  };
+        return { type: 'MemberExpression', object: accumulator, property: currentValue, loc: location() };
       }, tail);
     }
     /
@@ -1187,7 +1270,7 @@ Variable =
     '#' _0 BaseExpr
   )* {
     if (indexes && indexes.length !== 0) {
-      return { type: 'ArrayElementExpression', object, indexes, loc: location(), };
+      return { type: 'ArrayElementExpression', object, indexes, loc: location() };
     } else {
       return object;
     }
@@ -1223,7 +1306,7 @@ End
 ArrayElement =
   object:(StdId / LiberalId) index:(_0 '[' _0 @BaseExpr _0 ']')? {
     if (index) {
-      return { type: 'ArrayElement', object, index, loc: location(), };
+      return { type: 'ArrayElement', object, index, loc: location() };
     } else {
       return object;
     }
@@ -1231,7 +1314,7 @@ ArrayElement =
 
 PathExpr 'path expression' =
   heads:(@(RefExpr / StdId / LiberalId)? ':')+ tail:(RefExpr / StdId / LiberalId)? {
-    return { type: 'PathExpression', body: [...heads, tail], loc: location(), };
+    return { type: 'PathExpression', body: [...heads, tail], loc: location() };
   }
   /
   RefExpr / StdId / LiberalId
@@ -1243,7 +1326,7 @@ LValue =
   Variable
   /
   '[' _0 elements:VariableWWOType|.., _Comma| _0 ']' {
-    return { type: 'ArrayExpression', elements, kind: 'bracket', loc: location(), };
+    return { type: 'ArrayExpression', elements, kind: 'bracket', loc: location() };
   }
 
 /* 
@@ -1266,34 +1349,34 @@ For example: wave0[*], wave1(1.5), wave2[1, 7; 2], mystruct.mybytes[2]
 */
 ArrayElementAccessor =
   start:LabelOrIndex _0 extra:(
-    end:ArrayElemEnd inc:ArrayElemInc? { return { end, inc, }; }
+    end:ArrayElemEnd inc:ArrayElemInc? { return { end, inc }; }
     /
-    inc:ArrayElemInc { return { end: null, inc, }; }
+    inc:ArrayElemInc { return { end: null, inc }; }
   )? {
     if (extra) {
       checkWaveElemInc(extra.inc);
-      return { type: 'WaveRange', start, end: extra.end, increment: extra.inc, loc: location(), };
+      return { type: 'WaveRange', start, end: extra.end, increment: extra.inc, loc: location() };
     } else {
-    return { type: 'WaveIndex', index: start, loc: location(), };
+    return { type: 'WaveIndex', index: start, loc: location() };
     }
   }
   /
   end:ArrayElemEnd increment:ArrayElemInc? {
     checkWaveElemInc(increment);
-    return { type: 'WaveRange', start: null, end, increment, loc: location(), };
+    return { type: 'WaveRange', start: null, end, increment, loc: location() };
   }
   /
   increment:ArrayElemInc {
     checkWaveElemInc(increment);
-    return { type: 'WaveRange', start: null, end: null, increment, loc: location(), };
+    return { type: 'WaveRange', start: null, end: null, increment, loc: location() };
   }
 
 LabelOrIndex = 
-  '*' { return { type: 'Literal', value: Infinity, raw: '*', loc: location(), }; }
+  '*' { return { type: 'Literal', value: Infinity, raw: '*', loc: location() }; }
   /
   labelMarker:(@'%' _0)? labelOrIndex:BaseExpr {
     if (labelMarker) {
-      return { type: 'WaveDimLabel', label: labelOrIndex, loc: location(), };
+      return { type: 'WaveDimLabel', label: labelOrIndex, loc: location() };
     } else {
       return labelOrIndex;
     }
@@ -1302,12 +1385,12 @@ LabelOrIndex =
 ArrayElemEnd =
   ',' _0 end:(@LabelOrIndex _0)? {
     const loc = location();
-    return end ?? { type: 'Literal', value: '', raw: '', loc: getRange(loc.source, loc.start, 0, 1), };
+    return end ?? { type: 'Literal', value: '', raw: '', loc: getRange(loc.source, loc.start, 0, 1) };
   }
 
 ArrayElemInc = ';' _0 inc:(@LabelOrIndex _0)? {
   const loc = location();
-    return inc ?? { type: 'Literal', value: '', raw: '', loc: getRange(loc.source, loc.start, 0, 1), };
+    return inc ?? { type: 'Literal', value: '', raw: '', loc: getRange(loc.source, loc.start, 0, 1) };
   }
 
 _StdName 'standard name' =
@@ -1318,7 +1401,7 @@ _StdName2 'standard name' =
 
 StdId 'standard identifier' =
   name:_StdName {
-    return { type: 'Identifier', name, kind: 'strict', loc: location(), };
+    return { type: 'Identifier', name, kind: 'strict', loc: location() };
   }
 
 _LiberalName 'liberal name' =
@@ -1327,38 +1410,38 @@ _LiberalName 'liberal name' =
 
 LiberalId 'liberal identifier' =
   name:_LiberalName {
-    return { type: 'Identifier', name, kind: 'liberal', loc: location(), };
+    return { type: 'Identifier', name, kind: 'liberal', loc: location() };
   }
 
 NumLiteral 'numeric literal' =
   // floating-point
   (([0-9]+ (_Exponent / '.' [0-9]* _Exponent?)) / '.' [0-9]+ _Exponent?) {
-    return { type: 'Literal', value: parseFloat(text()), raw: text(), loc: location(), };
+    return { type: 'Literal', value: parseFloat(text()), raw: text(), loc: location() };
   }
   /
   // hexadecimal integer
   '0x' body:$[0-9a-fA-F]+ {
-    return { type: 'Literal', value: parseInt(body, 16), raw: text(), loc: location(), };
+    return { type: 'Literal', value: parseInt(body, 16), raw: text(), loc: location() };
   }
   /
   // decimal integer
   [0-9]+ {
-    return { type: 'Literal', value: parseInt(text(), 10), raw: text(), loc: location(), };
+    return { type: 'Literal', value: parseInt(text(), 10), raw: text(), loc: location() };
   }
   /
   // NaN
   'NaN'i !_Word {
-    return { type: 'Literal', value: NaN, raw: text(), loc: location(), };
+    return { type: 'Literal', value: NaN, raw: text(), loc: location() };
   }
   /
   // Infinity
   'Inf'i !_Word {
-    return { type: 'Literal', value: Infinity, raw: text(), loc: location(), };
+    return { type: 'Literal', value: Infinity, raw: text(), loc: location() };
   }
 
 SignedNumLiteral =
   operator:('+' /  '-')? _0 arg:NumLiteral {
-    return operator ? { type: 'UnaryExpression', operator, argument: arg, loc: location(), } : arg;
+    return operator ? { type: 'UnaryExpression', operator, argument: arg, loc: location() } : arg;
   }
 
 _SignedNumLiteralRaw =
@@ -1378,24 +1461,24 @@ _StrRaw 'string' =
 
 StrLiteral 'string literal' =
   str:_StrRaw {
-    return { type: 'Literal', value: str, raw: text(), loc: location(), };
+    return { type: 'Literal', value: str, raw: text(), loc: location() };
   }
   /
   'U+' body:$([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) {
-    return { type: 'Literal', value: String.fromCodePoint(parseInt(body, 16)), raw: text(), loc: location(), };  }
+    return { type: 'Literal', value: String.fromCodePoint(parseInt(body, 16)), raw: text(), loc: location() }; }
 
 StrId 'string identifier' =
   name:_StrRaw {
-    return { type: 'Identifier', name, kind: 'string', loc: location(), };
+    return { type: 'Identifier', name, kind: 'string', loc: location() };
   }
 
 FlagWOValue =
   '/' _0 key:_StdName2 {
-    return { type: 'Flag', key, loc: location(), };
+    return { type: 'Flag', key, loc: location() };
   }
 
 Flag 'operation flag' =
   // '/' _0 key:_StdName2 value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / SignedNumericLiteral / StringLiteral / CallExpr / RefExpr / Variable))? {
   '/' _0 key:_StdName2 value:(_0 '=' _0 @(BraceListExpr / ParenListExpr / BracketListExpr+ / BaseExpr))? {
-    return { type: 'Flag', key, value, loc: location(), };
+    return { type: 'Flag', key, value, loc: location() };
   }
