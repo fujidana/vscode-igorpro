@@ -62,7 +62,7 @@ function truncateString(level: TruncationLevel, item: { description?: string, de
             const endIndex = item.description.indexOf('\n\n');
             truncatedString = (endIndex >= 0) ? item.description.substring(0, endIndex) + '\n\n...' : item.description;
         } else if (level === TruncationLevel.line) {
-            const endIndex = item.description.search(/\.\s/g);
+            const endIndex = item.description.search(/\.\s|\n\n/);
             truncatedString = (endIndex >= 0) ? item.description.substring(0, endIndex) + '. ...' : item.description;
         }
     }
