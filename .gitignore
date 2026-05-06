@@ -6,6 +6,7 @@ node_modules
 *.vsix
 .env
 .DS_Store
+bundle.l10n.json
 syntaxes/*.json
 src/parser.d.ts
 src/parser.js

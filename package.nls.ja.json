@@ -1,0 +1,20 @@
+{
+	"command.vscode-igorpro.showBuiltInSymbols.title": "ビルトインのシンボルを表示",
+	"command.vscode-igorpro.showUserDefinedSymbolsJson.title": "ユーザー定義のシンボルを表示 (JSON)",
+	"command.vscode-igorpro.inspectSyntaxTree.title": "構文ツリーを検査 (開発)",
+	"configuration.vscode-igorpro.igorVersion.description": "対象とするIgor Proのバージョンを指定します。これはコード補完に影響します。",
+	"configuration.vscode-igorpro.specVersion.patternErrorMessage": "値は `7.38` や `9.01` のように、小数点2桁の数字で始まらなければなりません。",
+	"configuration.vscode-igorpro.showSymbolsInPreview.description": "[ビルトインのシンボルを表示](command:vscode-igorpro.showBuiltInSymbols) コマンドが呼び出された時に、マークダウンのソーステキストに加えてプレビューを表示します。",
+	"configuration.vscode-igorpro.suggest.suppressMessages.description": "コード補完のメッセージ量を抑制します。",
+	"configuration.vscode-igorpro.suggest.suppressMessages.completionItem.label.detail.description": "未選択の補完項目の詳細 (項目が関数の場合にパラメータが表示される) を隠します。",
+	"configuration.vscode-igorpro.suggest.suppressMessages.completionItem.label.description.description": "未選択の補完項目の説明 (項目を定義しているファイル名などが表示される) を隠します。",
+	"configuration.vscode-igorpro.suggest.suppressMessages.completionItem.documentation.description": "選択した補完項目の説明文を一文に切り詰めます。",
+	"configuration.vscode-igorpro.suggest.suppressMessages.hover.contents.description": "マウスカーソルをシンボル上に置いたときに表示されるホバーの説明文を一段落に切り詰めます。",
+	"configuration.vscode-igorpro.suggest.suppressMessages.signatureHelp.signatures.documentation.description": "関数引数を編集したときに表示されるシグネチャヘルプの説明文を一段落に切り詰めます。",
+    "configuration.vscode-igorpro.suggest.scope.description": "コード補完で考慮されるグローバルシンボルの範囲を制限します。",
+    "configuration.vscode-igorpro.suggest.scope.workspace.enumDescription": "ワークスペース内のグローバルシンボルはフィルタリングなしで提案されます。",
+    "configuration.vscode-igorpro.suggest.scope.openDocuments.enumDescription": "開いているドキュメントおよびそれらから読み込まれるファイルで定義されたグローバルシンボルが提案されます。",
+    "configuration.vscode-igorpro.suggest.scope.activeEditor.enumDescription": "現在のドキュメントおよびそれらに含まれるファイルで定義されたグローバルシンボルが提案されます。",
+	"configuration.vscode-igorpro.suggest.symbolFile.description": "シンボルが定義されているJSONファイルへの絶対パスを指定します。以下の事前定義された変数がパスに使用できます: `${userHome}`, `${workspaceFolder}`。ファイル形式については、[Show Workspace Symbols (JSON)](command:vscode-igorpro.showWorkspaceSymbolsJson) コマンドで作成されたJSONファイルを参照してください。",
+	"capabilities.untrustedWorkspaces.description": "信頼されないワークスペースでは、セキュリティ場の理由により、いくつかの設定が無効化されます。"
+}
