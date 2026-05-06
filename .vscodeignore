@@ -10,12 +10,15 @@ webpack.config.js
 esbuild.js
 vsc-extension-quickstart.md
 **/tsconfig.json
+**/tsconfig.*.json
+**/*.tsbuildinfo
 **/eslint.config.mjs
 **/*.map
 **/*.ts
 **/.vscode-test.*
 dist/**/test/**
 pnpm-lock.yaml
+pnpm-workspace.yaml
 **/bundle.l10n.json
 syntaxes/*.yaml
 **/pegconfig.json
