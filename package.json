@@ -95,6 +95,15 @@
         }
       ]
     },
+		"jsonValidation": [
+			{
+				"fileMatch": [
+					"ipdict.json",
+					"*.ipdict.json"
+				],
+				"url": "./schema/ipdict.schema.json"
+			}
+		],
     "configurationDefaults": {
       "[igorpro]": {
         "editor.insertSpaces": false

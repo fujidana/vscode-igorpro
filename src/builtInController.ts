@@ -12,9 +12,9 @@ const builtInConfigs: ReferenceConfiguration[] = [
 ];
 
 /**
- * Provider subclass that manages built-in symbols.
+ * Provider subclass that manages built-in and user-defined symbols.
  */
-export class BuiltInController extends Controller implements vscode.TextDocumentContentProvider {
+export class BuiltInController extends Controller<lang.UpdateSession<lang.DictParserResult>>  implements vscode.TextDocumentContentProvider {
     public externalOperationIdentifiers: string[] = [];
 
     constructor(context: vscode.ExtensionContext) {
@@ -89,18 +89,18 @@ export class BuiltInController extends Controller implements vscode.TextDocument
         try {
             const uint8Array = await vscode.workspace.fs.readFile(fileUri);
             const decodedString = await vscode.workspace.decode(uint8Array, { encoding: 'utf8' });
-            const refBookLike = JSON.parse(decodedString) as lang.ReferenceBookLike;
+            const dictionary: lang.CategorizedDictionary = JSON.parse(decodedString);
 
             if (mode !== 'builtin') {
-                const operationEntries = refBookLike.operation;
+                const operationEntries = dictionary.categories.operation;
                 if (operationEntries) {
                     this.externalOperationIdentifiers.push(...Object.keys(operationEntries));
                 }
             }
 
             for (const { uriString, categories } of referenceConfigurations) {
-                const promise = Promise.resolve({ refBook: lang.flattenRefBook(refBookLike, categories) });
-                this.updateSessionMap.set(uriString, { promise: promise });
+                const parserResult = lang.convertFromCategorizedDictionary(dictionary, categories);
+                this.updateSessionMap.set(uriString, { promise: Promise.resolve(parserResult) });
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -134,7 +134,7 @@ export class BuiltInController extends Controller implements vscode.TextDocument
     public async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string | undefined> {
         if (token.isCancellationRequested) { return; }
 
-        const getFormattedStringForItem = (item: { signature: string, description?: string, deprecated?: lang.VersionRange, available?: lang.VersionRange }) => {
+        const getFormattedStringForItem = (item: Omit<lang.ReferenceItem, 'category'>) => {
             let mdText = `\`${item.signature}\``;
             mdText += item.description ? ` \u2014 ${item.description}\n\n` : '\n\n';
             if (item.available) {
@@ -143,49 +143,62 @@ export class BuiltInController extends Controller implements vscode.TextDocument
             if (item.deprecated) {
                 mdText += lang.getVersionRangeDescription(item.deprecated, 'deprecated') + '\n\n';
             }
+            if (item.overloads) {
+                for (const overload of item.overloads) {
+                    mdText += getFormattedStringForItem(overload);
+                }
+            }
             return mdText;
         };
 
         if (lang.BUILTIN_URI === uri.with({ query: '' }).toString()) {
-            let refBookLike: lang.ReferenceBookLike = {};
+            const dictionaries: lang.CategorizedDictionary[] = [];
             for (const { uriString, categories } of builtInConfigs) {
-                const refBook = (await this.updateSessionMap.get(uriString)?.promise)?.refBook;
-                if (refBook) {
-                    refBookLike = Object.assign(refBookLike, lang.categorizeRefBook(refBook, categories, false));
+                const parserResult = await this.updateSessionMap.get(uriString)?.promise;
+                if (parserResult) {
+                    dictionaries.push(lang.convertToCategorizedDictionary(parserResult, categories, false));
                 }
             }
 
             if (token.isCancellationRequested) { return; }
+            if (dictionaries.length === 0) { return; }
+
+            // Merge dictionaries containing different categories into one dictionary. 
+            // Merging must be done after the entries are classified into categories to avoid
+            // entries having the same identifier but classified in different categories
+            // (concretely, `note()` function and `Note` operation) being merged into one entry.
+            const dictionary = dictionaries[0];
+            for (let i = 1; i < dictionaries.length; i++) {
+                for (const [category, entries] of Object.entries(dictionaries[i].categories)) {
+                    dictionary.categories[category as keyof lang.CategorizedDictionary['categories']] = entries;
+                }
+            }
 
             let mdText = '# Igor Pro Built-in Symbols\n\n';
             mdText += 'The contents of this page are, except where otherwise noted, cited from the __Volume V Reference__ in [the official Igor Pro 9 manual](https://www.wavemetrics.com/products/igorpro/manual) or command helps in the in-app help browser, both written by [WaveMetrics, Inc.](https://www.wavemetrics.com/)\n\n';
 
-            for (const [category, refSheet] of Object.entries(refBookLike)) {
+            for (const [categoryName, entriesInCategory] of Object.entries(dictionary.categories)) {
                 // If 'query' is not 'all', skip maps other than the speficed query.
-                if (uri.query && uri.query !== 'all' && uri.query !== category) {
+                if (uri.query && uri.query !== 'all' && uri.query !== categoryName) {
                     continue;
                 }
 
                 // Add heading for each category.
-                mdText += `## ${lang.referenceCategoryMetadata[category as keyof typeof refBookLike].label}\n\n`;
+                mdText += `## ${lang.referenceCategoryMetadata[categoryName as keyof typeof dictionary.categories].label}\n\n`;
 
                 // Add each item.
-                for (const [identifier, refItemLike] of Object.entries(refSheet)) {
+                for (const [identifier, entry] of Object.entries(entriesInCategory)) {
                     // *Specific to Igor Pro*: Keys (identifiers) in the database are lowercased.
                     // If the case-insensitive match of the key with its signature is succeeded,
                     // use the value in the signature field.
-                    if (refItemLike.signature && refItemLike.signature.substring(0, identifier.length).toLowerCase() === identifier) {
-                        mdText += `### ${refItemLike.signature.substring(0, identifier.length)}\n\n`;
+                    if (entry.signature && entry.signature.substring(0, identifier.length).toLowerCase() === identifier) {
+                        mdText += `### ${entry.signature.substring(0, identifier.length)}\n\n`;
                     } else {
-                        console.log('Mismatch between key and signature:', identifier, refItemLike.signature);
+                        console.log('Mismatch between key and signature:', identifier, entry.signature);
                         mdText += `### ${identifier}\n\n`;
                     }
-                    mdText += getFormattedStringForItem(refItemLike);
-                    if (refItemLike.overloads) {
-                        for (const overload of refItemLike.overloads) {
-                            mdText += getFormattedStringForItem(overload);
-                        }
-                    }
+
+                    mdText += getFormattedStringForItem(entry);
                 }
             }
             return mdText;
@@ -198,6 +211,7 @@ export class BuiltInController extends Controller implements vscode.TextDocument
  */
 function getExternalRefBookUri(mode: 'external' | 'external2'): vscode.Uri | undefined {
     const path = vscode.workspace.getConfiguration('vscode-igorpro.suggest').get<string>('symbolFile', '');
+
     const buttons = mode === 'external2' ?
         [vscode.l10n.t('OK'), vscode.l10n.t('Open Settings')] :
         [];

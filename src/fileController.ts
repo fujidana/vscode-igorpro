@@ -119,25 +119,31 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 vscode.window.showErrorMessage(vscode.l10n.t('The language of the current document must be {0}.', lang.SELECTOR.language));
             }
 
-            const categories = ['constant', 'picture', 'structure', 'macro', 'function'] as const;
-            type Category = typeof categories[number];
-            const obj: { [K in Category]: Required<lang.ReferenceBookLike>[K] } = { constant: {}, picture: {}, structure: {}, macro: {}, function: {}, };
+            // If the user selects a template with current workspace symbols, 
+            // gather symbols from all files in the workspace and put them in a reference book.
+            const refBookEntries: [string, lang.ReferenceItem][] = [];
+
             const parserSessionIterable = await this.getUpdateSessionIteable(igorDocument);
             for (const [uriString, session] of parserSessionIterable) {
-                const refBook = (await session.promise)?.refBook;
-                if (refBook === undefined) { continue; }
-
                 // Local variables are not exported.
                 if (uriString === lang.ACTIVE_FILE_URI) { continue; }
 
-                const refBookLike = lang.categorizeRefBook(refBook, categories, true);
-                for (const [category, refSheet] of Object.entries(refBookLike)) {
-                    const category2 = category as keyof typeof refBookLike;
-                    if (category2 === 'constant' || category2 === 'picture' || category2 === 'structure' || category2 === 'macro' || category2 === 'function') {
-                        obj[category2] = Object.assign(obj[category2], refSheet);
-                    }
-                }
+                // Skip files that are not parsed successfully.
+                const refBook = (await session.promise)?.refBook;
+                if (refBook === undefined) { continue; }
+
+                refBookEntries.push(...refBook.entries());
             }
+
+            const categoryFilters = ['constant', 'picture', 'structure', 'macro', 'function'] as const;
+
+            const obj = lang.convertToCategorizedDictionary({
+                $schema: lang.SCDICT_SCHEMA_URI,
+                identifier: 'globalDict',
+                scope: 'global',
+                refBook: new Map(refBookEntries),
+            }, categoryFilters, true);
+
             const content = JSON.stringify(obj, (key, value) => key === 'location' || key === 'category' ? undefined : value, 2);
             const jsonDocument = await vscode.workspace.openTextDocument({ language: 'json', content: content });
             vscode.window.showTextDocument(jsonDocument, { preview: false });
@@ -354,7 +360,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
 
             // Create a new update session and start to analyze.
             const tokenSource = new vscode.CancellationTokenSource();
-            const promise: Promise<lang.ParsedFileData | undefined> = (query.type === 'Document') ?
+            const promise: Promise<lang.FileParserResult | undefined> = (query.type === 'Document') ?
                 Promise.resolve().then(() => analyzeDocumentContent(query.document.getText(), true, true, this.externalOperationIdentifiers, tokenSource.token)) :
                 analyzeContentOfUri(query.uri, false, false, this.externalOperationIdentifiers, tokenSource.token);
             const session: lang.FileUpdateSession = { promise, tokenSource };
@@ -748,13 +754,13 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
     }
 }
 
-async function analyzeContentOfUri(uri: vscode.Uri, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken): Promise<lang.ParsedFileData | undefined> {
+async function analyzeContentOfUri(uri: vscode.Uri, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken): Promise<lang.FileParserResult | undefined> {
     const uint8Array = await vscode.workspace.fs.readFile(uri);
     const content = await vscode.workspace.decode(uint8Array, { uri });
     return analyzeDocumentContent(content, diagnose, isInEditor, operationIdentifiers, token);
 }
 
-function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken): lang.ParsedFileData | undefined {
+function analyzeDocumentContent(content: string, diagnose: boolean, isInEditor: boolean, operationIdentifiers: string[], token: vscode.CancellationToken): lang.FileParserResult | undefined {
     // private parseDocumentContents(contents: string, uri: vscode.Uri, isOpenDocument: boolean, diagnoseProblems: boolean) {
     if (token.isCancellationRequested) { return undefined; }
 
