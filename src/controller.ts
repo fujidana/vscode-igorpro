@@ -12,41 +12,6 @@ const suppressMessagesConfig = {
 
 type SuppressMessagesConfig = Partial<typeof suppressMessagesConfig>;
 
-function getShortDescription(item: lang.ReferenceItem, category: lang.ReferenceCategory, itemUriString: string, documentUriString: string, markdownFormat: boolean) {
-    let symbolLabel: string;
-    let itemUriLabel: string | undefined;
-
-    symbolLabel = lang.referenceCategoryMetadata[category].label;
-
-    if (itemUriString === lang.BUILTIN_URI || itemUriString === lang.OPERATION_URI || itemUriString === lang.EXTRA_URI) {
-        symbolLabel = 'built-in ' + symbolLabel;
-    } else if (itemUriString === lang.EXTERNAL_URI) {
-        symbolLabel = 'external ' + symbolLabel;
-    } else if (itemUriString === lang.ACTIVE_FILE_URI || itemUriString === documentUriString) {
-        if (item.location) {
-            symbolLabel = `${symbolLabel} defined at l.${item.location.start.line} in this file `;
-        } else {
-            symbolLabel = symbolLabel + ' defined in this file';
-        }
-    } else {
-        itemUriLabel = vscode.workspace.asRelativePath(vscode.Uri.parse(itemUriString));
-        symbolLabel = markdownFormat ? 'user-defined ' + symbolLabel : symbolLabel + ' defined in ' + itemUriLabel;
-    }
-    let mainText = `${item.signature} // ${item.isStatic ? 'static ' : ''}${symbolLabel}`;
-    if (item.overloads && item.overloads.length > 1) {
-        mainText += `, ${item.overloads.length} overloads`;
-    }
-
-    if (markdownFormat) {
-        mainText = '```\n' + mainText + '\n```\n\n';
-        if (itemUriLabel) {
-            mainText += `_defined in_ [${itemUriLabel}](${itemUriString}).\n\n`;
-        }
-    }
-    return mainText;
-}
-
-
 const enum TruncationLevel {
     full = 0,
     paragraph,
@@ -54,7 +19,7 @@ const enum TruncationLevel {
 }
 
 function truncateString(level: TruncationLevel, item: { description?: string, deprecated?: lang.VersionRange, available?: lang.VersionRange }): string | undefined {
-    let truncatedString;
+    let truncatedString: string | undefined;
     if (item.description) {
         if (level === TruncationLevel.full) {
             truncatedString = item.description;
@@ -149,9 +114,9 @@ function getWordTypeInCommand(document: vscode.TextDocument, position: vscode.Po
 }
 
 /**
- * Controller class
+ * Abstract class for a main controller.
  */
-export class Controller<T extends lang.UpdateSession = lang.UpdateSession> implements vscode.CompletionItemProvider<lang.CompletionItem>, vscode.HoverProvider, vscode.SignatureHelpProvider {
+export abstract class Controller<T extends lang.UpdateSession = lang.UpdateSession> implements vscode.CompletionItemProvider<lang.CompletionItem>, vscode.HoverProvider, vscode.SignatureHelpProvider {
 
     // In JavaScript, equality comparison (`==` and `===`) of two different objects
     // is always `false`, regardless of the equality of their values.
@@ -188,9 +153,7 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
         return this.updateSessionMap;
     }
 
-    /**
-     * Required implementation of vscode.CompletionItemProvider.
-     */
+    // Required implementation of vscode.CompletionItemProvider.    
     public async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionList<lang.CompletionItem> | lang.CompletionItem[] | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -200,9 +163,8 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
         const selectorName = document.getText(range).toLowerCase();
         if (!/^[a-z][a-z0-9_]*$/.test(selectorName)) { return; }
 
-        const wordType = getWordTypeInCommand(document, position);
-
         // *Specific to Igor Pro*: Completion items are selected contexually.
+        const wordType = getWordTypeInCommand(document, position);
 
         // If it is a flag in operation, currently no suggestion.
         if (wordType === WordType.flag) {
@@ -219,22 +181,12 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
         for (const [uriString, session] of parserSessionIterable) {
             const refBook = (await session.promise)?.refBook;
 
-            // Quit if cancelled and skip if symbol is not found in a file.
             if (token.isCancellationRequested) { return; }
             if (refBook === undefined) { continue; }
 
-            let description: string | undefined;
-            if (!suppressDescription) {
-                if (uriString === lang.BUILTIN_URI || uriString === lang.OPERATION_URI || uriString === lang.EXTRA_URI) {
-                    description = 'built-in';
-                } else if (uriString === lang.EXTERNAL_URI) {
-                    description = 'external';
-                } else if (uriString === lang.ACTIVE_FILE_URI) {
-                    description = 'local';
-                } else {
-                    description = vscode.workspace.asRelativePath(vscode.Uri.parse(uriString));
-                }
-            }
+            const description = suppressDescription ?
+                undefined :
+                this.getCompletionItemLabelDescription(uriString);
 
             for (const [identifier, refItem] of refBook.entries()) {
                 // *Specific to Igor Pro*
@@ -247,7 +199,7 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
                     continue;
                 }
                 // Built-in functions are not allowed at the first word of the sentence.
-                // Operations are allowed only at the first word of hte sentense.
+                // Operations are allowed only at the first word of the sentence.
                 if (wordType === WordType.firstWord) {
                     if (refItem.category === 'function' && uriString === lang.BUILTIN_URI) {
                         continue;
@@ -269,7 +221,7 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
                     continue;
                 }
 
-                // Create completion item.
+                // Create a completion item.
                 const label = refItem.signature.substring(0, identifier.length);
                 const detail = (!suppressDetail && refItem.signature.startsWith(identifier)) ? refItem.signature.substring(identifier.length) : undefined;
                 const completionItem = new lang.CompletionItem({ label, detail, description }, uriString, refItem.category, refItem.isStatic ?? false);
@@ -290,9 +242,7 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
         return completionItems;
     }
 
-    /**
-     * Optional implementation of vscode.CompletionItemProvider.
-     */
+    // Optional implementation of vscode.CompletionItemProvider.
     public async resolveCompletionItem(completionItem: lang.CompletionItem, token: vscode.CancellationToken): Promise<lang.CompletionItem | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -327,18 +277,13 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
 
         // Copy completion item and update its properties.
         const newCompletionItem = Object.assign({}, completionItem);
-        const category = completionItem.category;
-        const activeEditor = vscode.window.activeTextEditor;
-        const documentUriString = activeEditor ? activeEditor.document.uri.toString() : '';
-        newCompletionItem.detail = getShortDescription(refItem, category, refUriString, documentUriString, false);
+        newCompletionItem.detail = this.getSignatureDescription(refItem, refUriString);
         newCompletionItem.documentation = documentation;
 
         return newCompletionItem;
     }
 
-    /**
-     * Required implementation of vscode.HoverProvider.
-     */
+    // Required implementation of vscode.HoverProvider.
     public async provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Promise<vscode.Hover | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -348,9 +293,9 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
         const range = document.getWordRangeAtPosition(position);
         if (range === undefined) { return; }
 
-        const wordType = getWordTypeInCommand(document, position);
-
+        
         // *Specific to Igor Pro*: If it is a flag in operation, currently no suggestion.
+        const wordType = getWordTypeInCommand(document, position);
         if (wordType === WordType.flag) {
             return undefined;
         }
@@ -364,7 +309,6 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
         const parserSessionIterable = await this.getUpdateSessionIteable(document);
         if (token.isCancellationRequested) { return; }
 
-
         for (const [uriString, session] of parserSessionIterable) {
             const refItem = (await session.promise)?.refBook.get(selectorName);
 
@@ -377,7 +321,7 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
                 continue;
             }
             // Built-in functions are not allowed at the first word of the sentence.
-            // Operations are allowed only at the first word of hte sentense.
+            // Operations are allowed only at the first word of the sentence.
             if (wordType === WordType.firstWord) {
                 if (refItem.category === 'function' && uriString === lang.BUILTIN_URI) {
                     continue;
@@ -389,7 +333,7 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
             }
 
             // Create markdown text if symbol is found.
-            let mainMarkdown = new vscode.MarkdownString(getShortDescription(refItem, refItem.category, uriString, document.uri.toString(), true));
+            let mainMarkdown = new vscode.MarkdownString().appendCodeblock(this.getSignatureDescription(refItem, uriString));
 
             const truncatedString = truncateString(truncationLevel, refItem);
             if (truncatedString) {
@@ -412,9 +356,7 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
         return contents.length > 0 ? new vscode.Hover(contents) : undefined;
     }
 
-    /**
-     * Required implementation of vscode.SignatureHelpProvider.
-     */
+    // Required implementation of vscode.SignatureHelpProvider.
     public async provideSignatureHelp(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.SignatureHelpContext): Promise<vscode.SignatureHelp | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -465,5 +407,31 @@ export class Controller<T extends lang.UpdateSession = lang.UpdateSession> imple
             }
             return signatureHelp;
         }
+    }
+
+    /**
+     * Get description to be shown at the right side of a completion item.
+     * Typical return value is the relative path of the file where the symbol is defined.
+     */
+    protected abstract getCompletionItemLabelDescription(uriString: string): string | undefined;
+
+    /**
+     * Get text to be shown aside the signature on the hover and resolved completion item.
+     * Typical return value is short text about the type (category) of the symbol and some other information.
+     */
+    protected abstract getSignatureComment(categoryLabel: string, uriString: string): string;
+
+    /**
+     * Get the description about to be shown on the hover and in the resolved completion item.
+     * The default implementation returns the symbol signature and the file where the symbol is defined.
+     */
+    private getSignatureDescription(item: lang.ReferenceItem, itemUriString: string): string {
+        const symbolLabel = this.getSignatureComment(lang.getLabelForCategory(item.category), itemUriString);
+
+        let mainText = `${item.signature} # ${symbolLabel}`; // ${item.isStatic ? 'static ' : ''}
+        if (item.overloads && item.overloads.length > 1) {
+            mainText += `, ${item.overloads.length} overloads`;
+        }
+        return mainText;
     }
 }

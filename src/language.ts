@@ -15,8 +15,8 @@ export const ACTIVE_FILE_URI = 'igorpro://file/active-document.md';
 
 export const SCDICT_SCHEMA_URI = 'https://raw.githubusercontent.com/fujidana/vscode-igorpro/refs/heads/main/schema/ipdict.schema.json';
 
-export function convertPosition(position: Location): vscode.Position {
-    return new vscode.Position(position.line - 1, position.column - 1);
+export function convertPosition(location: Location): vscode.Position {
+    return new vscode.Position(location.line - 1, location.column - 1);
 }
 
 export function convertRange(range: LocationRange): vscode.Range {
@@ -72,8 +72,8 @@ export type ReferenceItem = {
 };
 
 export type VersionRange = {
-    range: string;
-    description?: string;
+    readonly range: string;
+    readonly description?: string;
 };
 
 export const referenceCategoryNames = ['constant', 'variable', 'picture', 'macro', 'function', 'operation', 'keyword', 'structure', 'subtype', 'pragma', 'hook'] as const;
@@ -97,13 +97,6 @@ export type CategorizedDictionary = {
     };
 };
 
-type ReferenceCategoryMetadata = {
-    readonly label: string
-    readonly iconIdentifier: string,
-    readonly completionItemKind: vscode.CompletionItemKind | undefined,
-    readonly symbolKind: vscode.SymbolKind,
-};
-
 export function getVersionRangeDescription(versionRange: VersionRange, label: string) {
     let tmpStr = versionRange.range === '>=0.0.0' ? `[${label} at some time]` : `[${label}: \`${versionRange.range}\`]`;
     if (versionRange.description) {
@@ -112,90 +105,125 @@ export function getVersionRangeDescription(versionRange: VersionRange, label: st
     return tmpStr;
 }
 
-export const referenceCategoryMetadata: { readonly [K in ReferenceCategory]: ReferenceCategoryMetadata } = {
-    constant: {
-        label: "constant",
-        iconIdentifier: 'symbol-constant',
-        completionItemKind: vscode.CompletionItemKind.Constant,
-        symbolKind: vscode.SymbolKind.Constant
-    },
-    variable: {
-        label: "variable",
-        iconIdentifier: 'symbol-variable',
-        completionItemKind: vscode.CompletionItemKind.Variable,
-        symbolKind: vscode.SymbolKind.Variable
-    },
-    picture: {
-        label: "picture",
-        iconIdentifier: 'symbol-misc',
-        completionItemKind: vscode.CompletionItemKind.File,
-        symbolKind: vscode.SymbolKind.File
-    },
-    macro: {
-        label: "macro",
-        iconIdentifier: 'symbol-method',
-        completionItemKind: vscode.CompletionItemKind.Method,
-        symbolKind: vscode.SymbolKind.Method
-    },
-    function: {
-        label: "function",
-        iconIdentifier: 'symbol-function',
-        completionItemKind: vscode.CompletionItemKind.Function,
-        symbolKind: vscode.SymbolKind.Function
-    },
-    operation: {
-        label: "operation",
-        iconIdentifier: 'symbol-field',
-        completionItemKind: vscode.CompletionItemKind.Field,
-        symbolKind: vscode.SymbolKind.Field
-    },
-    keyword: {
-        label: "keyword",
-        iconIdentifier: 'symbol-keyword',
-        completionItemKind: vscode.CompletionItemKind.Keyword,
-        symbolKind: vscode.SymbolKind.Key
-    },
-    structure: {
-        label: "structure",
-        iconIdentifier: 'symbol-structure',
-        completionItemKind: vscode.CompletionItemKind.Struct,
-        symbolKind: vscode.SymbolKind.Struct
-    },
-    subtype: {
-        label: "subtype",
-        iconIdentifier: 'symbol-interface',
-        completionItemKind: vscode.CompletionItemKind.Interface,
-        symbolKind: vscode.SymbolKind.Interface
-    },
-    pragma: {
-        label: "pragma keyword",
-        iconIdentifier: 'symbol-misc',
-        completionItemKind: vscode.CompletionItemKind.Keyword,
-        symbolKind: vscode.SymbolKind.Key
-    },
-    hook: {
-        label: "hook function",
-        iconIdentifier: 'symbol-function',
-        completionItemKind: undefined,
-        symbolKind: vscode.SymbolKind.Null // no corresponding value
-    },
-    // undefined: {
-    //     label: "unknown symbol",
-    //     iconIdentifier: 'symbol-null',
-    //     completionItemKind: undefined,
-    //     symbolKind: vscode.SymbolKind.Null
-    // },
-};
+export function getLabelForCategory(categoryName: ReferenceCategory): string {
+    switch (categoryName) {
+        case 'constant':
+            return 'constant';
+        case 'variable':
+            return 'variable';
+        case 'picture':
+            return 'picture';
+        case 'macro':
+            return 'macro';
+        case 'function':
+            return 'function';
+        case 'operation':
+            return 'operation';
+        case 'keyword':
+            return 'keyword';
+        case 'structure':
+            return 'structure';
+        case 'subtype':
+            return 'subtype';
+        case 'pragma':
+            return 'pragma keyword';
+        case 'hook':
+            return 'hook function';
+        // default:
+    }
+}
+
+function getCompletionItemKindForCategory(categoryName: ReferenceCategory): vscode.CompletionItemKind | undefined {
+    switch (categoryName) {
+        case 'constant':
+            return vscode.CompletionItemKind.Constant;
+        case 'variable':
+            return vscode.CompletionItemKind.Variable;
+        case 'picture':
+            return vscode.CompletionItemKind.File;
+        case 'macro':
+            return vscode.CompletionItemKind.Method;
+        case 'function':
+            return vscode.CompletionItemKind.Function;
+        case 'operation':
+            return vscode.CompletionItemKind.Field;
+        case 'keyword':
+            return vscode.CompletionItemKind.Keyword;
+        case 'structure':
+            return vscode.CompletionItemKind.Struct;
+        case 'subtype':
+            return vscode.CompletionItemKind.Interface;
+        case 'pragma':
+            return vscode.CompletionItemKind.Keyword; // duplicated with 'keyword'
+        case 'hook':
+            return undefined; // no value corresponding to this kind
+        // default:
+    }
+}
+
+export function getSymbolKindForCategory(categoryName: ReferenceCategory): vscode.SymbolKind {
+    switch (categoryName) {
+        case 'constant':
+            return vscode.SymbolKind.Constant;
+        case 'variable':
+            return vscode.SymbolKind.Variable;
+        case 'picture':
+            return vscode.SymbolKind.File;
+        case 'macro':
+            return vscode.SymbolKind.Method;
+        case 'function':
+            return vscode.SymbolKind.Function;
+        case 'operation':
+            return vscode.SymbolKind.Field;
+        case 'keyword':
+            return vscode.SymbolKind.Key;
+        case 'structure':
+            return vscode.SymbolKind.Struct;
+        case 'subtype':
+            return vscode.SymbolKind.Interface;
+        case 'pragma':
+            return vscode.SymbolKind.Key; // duplicated with 'keyword'
+        case 'hook':
+            return vscode.SymbolKind.Null; // no value corresponding to this kind
+        // default:
+    }
+}
+
+export function getIconIdentifierForCategory(categoryName: ReferenceCategory): string {
+    switch (categoryName) {
+        case 'constant':
+            return 'symbol-constant';
+        case 'variable':
+            return 'symbol-variable';
+        case 'picture':
+            return 'symbol-misc';
+        case 'macro':
+            return 'symbol-method';
+        case 'function':
+            return 'symbol-function';
+        case 'operation':
+            return 'symbol-field';
+        case 'keyword':
+            return 'symbol-keyword';
+        case 'structure':
+            return 'symbol-structure';
+        case 'subtype':
+            return 'symbol-interface';
+        case 'pragma':
+            return 'symbol-keyword'; // duplicated with 'keyword'
+        case 'hook':
+            return 'symbol-null'; // no value corresponding to this kind
+        // default:
+    }
+}
 
 export class CompletionItem extends vscode.CompletionItem {
     readonly uriString: string;
-    readonly category: ReferenceCategory;
     readonly isStatic: boolean;
 
-    constructor(label: string | vscode.CompletionItemLabel, uriString: string, category: ReferenceCategory, isStatic: boolean) {
-        super(label, referenceCategoryMetadata[category].completionItemKind);
+    constructor(label: string | vscode.CompletionItemLabel, uriString: string, categoryName: ReferenceCategory, isStatic: boolean) {
+        super(label, getCompletionItemKindForCategory(categoryName));
         this.uriString = uriString;
-        this.category = category;
         this.isStatic = isStatic;
     };
 }

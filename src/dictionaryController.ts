@@ -14,15 +14,18 @@ const builtInConfigs: ReferenceConfiguration[] = [
 /**
  * Provider subclass that manages built-in and user-defined symbols.
  */
-export class BuiltInController extends Controller<lang.UpdateSession<lang.DictParserResult>>  implements vscode.TextDocumentContentProvider {
+export class DictionaryController extends Controller<lang.UpdateSession<lang.DictParserResult>> implements vscode.TextDocumentContentProvider {
+    private readonly extensionSchemaUriString: string;
     public externalOperationIdentifiers: string[] = [];
 
     constructor(context: vscode.ExtensionContext) {
         super(context);
 
+        this.extensionSchemaUriString = vscode.Uri.joinPath(context.extensionUri, 'schema', 'ipdict.schema.json').toString();
+
         // Load built-in symbol database from the JSON file.
         // ['picture', 'macro', 'undefined'] are not used for built-in symbol database.
-        const builtInRefUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.builtIns.json');
+        const builtInRefUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.ipdict.json');
         this.loadReferenceBooks(builtInRefUri, builtInConfigs, 'builtin');
 
         // Load external symbol database from the JSON file.
@@ -58,8 +61,10 @@ export class BuiltInController extends Controller<lang.UpdateSession<lang.DictPa
             const categories = ['constant', 'variable', 'structure', 'function', 'operation', 'keyword', 'subtype', 'pragma', 'hook'] as const;
             const quickPickItems = [{ category: 'all', label: '$(references) all' }];
             for (const category of categories) {
-                const metadata = lang.referenceCategoryMetadata[category];
-                quickPickItems.push({ category: category, label: `$(${metadata.iconIdentifier}) ${metadata.label}` });
+                quickPickItems.push({
+                    category: category,
+                    label: `$(${lang.getIconIdentifierForCategory(category)}) ${lang.getLabelForCategory(category)}`
+                });
             }
             const quickPickItem = await vscode.window.showQuickPick(quickPickItems);
             if (quickPickItem) {
@@ -128,9 +133,30 @@ export class BuiltInController extends Controller<lang.UpdateSession<lang.DictPa
         }
     }
 
-    /**
-     * Required implementation of vscode.TextDocumentContentProvider.
-     */
+    // Override the method in the base class to provide custom descriptions for completion items.
+    // For entries in a built-in or user-defined dictionary, it returns a descriptive label.
+    protected override getCompletionItemLabelDescription(uriString: string): string | undefined {
+        if (uriString === lang.BUILTIN_URI || uriString === lang.OPERATION_URI || uriString === lang.EXTRA_URI) {
+            return 'built-in';
+        } else if (uriString === lang.EXTERNAL_URI) {
+            return 'external';
+        } else {
+            return undefined;
+        }
+    }
+
+    // Override the method in the base class to provide short text on hover and resolved completion items.
+    protected override getSignatureComment(categoryLabel: string, uriString: string): string {
+        if (uriString === lang.BUILTIN_URI || uriString === lang.OPERATION_URI || uriString === lang.EXTRA_URI) {
+            return 'built-in ' + categoryLabel;
+        } else if (uriString === lang.EXTERNAL_URI) {
+            return 'external ' + categoryLabel;
+        } else {
+            return categoryLabel;
+        }
+    }
+
+    // Required implementation of vscode.TextDocumentContentProvider.
     public async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -184,7 +210,7 @@ export class BuiltInController extends Controller<lang.UpdateSession<lang.DictPa
                 }
 
                 // Add heading for each category.
-                mdText += `## ${lang.referenceCategoryMetadata[categoryName as keyof typeof dictionary.categories].label}\n\n`;
+                mdText += `## ${lang.getLabelForCategory(categoryName as keyof typeof dictionary.categories)}\n\n`;
 
                 // Add each item.
                 for (const [identifier, entry] of Object.entries(entriesInCategory)) {

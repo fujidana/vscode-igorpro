@@ -228,7 +228,7 @@
     "js-yaml": "pnpm run '/^js-yaml:.+/'",
     "js-yaml:snippets": "js-yaml syntaxes/igorpro.snippets.yaml > syntaxes/igorpro.snippets.json",
     "js-yaml:tmLanguage": "js-yaml syntaxes/igorpro.tmLanguage.yaml > syntaxes/igorpro.tmLanguage.json",
-    "js-yaml:builtIns": "js-yaml syntaxes/igorpro.builtIns.yaml > syntaxes/igorpro.builtIns.json",
+    "js-yaml:ipdict": "js-yaml syntaxes/igorpro.ipdict.yaml > syntaxes/igorpro.ipdict.json",
     "l10n-export": "pnpm dlx @vscode/l10n-dev export -o ./l10n ./src"
   },
   "dependencies": {

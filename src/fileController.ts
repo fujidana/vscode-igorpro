@@ -1,6 +1,6 @@
-import * as vscode from "vscode";
-import * as lang from "./language";
-import { Controller } from "./controller";
+import * as vscode from 'vscode';
+import * as lang from './language';
+import { Controller } from './controller';
 import { SyntaxError, parse } from './parser';
 import { traverseForGlobals, traverseForLocals } from './traverser';
 import type * as tree from './tree';
@@ -27,7 +27,7 @@ type SuggestScopeConfig = 'workspace' | 'openDocuments' | 'activeEditor';
 /**
  * Get a set of the URIs of supported files from workspaces.
  * 
- * @returns a promise of a set of URI strings
+ * @returns Thenable that resolves to a set of URI strings.
  */
 async function findFilesInWorkspaces() {
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -75,7 +75,6 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
      * The root of "user" domain is "Igor Pro N User Files" folder.
      * This folder contains "User Procedures", "Igor Procedures", etc.
      */
-
     getSpecialDirPath(domain: 'user' | 'app', dirName?: 'User Procedures' | 'WaveMetrics Procedures') {
         let basePath: string | undefined;
         if (domain === 'app') {
@@ -484,10 +483,22 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         }
     }
 
+    // Override the method in the base class to provide custom descriptions for completion items.
+    // For symbols defined in a file in the workspace, it returns the relative path.
+    protected override getCompletionItemLabelDescription(uriString: string): string | undefined {
+        if (uriString === lang.ACTIVE_FILE_URI) {
+            return 'local';
+        } else {
+            return vscode.workspace.asRelativePath(vscode.Uri.parse(uriString));
+        }
+    }
 
-    /**
-     * Required implementation of vscode.CompletionItemProvider, overriding the super class.
-     */
+    // Override the method in the base class to provide short text on hover and resolved completion items.
+    protected override getSignatureComment(categoryLabel: string, _uriString: string): string {
+        return `user-defined ${categoryLabel}`;
+    }
+
+    // Required implementation of vscode.CompletionItemProvider, overriding the super class.
     public override async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionList<lang.CompletionItem> | lang.CompletionItem[] | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -497,9 +508,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         return super.provideCompletionItems(document, position, token, context);
     }
 
-    /**
-     * Required implementation of vscode.HoverProvider, overriding the super class.
-     */
+    // Required implementation of vscode.HoverProvider, overriding the super class.
     public override async provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Promise<vscode.Hover | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -509,9 +518,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         return super.provideHover(document, position, token);
     }
 
-    /**
-     * Required implementation of vscode.DefinitionProvider.
-     */
+    // Required implementation of vscode.DefinitionProvider.
     public async provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Promise<vscode.Definition | vscode.DefinitionLink[] | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -543,20 +550,15 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         return locations;
     }
 
-    /**
-     * Required implementation of `vscode.DocumentSymbolProvider`.
-     */
+    // Required implementation of `vscode.DocumentSymbolProvider`.
     public async provideDocumentSymbols(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.SymbolInformation[] | vscode.DocumentSymbol[] | undefined> {
         if (token.isCancellationRequested) { return; }
 
         return (await this.updateSessionMap.get(document.uri.toString())?.promise)?.symbols;
     }
 
-    /**
-     * Required implementation of `vscode.WorkspaceSymbolProvider`.
-     * 
-     * This function looks for all symbol definitions that matched with `query` from the workspace.
-     */
+    // Required implementation of `vscode.WorkspaceSymbolProvider`.
+    // This function looks for all symbol definitions that matched with `query` from the workspace.
     public async provideWorkspaceSymbols(query: string, token: vscode.CancellationToken): Promise<vscode.SymbolInformation[] | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -586,7 +588,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 if ((query.length === 0 || regExp.test(identifier)) && refItem.location) {
                     const name = (refItem.category === 'function') ? identifier + '()' : identifier;
                     const location = new vscode.Location(uri, lang.convertRange(refItem.location));
-                    const symbolKind = lang.referenceCategoryMetadata[refItem.category].symbolKind;
+                    const symbolKind = lang.getSymbolKindForCategory(refItem.category);
                     symbols.push(new vscode.SymbolInformation(name, symbolKind, '', location));
                 }
             }
@@ -594,9 +596,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         return symbols;
     }
 
-    /**
-     * Required implementation of `vscode.DocumentLinkProvider`.
-     */
+    // Required implementation of `vscode.DocumentLinkProvider`.
     public async provideDocumentLinks(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<IgorproDocumentLink[] | undefined> {
         if (token.isCancellationRequested) { return; }
 
@@ -607,9 +607,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         return includes?.map(arg => new IgorproDocumentLink(arg.range, arg, baseUri));
     }
 
-    /**
-     * Optional implementation of `vscode.DocumentLinkProvider`.
-     */
+    // Optional implementation of `vscode.DocumentLinkProvider`.
     public resolveDocumentLink(link: IgorproDocumentLink, token: vscode.CancellationToken): vscode.ProviderResult<IgorproDocumentLink> {
         if (token.isCancellationRequested) { return; }
 
@@ -618,12 +616,9 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         );
     }
 
-    /**
-     * Required implementation of `vscode.DocumentDropEditProvider`.
-     * 
-     * This function is called when a file is dropped into the editor.
-     * This function returns a path string like `#include "..."`.
-     */
+    // Required implementation of `vscode.DocumentDropEditProvider`.
+    // This function is called when a file is dropped into the editor.
+    // This function returns a path string like `#include "..."`.
     public provideDocumentDropEdits(document: vscode.TextDocument, position: vscode.Position, dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): vscode.ProviderResult<vscode.DocumentDropEdit> {
         // The value for 'text/uri-list' key in dataTransfer is a string of file list separated by '\r\n'.
         const uriList = dataTransfer.get('text/uri-list');
@@ -660,9 +655,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         return undefined;
     }
 
-    /**
-     * required implementation of vscode.TextDocumentContentProvider
-     */
+    // required implementation of vscode.TextDocumentContentProvider.
     public provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
         if (token.isCancellationRequested) { return; }
 

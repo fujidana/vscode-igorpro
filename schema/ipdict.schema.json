@@ -83,7 +83,7 @@
     "entriesInCategory": {
       "type": "object",
       "patternProperties": {
-        "^[a-z][_a-z0-9]*$": {
+        "^[a-z][a-z0-9_]*$": {
           "$ref": "#/$defs/entry"
         }
       },
