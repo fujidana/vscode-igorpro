@@ -5,15 +5,10 @@ import type * as tree from './tree';
 export const SELECTOR = { language: 'igorpro' };
 // export const SELECTOR = [{ scheme: 'file', language: 'igorpro' }, { scheme: 'untitled', language: 'igorpro' }];
 
-export const BUILTIN_URI = 'igorpro://built-in/built-in.md';
-export const OPERATION_URI = 'igorpro://built-in/operation.md';
-export const EXTRA_URI = 'igorpro://built-in/extra.md';
-export const EXTERNAL_URI = 'igorpro://built-in/external.md';
-
 export const AST_URI = 'igorpro://file/ast.json';
 export const ACTIVE_FILE_URI = 'igorpro://file/active-document.md';
 
-export const SCDICT_SCHEMA_URI = 'https://raw.githubusercontent.com/fujidana/vscode-igorpro/refs/heads/main/schema/ipdict.schema.json';
+export const DICT_SCHEMA_URI = 'https://raw.githubusercontent.com/fujidana/vscode-igorpro/refs/heads/main/schema/ipdict.schema.json';
 
 export function convertPosition(location: Location): vscode.Position {
     return new vscode.Position(location.line - 1, location.column - 1);
@@ -49,7 +44,7 @@ export type IncludeArgument = {
 };
 
 export type UpdateSession<T extends ParserResult = ParserResult> = { promise: Promise<T | undefined> };
-export type FileUpdateSession = { promise: Promise<FileParserResult | undefined>, tokenSource?: vscode.CancellationTokenSource | undefined, tokenSource1?: vscode.CancellationTokenSource | undefined };
+export type FileUpdateSession = { promise: Promise<FileParserResult | undefined>, tokenSource?: vscode.CancellationTokenSource | undefined };
 
 /**
  * Map object consisting of pairs of a unique identifier and a reference item.
@@ -231,18 +226,18 @@ export class CompletionItem extends vscode.CompletionItem {
 /**
  * Convert a `Map` object the extension internally uses to a plain object that can be exported after `JSON.stringify()`.
  * @param parserResult Object containing a Map object and some other properties.
- * @param categoryFilters Categories to be converted. Only listed categories will be included in the output object. If not specified, all categories will be included.
+ * @param categoryFilter Categories to be converted. Only listed categories will be included in the output object. If not specified, all categories will be included.
  * @param excludeStatic Exclude static symbols if true.
  * @returns Stringifiable object that has the `categories` proprty. To access an entry of the dictionary (a leaf of the object tree), do like the following: `obj.categories.function.sock_par`.
  */
-export function convertToCategorizedDictionary(parserResult: DictParserResult, categoryFilters: readonly ReferenceCategory[], excludeStatic?: boolean): CategorizedDictionary {
+export function convertToCategorizedDictionary(parserResult: DictParserResult, categoryFilter: readonly ReferenceCategory[] = referenceCategoryNames, excludeStatic?: boolean): CategorizedDictionary {
     const categories: CategorizedDictionary['categories'] = {};
-    for (const categoryName of categoryFilters) {
+    for (const categoryName of categoryFilter) {
         categories[categoryName] = {};
     }
 
     for (const [identifier, entry] of parserResult.refBook.entries()) {
-        if (!categoryFilters.includes(entry.category)) {
+        if (!categoryFilter.includes(entry.category)) {
             continue;
         } else if (excludeStatic && entry.isStatic) {
             continue;
@@ -271,13 +266,13 @@ export function convertToCategorizedDictionary(parserResult: DictParserResult, c
 /**
  * Convert a plain object that can be imported from file via `JSON.parse()` to a `Map` object the extension internally uses.
  * @param dictionary Object typically parsed from a JSON file, where reference items are categorized under `categories` property.
- * @param categoryFilters Categories to be converted. Only listed categories will be included in the output object. If not specified, all categories will be included.
+ * @param categoryFilter Categories to be converted. Only listed categories will be included in the output object. If not specified, all categories will be included.
  * @returns Object containing a Map object and some other properties.
  */
-export function convertFromCategorizedDictionary(dictionary: CategorizedDictionary, categoryFilters: readonly ReferenceCategory[] = referenceCategoryNames): DictParserResult {
+export function convertFromCategorizedDictionary(dictionary: CategorizedDictionary, categoryFilter: readonly ReferenceCategory[] = referenceCategoryNames): DictParserResult {
     const refBook: ReferenceBook = new Map();
     for (const [categoryName, entries] of Object.entries(dictionary.categories)) {
-        if (categoryFilters.includes(categoryName as keyof typeof dictionary.categories)) {
+        if (categoryFilter.includes(categoryName as keyof typeof dictionary.categories)) {
             for (const [identifier, entry] of Object.entries(entries)) {
                 // if (refBook.has(identifier)) {
                 //     console.log(`Identifiers are duplicated!: ${identifier}`);

@@ -18,7 +18,9 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	const dictionaryController = new DictionaryController(context);
-	new FileController(context, dictionaryController.externalOperationIdentifiers);
+	const fileController = new FileController(context, dictionaryController.externalOperationMap);
+
+	dictionaryController.fileController = fileController;
 }
 
 export function deactivate() { }

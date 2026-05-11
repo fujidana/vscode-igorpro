@@ -64,7 +64,7 @@ async function findFilesInWorkspaces() {
 export class FileController extends Controller<lang.FileUpdateSession> implements vscode.DefinitionProvider, vscode.DocumentSymbolProvider, vscode.WorkspaceSymbolProvider, vscode.DocumentLinkProvider<IgorproDocumentLink>, vscode.DocumentDropEditProvider, vscode.TextDocumentContentProvider {
 
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
-    public externalOperationIdentifiers: string[];
+    public externalOperationMap: Map<string, string[]>;
 
     /**
      * Return the path to a special directory.
@@ -96,57 +96,11 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         }
     }
 
-    constructor(context: vscode.ExtensionContext, externalOperationIdentifiers: string[]) {
+    constructor(context: vscode.ExtensionContext, externalOperationMap: Map<string, string[]>) {
         super(context);
 
-        this.externalOperationIdentifiers = externalOperationIdentifiers;
+        this.externalOperationMap = externalOperationMap;
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('igorpro');
-
-        const showUserDefinedSymbolsJsonCommandHandler = async () => {
-            // When the extension is activated by the command, `updateSessionMap`
-            // is empty at the moment. In such a case, the extension wait for a while
-            // so that promise objects will be added into `updateSessionMap`.
-            if (this.updateSessionMap.size === 0) {
-                await new Promise((resolve) => setTimeout(resolve, 200));
-            }
-
-            const igorDocument = vscode.window.activeTextEditor?.document;
-            if (!igorDocument) {
-                vscode.window.showErrorMessage(vscode.l10n.t('Active text editor is not found.'));
-                return;
-            } else if (vscode.languages.match(lang.SELECTOR, igorDocument) === 0) {
-                vscode.window.showErrorMessage(vscode.l10n.t('The language of the current document must be {0}.', lang.SELECTOR.language));
-            }
-
-            // If the user selects a template with current workspace symbols, 
-            // gather symbols from all files in the workspace and put them in a reference book.
-            const refBookEntries: [string, lang.ReferenceItem][] = [];
-
-            const parserSessionIterable = await this.getUpdateSessionIteable(igorDocument);
-            for (const [uriString, session] of parserSessionIterable) {
-                // Local variables are not exported.
-                if (uriString === lang.ACTIVE_FILE_URI) { continue; }
-
-                // Skip files that are not parsed successfully.
-                const refBook = (await session.promise)?.refBook;
-                if (refBook === undefined) { continue; }
-
-                refBookEntries.push(...refBook.entries());
-            }
-
-            const categoryFilters = ['constant', 'picture', 'structure', 'macro', 'function'] as const;
-
-            const obj = lang.convertToCategorizedDictionary({
-                $schema: lang.SCDICT_SCHEMA_URI,
-                identifier: 'globalDict',
-                scope: 'global',
-                refBook: new Map(refBookEntries),
-            }, categoryFilters, true);
-
-            const content = JSON.stringify(obj, (key, value) => key === 'location' || key === 'category' ? undefined : value, 2);
-            const jsonDocument = await vscode.workspace.openTextDocument({ language: 'json', content: content });
-            vscode.window.showTextDocument(jsonDocument, { preview: false });
-        };
 
         const inspectSyntaxTreeCommandHandler = async () => {
             const editor = vscode.window.activeTextEditor;
@@ -198,10 +152,10 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 const filesInWorkspaces = await findFilesInWorkspaces();
                 if (filesInWorkspaces.has(uriString)) {
                     // If file also exists in a workspace folder, delete tree and symbols.
-                    const parsedData = await this.updateSessionMap.get(uriString)?.promise;
-                    if (parsedData) {
-                        parsedData.tree = undefined;
-                        parsedData.symbols = undefined;
+                    const parserResult = await this.updateSessionMap.get(uriString)?.promise;
+                    if (parserResult) {
+                        parserResult.tree = undefined;
+                        parserResult.symbols = undefined;
                     }
                 } else {
                     this.updateSessionMap.delete(uriString);
@@ -273,7 +227,6 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         // Register providers and event handlers.
         context.subscriptions.push(
             // Register command handlers.
-            vscode.commands.registerCommand('vscode-igorpro.showUserDefinedSymbolsJson', showUserDefinedSymbolsJsonCommandHandler),
             vscode.commands.registerCommand('vscode-igorpro.inspectSyntaxTree', inspectSyntaxTreeCommandHandler),
 
             // Register document-event listeners.
@@ -331,7 +284,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
      * Refresh the database by scanning files open in editor and other files in workspace folders.
      */
     private async refreshCollections() {
-        // Clear caches.
+        // Clear data.
         this.updateSessionMap.clear();
         this.diagnosticCollection.clear();
 
@@ -359,14 +312,15 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
 
             // Create a new update session and start to analyze.
             const tokenSource = new vscode.CancellationTokenSource();
+            const operationIdentifiers = [...this.externalOperationMap.values()].flat();
             const promise: Promise<lang.FileParserResult | undefined> = (query.type === 'Document') ?
-                Promise.resolve().then(() => analyzeDocumentContent(query.document.getText(), true, true, this.externalOperationIdentifiers, tokenSource.token)) :
-                analyzeContentOfUri(query.uri, false, false, this.externalOperationIdentifiers, tokenSource.token);
+                Promise.resolve().then(() => analyzeDocumentContent(query.document.getText(), true, true, operationIdentifiers, tokenSource.token)) :
+                analyzeContentOfUri(query.uri, false, false, operationIdentifiers, tokenSource.token);
             const session: lang.FileUpdateSession = { promise, tokenSource };
             // Attach a callback that will clean the cancellation token when update is finished.
-            session.promise.then(parsedData => {
-                if (parsedData?.diagnostics) {
-                    this.diagnosticCollection.set(uri, parsedData.diagnostics);
+            session.promise.then(parserResult => {
+                if (parserResult?.diagnostics) {
+                    this.diagnosticCollection.set(uri, parserResult.diagnostics);
                 } else {
                     this.diagnosticCollection.delete(uri);
                 }
@@ -416,9 +370,9 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         const session = this.updateSessionMap.get(document.uri.toString());
         if (session) {
             const promise = session.promise.then(
-                parsedData => {
-                    if (parsedData?.tree) {
-                        return { refBook: traverseForLocals(parsedData.tree, position), includes: [] };
+                parserResult => {
+                    if (parserResult?.tree) {
+                        return { refBook: traverseForLocals(parserResult.tree, position), includes: [] };
                     };
                 }
             );
@@ -437,7 +391,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
      * @param document Root document of `#include` chains (used when `vscode-igorpro.suggest.scope` setting is set to `"activeEditor"`)
      * @returns A promise of iterable of filtered parser sessions.
      */
-    protected override async getUpdateSessionIteable(document: vscode.TextDocument): Promise<Iterable<[string, lang.FileUpdateSession]>> {
+    public override async getUpdateSessionIteable(document: vscode.TextDocument): Promise<Iterable<[string, lang.FileUpdateSession]>> {
         const scope = vscode.workspace.getConfiguration('vscode-igorpro.suggest', document).get<SuggestScopeConfig>('scope', 'workspace');
 
         /**
@@ -664,7 +618,8 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
             const editor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === docUri.toString());
             if (editor) {
                 try {
-                    const tree = parse(editor.document.getText(), { operationIdentifiers: this.externalOperationIdentifiers });
+                    const operationIdentifiers = [...this.externalOperationMap.values()].flat();
+                    const tree = parse(editor.document.getText(), { operationIdentifiers });
                     // const content = JSON.stringify(tree, null, 2);
                     return JSON.stringify(tree, (key, value) => { return key === 'loc' ? undefined : value; }, 2);
                 } catch (error) {

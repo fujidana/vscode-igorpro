@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as lang from './language';
+import { BUILTIN_DICT_URI } from './dictionaryController';
 import { SemVer, satisfies } from 'semver';
 
 const suppressMessagesConfig = {
@@ -149,7 +150,7 @@ export abstract class Controller<T extends lang.UpdateSession = lang.UpdateSessi
      * This method simply passes all update sessions without filtration.
      * Subclass can override it to limit the scope.
      */
-    protected async getUpdateSessionIteable(_document: vscode.TextDocument): Promise<Iterable<[string, T]>> {
+    public async getUpdateSessionIteable(_document: vscode.TextDocument): Promise<Iterable<[string, T]>> {
         return this.updateSessionMap;
     }
 
@@ -201,7 +202,7 @@ export abstract class Controller<T extends lang.UpdateSession = lang.UpdateSessi
                 // Built-in functions are not allowed at the first word of the sentence.
                 // Operations are allowed only at the first word of the sentence.
                 if (wordType === WordType.firstWord) {
-                    if (refItem.category === 'function' && uriString === lang.BUILTIN_URI) {
+                    if (refItem.category === 'function' && uriString === BUILTIN_DICT_URI) {
                         continue;
                     }
                 } else {
@@ -293,7 +294,7 @@ export abstract class Controller<T extends lang.UpdateSession = lang.UpdateSessi
         const range = document.getWordRangeAtPosition(position);
         if (range === undefined) { return; }
 
-        
+
         // *Specific to Igor Pro*: If it is a flag in operation, currently no suggestion.
         const wordType = getWordTypeInCommand(document, position);
         if (wordType === WordType.flag) {
@@ -323,7 +324,7 @@ export abstract class Controller<T extends lang.UpdateSession = lang.UpdateSessi
             // Built-in functions are not allowed at the first word of the sentence.
             // Operations are allowed only at the first word of the sentence.
             if (wordType === WordType.firstWord) {
-                if (refItem.category === 'function' && uriString === lang.BUILTIN_URI) {
+                if (refItem.category === 'function' && uriString === BUILTIN_DICT_URI) {
                     continue;
                 }
             } else {
