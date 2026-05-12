@@ -7,11 +7,13 @@ patterns:
     name: meta.preprocessor.igorpro
     captures:
       "1": { patterns: [{ include: "#preprocessor" }] }
-  - begin: (?i)^\s*(Static|Override)?\s*\b((?:Str)?Constant)\s*((?:/\w+\s*)*)\s+
+  - begin: (?i)^\s*(Static|Override)?\s*\b((?:Str)?Constant)((?:\s*/\w+)*)\s*\b(?:(\w+)\s*(=)\s*)?
     beginCaptures:
       "1": { name: storage.modifier.scope.igorpro }
       "2": { name: storage.type.constant.igorpro }
       "3": { patterns: [{ include: "#optional-flag" }] }
+      "4": { name: variable.other.constant.igorpro }
+      "5": { name: keyword.operator.assignment.arithmetic.igorpro }
     end: (?=;|//|$)
     patterns:
       - match: \s+
@@ -224,7 +226,7 @@ repository:
       - include: "#line-comment"
       - match: ;
         name: punctuation.terminator.statement.igorpro
-      - match: (?i)^\s*(#\w+\b(?:(?!;|//|$).)*)
+      - match: ^\s*(#\w+\b(?:(?!;|//|$).)*)
         name: meta.preprocessor.igorpro
         captures:
           "1": { patterns: [{ include: "#preprocessor" }] }
