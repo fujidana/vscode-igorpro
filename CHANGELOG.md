@@ -4,9 +4,31 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### [2.2.0] -- 2026-05-12
+
+### Added
+
+- Restruct the code for multilingual support (i.e, internationalization) and add Japanese localization. Issue [#76](https://github.com/fujidana/vscode-igorpro/issues/76).
+- Enable to store user-defined dictionaries in the _Global State_ and _Workspace State_. Issue [#78](https://github.com/fujidana/vscode-igorpro/issues/78).
+  - To use a user-defined dictionary in the previous version (v2.0.0--v2.1.0), a user needed to put a JSON file in one's PC and set the path in the `vscode-igorpro.suggest.symbolFile` setting. This feature is replaced by the new feature and the setting is deprecated.
+  - The following commands are added to manage user-defined dictionaries:
+    - `vscode-igorpro.showDictionaryPreview`: Show the content of a user-defined dictionary in a markdown text and its preview. This command can also show the preview of built-in dictionary.
+    - `vscode-igorpro.showDictionarySource`: Show the JSON-formatted user-defined dictionary in the active editor. This command can also show a template for a new dictionary based on the workspace symbols.
+    - `vscode-igorpro.registerDictionary`: Register the JSON-formatted content of the active editor as a user-defined dictionary.
+    - `vscode-igorpro.deleteDictionary`: Delete a user-defined dictionary.
+  - Remove the following commands related to user-defined dictionaries, since the new commands cover the same features and more:
+    - `vscode-igorpro.showBuiltInSymbols`
+    - `vscode-igorpro.showWorkspaceSymbolsJson`
+
 ### Changed
 
 - Raise the minimum VS Code version to 1.110.0.
+- Bump `semver` dependency to 7.8.0.
+- Add `vscode-igorpro.dictionaryPreview` setting and deprecate `vscode-igorpro.showSymbolsInPreview` setting. The former setting has more options to control the content of the preview.
+
+### Fixed
+
+- Fix a bug where information about symbol signature is not shown in completion items in some cases.
 
 ## [2.1.0] -- 2025-12-03
 
@@ -17,7 +39,7 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Changed
 
-- Make syntax parser and syntax highlighting rules accept line continuation (a backslash followed by a line break) in more places, for better compatiblity with Igor Pro 10 (not perfectly the same as Igor Pro 10's compiler). Issue [#74](https://github.com/fujidana/vscode-igorpro/issues/74)
+- Make syntax parser and syntax highlighting rules accept line continuation (a backslash followed by a line break) in more places, for better compatiblity with Igor Pro 10 (not perfectly the same as Igor Pro 10's compiler). Issue [#74](https://github.com/fujidana/vscode-igorpro/issues/74).
 - Rename "Show Workspace Symbols (JSON)" command action "Show User-defined Symbols (JSON)" and now the document exported by this action is affected by the "vscode-igorpro.suggest.scope" setting. Issue [#53](https://github.com/fujidana/vscode-igorpro/issues/53).
 - Raise the minimum VS Code version to 1.102.0.
 
@@ -173,7 +195,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
   - bracket definition, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/fujidana/vscode-igorpro/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/fujidana/vscode-igorpro/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.4.4...v1.5.0
