@@ -224,7 +224,7 @@ export abstract class Controller<T extends lang.UpdateSession = lang.UpdateSessi
 
                 // Create a completion item.
                 const label = refItem.signature.substring(0, identifier.length);
-                const detail = (!suppressDetail && refItem.signature.startsWith(identifier)) ? refItem.signature.substring(identifier.length) : undefined;
+                const detail = (!suppressDetail && refItem.signature.toLowerCase().startsWith(identifier)) ? refItem.signature.substring(identifier.length) : undefined;
                 const completionItem = new lang.CompletionItem({ label, detail, description }, uriString, refItem.category, refItem.isStatic ?? false);
                 // if (refItem.snippet) {
                 //     completionItem.insertText = new vscode.SnippetString(refItem.snippet);
