@@ -62,16 +62,29 @@
     ],
     "commands": [
       {
-        "command": "vscode-igorpro.showBuiltInSymbols",
-        "title": "%command.vscode-igorpro.showBuiltInSymbols.title%",
+        "command": "vscode-igorpro.showDictionaryPreview",
+        "title": "%command.vscode-igorpro.showDictionaryPreview.title%",
         "category": "Igor Pro",
         "icon": "$(references)"
       },
       {
-        "command": "vscode-igorpro.showUserDefinedSymbolsJson",
-        "title": "%command.vscode-igorpro.showUserDefinedSymbolsJson.title%",
+        "command": "vscode-igorpro.showDictionarySource",
+        "title": "%command.vscode-igorpro.showDictionarySource.title%",
         "category": "Igor Pro",
-        "icon": "$(json)"
+        "icon": "$(repo-pull)"
+      },
+      {
+        "command": "vscode-igorpro.registerDictionary",
+        "title": "%command.vscode-igorpro.registerDictionary.title%",
+        "enablement": "editorLangId == json",
+        "category": "Igor Pro",
+        "icon": "$(repo-push)"
+      },
+      {
+        "command": "vscode-igorpro.deleteDictionary",
+        "title": "%command.vscode-igorpro.deleteDictionary.title%",
+        "category": "Igor Pro",
+        "icon": "$(trash)"
       },
       {
         "command": "vscode-igorpro.inspectSyntaxTree",
@@ -83,11 +96,17 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "vscode-igorpro.showBuiltInSymbols"
+          "command": "vscode-igorpro.showDictionaryPreview"
         },
         {
-          "command": "vscode-igorpro.showUserDefinedSymbolsJson",
-          "when": "editorLangId == igorpro"
+          "command": "vscode-igorpro.showDictionarySource"
+        },
+        {
+          "command": "vscode-igorpro.registerDictionary",
+          "when": "editorLangId == json"
+        },
+        {
+          "command": "vscode-igorpro.deleteDictionary"
         },
         {
           "command": "vscode-igorpro.inspectSyntaxTree",
@@ -95,6 +114,15 @@
         }
       ]
     },
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "ipdict.json",
+          "*.ipdict.json"
+        ],
+        "url": "./schema/ipdict.schema.json"
+      }
+    ],
     "configurationDefaults": {
       "[igorpro]": {
         "editor.insertSpaces": false
@@ -109,12 +137,23 @@
             "default": "10.00",
             "markdownDescription": "%configuration.vscode-igorpro.igorVersion.description%",
             "pattern": "^(0|[1-9]\\d*)\\.(\\d)(\\d)(?!\\d)",
-            "patternErrorMessage": "%configuration.vscode-igorpro.specVersion.patternErrorMessage%"
+            "patternErrorMessage": "%configuration.vscode-igorpro.igorVersion.patternErrorMessage%"
           },
           "vscode-igorpro.showSymbolsInPreview": {
             "type": "boolean",
             "default": true,
-            "markdownDescription": "%configuration.vscode-igorpro.showSymbolsInPreview.description%"
+            "markdownDescription": "%configuration.vscode-igorpro.showSymbolsInPreview.description%",
+            "markdownDeprecationMessage": "**Deprecated**: Please use `#vscode-igorpro.dictionaryPreview#` instead."
+          },
+          "vscode-igorpro.dictionaryPreview": {
+            "type": "string",
+            "enum": [
+              "markdown",
+              "preview",
+              "markdown+preview"
+            ],
+            "default": "preview",
+            "markdownDescription": "%configuration.vscode-igorpro.dictionaryPreview.description%"
           },
           "vscode-igorpro.suggest.suppressMessages": {
             "type": "object",
@@ -179,9 +218,7 @@
             "default": "",
             "scope": "window",
             "markdownDescription": "%configuration.vscode-igorpro.suggest.symbolFile.description%",
-            "tags": [
-              "preview"
-            ]
+            "markdownDeprecationMessage": "**Deprecated**: Not effective now."
           }
         }
       }
@@ -219,7 +256,7 @@
     "js-yaml": "pnpm run '/^js-yaml:.+/'",
     "js-yaml:snippets": "js-yaml syntaxes/igorpro.snippets.yaml > syntaxes/igorpro.snippets.json",
     "js-yaml:tmLanguage": "js-yaml syntaxes/igorpro.tmLanguage.yaml > syntaxes/igorpro.tmLanguage.json",
-    "js-yaml:builtIns": "js-yaml syntaxes/igorpro.builtIns.yaml > syntaxes/igorpro.builtIns.json",
+    "js-yaml:ipdict": "js-yaml syntaxes/igorpro.ipdict.yaml > syntaxes/igorpro.ipdict.json",
     "l10n-export": "pnpm dlx @vscode/l10n-dev export -o ./l10n ./src"
   },
   "dependencies": {

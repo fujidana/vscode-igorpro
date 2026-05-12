@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/fujidana/vscode-igorpro/refs/heads/master/schema/ipfdict.schema.json",
+  "title": "vscode-igorpro dictionary",
+  "description": "Collection of symbols in Igor Procedure such as variables, constants, and functions. \"vscode-igorpro\", the VS Code extension for Igor Pro Procedure files, uses this schema to validate the content of dictionary files.",
+  "type": "object",
+  "required": [
+    "kind",
+    "identifier",
+    "scope",
+    "categories"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "kind": {
+      "const": "igorpro.dictionary"
+    },
+    "identifier": {
+      "type": "string",
+      "description": "Identifier of the dictionary. This is used for internal management and should be unique across all dictionaries.",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "extension",
+        "global",
+        "workspace"
+      ],
+      "description": "Scope of the dictionary. This also indicates where the dictionary is stored."
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the dictionary. It should not include any line breaks."
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the dictionary. Markdown syntax is supported. It can contain multiple lines and paragraphs."
+    },
+    "categories": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "constant": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "variable": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "picture": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "macro": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "function": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "operation": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "keyword": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "structure": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "subtype": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "pragma": {
+          "$ref": "#/$defs/entriesInCategory"
+        },
+        "hook": {
+          "$ref": "#/$defs/entriesInCategory"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "entriesInCategory": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z][a-z0-9_]*$": {
+          "$ref": "#/$defs/entry"
+        }
+      },
+      "additionalProperties": false
+    },
+    "entry": {
+      "type": "object",
+      "required": [
+        "signature"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "signature": {
+          "type": "string",
+          "description": "Signature. In case of variables and constants, this is usually the name of the variable or constant. In case of functions, this is usually the function signature including parameters and surrounding parentheses.",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "description": "Description."
+        },
+        "available": {
+          "$ref": "#/$defs/versionRange",
+          "description": "Specifies the version range in which the item is available."
+        },
+        "deprecated": {
+          "$ref": "#/$defs/versionRange",
+          "description": "Specifies the version range in which the item is deprecated."
+        },
+        "isStatic": {
+          "type": "boolean",
+          "description": "Specifies whether the item is static."
+        },
+        "overloads": {
+          "type": "array",
+          "description": "Overloads of the item, only used for functions.",
+          "items": {
+            "type": "object",
+            "required": [
+              "signature"
+            ],
+            "properties": {
+              "signature": {
+                "type": "string",
+                "description": "Signature of the overload. This is usually the function signature including parameters and surrounding parentheses."
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the overload."
+              }
+            }
+          }
+        }
+      }
+    },
+    "versionRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "range": {
+          "type": "string",
+          "description": "Version range in semver format."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the version range."
+        }
+      },
+      "required": [
+        "range"
+      ]
+    }
+  }
+}
