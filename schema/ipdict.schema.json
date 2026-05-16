@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/fujidana/vscode-igorpro/refs/heads/master/schema/ipfdict.schema.json",
   "title": "vscode-igorpro dictionary",
-  "description": "Collection of symbols in Igor Procedure such as variables, constants, and functions. \"vscode-igorpro\", the VS Code extension for Igor Pro Procedure files, uses this schema to validate the content of dictionary files.",
+  "description": "Dictionary for \"fujidana.vscode-igorpro\", an extension of Visual Studio Code for Igor Pro Procedure files. The extension can load dictionaries that comply with the JSON schema to provide code hints.",
   "type": "object",
   "required": [
     "kind",
@@ -12,24 +12,26 @@
   ],
   "properties": {
     "$schema": {
-      "type": "string"
+      "type": "string",
+      "description": "URI of the JSON schema. If the file name is *.ipdict.json, this property is optional and defaults to the URI of the schema in the extension. Otherwise, the value of this property should be the URI of the schema in the extension or that in the remote repository (GitHub)."
     },
     "kind": {
-      "const": "igorpro.dictionary"
+      "const": "igorpro.dictionary",
+      "description": "Kind of the dictionary. The value must be \"igorpro.dictionary\"."
     },
     "identifier": {
       "type": "string",
-      "description": "Identifier of the dictionary. This is used for internal management and should be unique across all dictionaries.",
+      "description": "Identifier of the dictionary, typically given by the user. The value should be unique within the scope.",
       "minLength": 1
     },
     "scope": {
       "type": "string",
+      "description": "Scope of the dictionary. This also indicates where the dictionary is stored.",
       "enum": [
         "extension",
         "global",
         "workspace"
-      ],
-      "description": "Scope of the dictionary. This also indicates where the dictionary is stored."
+      ]
     },
     "name": {
       "type": "string",
@@ -37,10 +39,11 @@
     },
     "description": {
       "type": "string",
-      "description": "Description of the dictionary. Markdown syntax is supported. It can contain multiple lines and paragraphs."
+      "description": "Description of the dictionary. The extension renders the value as Markdown-style text."
     },
     "categories": {
       "type": "object",
+      "description": "Categories of the dictionary. Each property represents a category.",
       "additionalProperties": false,
       "properties": {
         "constant": {
@@ -82,8 +85,12 @@
   "$defs": {
     "entriesInCategory": {
       "type": "object",
+      "description": "A category whose properties are entries of the dictionary. The key of the property must be a lowercased strict identifier of Igor Pro procedures.",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
       "patternProperties": {
-        "^[a-z][a-z0-9_]*$": {
+        "": {
           "$ref": "#/$defs/entry"
         }
       },
@@ -91,6 +98,7 @@
     },
     "entry": {
       "type": "object",
+      "description": "An entry in a category. \"signature\" property is required.",
       "required": [
         "signature"
       ],
@@ -98,30 +106,31 @@
       "properties": {
         "signature": {
           "type": "string",
-          "description": "Signature. In case of variables and constants, this is usually the name of the variable or constant. In case of functions, this is usually the function signature including parameters and surrounding parentheses.",
+          "description": "Signature of the entry. In case of variables and constants, this is usually the name of the variable or constant. In case of functions, this is usually the function signature including parameters and surrounding parentheses.",
           "minLength": 1
         },
         "description": {
           "type": "string",
-          "description": "Description."
+          "description": "Description of the entry. The extension parses the value as Markdown-style text and shows it in the descriptive area of the code hints."
         },
         "available": {
           "$ref": "#/$defs/versionRange",
-          "description": "Specifies the version range in which the item is available."
+          "description": "Version range in which the entry is available."
         },
         "deprecated": {
           "$ref": "#/$defs/versionRange",
-          "description": "Specifies the version range in which the item is deprecated."
+          "description": "Version range in which the entry is deprecated."
         },
         "isStatic": {
           "type": "boolean",
-          "description": "Specifies whether the item is static."
+          "description": "Specifies whether the entry is static."
         },
         "overloads": {
           "type": "array",
-          "description": "Overloads of the item, only used for functions.",
+          "description": "Overloads of the entry, only used for functions.",
           "items": {
             "type": "object",
+            "description": "An overload of the entry",
             "required": [
               "signature"
             ],
@@ -132,7 +141,7 @@
               },
               "description": {
                 "type": "string",
-                "description": "Description of the overload."
+                "description": "Description of the overload. The extension parses the value as Markdown-style text and shows it in the descriptive area of the code hints."
               }
             }
           }
@@ -145,7 +154,7 @@
       "properties": {
         "range": {
           "type": "string",
-          "description": "Version range in semver format."
+          "description": "Version range in semver format. If the range is unknown, use \">=0.0.0\"."
         },
         "description": {
           "type": "string",
