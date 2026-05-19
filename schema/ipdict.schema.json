@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/fujidana/vscode-igorpro/refs/heads/master/schema/ipfdict.schema.json",
+  "$id": "https://raw.githubusercontent.com/fujidana/vscode-igorpro/refs/heads/main/schema/ipdict.schema.json",
   "title": "vscode-igorpro dictionary",
   "description": "Dictionary for \"fujidana.vscode-igorpro\", an extension of Visual Studio Code for Igor Pro Procedure files. The extension can load dictionaries that comply with the JSON schema to provide code hints.",
   "type": "object",
