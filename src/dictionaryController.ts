@@ -532,12 +532,13 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
         }
 
         // Add Table of Contents.
-        mdText += `## Table of Contents\n\n`;
+        mdText += '## Table of Contents\n\n';
         for (const [categoryName, entriesInCategory] of Object.entries(dictionary.categories)) {
             if (Object.keys(entriesInCategory).length === 0) { continue; }
             const categoryLabel = lang.getLabelForCategory(categoryName as keyof typeof dictionary.categories);
-            mdText += `- [${categoryLabel}](#${categoryLabel.toLowerCase().replace(/\s+/g, '-')} )\n`;
+            mdText += `- [${categoryLabel}](#${categoryLabel.toLowerCase().replace(/\s+/g, '-')})\n`;
         }
+        mdText += '\n';
 
         // Add each category and its items.
         for (const [categoryName, entriesInCategory] of Object.entries(dictionary.categories)) {
