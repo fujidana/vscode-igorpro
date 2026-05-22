@@ -1,0 +1,7 @@
+allowBuilds:
+  '@playwright/browser-chromium': true
+  esbuild: true
+overrides:
+  mocha>diff@>=6.0.0 <8.0.3: '^8.0.3'
+  mocha>serialize-javascript@<=7.0.2: '^7.0.3'
+  mocha>serialize-javascript@>=5.0.0 <7.0.5: '^7.0.5'

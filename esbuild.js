@@ -3,7 +3,8 @@ const esbuild = require("esbuild");
 /* modules for web extensions */
 const glob = require('glob');
 const path = require('path');
-const { polyfillNode } = require('esbuild-plugin-polyfill-node');
+const polyfillNodeGlobals = require('@esbuild-plugins/node-globals-polyfill');
+const polyfillNodeModules = require('@esbuild-plugins/node-modules-polyfill');
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -99,15 +100,13 @@ async function main() {
 		},
 
 		plugins: [
-			polyfillNode({
+			polyfillNodeGlobals.NodeGlobalsPolyfillPlugin({
 				globals: {
 					process: true,
 					buffer: true,
-				},
-				polyfills: {
-					fs: true,
 				}
 			}),
+			polyfillNodeModules.NodeModulesPolyfillPlugin(),
 			testBundlePlugin,
 			esbuildProblemMatcherPlugin, /* add to the end of plugins array */
 		],

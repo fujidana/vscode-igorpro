@@ -4,6 +4,10 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ## [Unreleased]
 
+### Changed
+
+- Raise the minimum VS Code version to 1.120.0.
+
 ### [2.2.0] -- 2026-05-12
 
 ### Added
