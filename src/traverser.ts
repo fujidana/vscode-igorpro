@@ -86,7 +86,7 @@ export function traverseForGlobals(program: tree.Program): { refBook: lang.Refer
 
                 if (node.type === 'DirectiveStatement') {
                     if (node.kind === 'include' && node.argument.loc) {
-                        includes.push({ range: lang.convertRange(node.argument.loc), raw: node.argument.name, builtin: node.builtin });
+                        includes.push({ range: lang.convertRange(node.argument.loc), path: node.argument.name, system: node.system });
                     }
                 } else if (node.type === 'ConstantDeclaration') {
                     const refItem = makeReferenceItem(node, node.id.name, 'constant', node.static);

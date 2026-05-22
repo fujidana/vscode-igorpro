@@ -12,11 +12,13 @@ type DocumentUpdateQuery = { type: 'Document', document: vscode.TextDocument };
 type FileUpdateQuery = { type: 'File', uri: vscode.Uri };
 
 class IgorproDocumentLink extends vscode.DocumentLink {
-    includeArgument: lang.IncludeArgument;
-    baseUri: vscode.Uri;
-    constructor(range: vscode.Range, includeArgument: lang.IncludeArgument, baseUri: vscode.Uri) {
-        super(range, undefined);
-        this.includeArgument = includeArgument;
+    public readonly path: string;
+    public readonly systemInclude: boolean;
+    public readonly baseUri: vscode.Uri;
+    constructor(arg: lang.IncludeArgument, baseUri: vscode.Uri) {
+        super(arg.range, undefined);
+        this.path = arg.path;
+        this.systemInclude = arg.system;
         this.baseUri = baseUri;
     }
 }
@@ -383,7 +385,7 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
                 if (!includes) { return; }
 
                 const baseUri = vscode.Uri.joinPath(documentUri, '..');
-                const urisIfExist = await Promise.all(includes.map(include => uriFromIgorInclude(include, this.igorVersion.major, baseUri)));
+                const urisIfExist = await Promise.all(includes.map(include => uriFromIgorInclude(include.path, include.system, this.igorVersion.major, baseUri)));
                 for (const uriIfExist of urisIfExist) {
                     if (!uriIfExist) { continue; }
                     await findIncludedFileUris(uriIfExist, uriStringSet);
@@ -531,16 +533,15 @@ export class FileController extends Controller<lang.FileUpdateSession> implement
         const includes = (await this.updateSessionMap.get(document.uri.toString())?.promise)?.includes;
 
         if (token.isCancellationRequested) { return; }
-        return includes?.map(arg => new IgorproDocumentLink(arg.range, arg, baseUri));
+        return includes?.map(arg => new IgorproDocumentLink(arg, baseUri));
     }
 
     // Optional implementation of `vscode.DocumentLinkProvider`.
-    public resolveDocumentLink(link: IgorproDocumentLink, token: vscode.CancellationToken): vscode.ProviderResult<IgorproDocumentLink> {
+    public async resolveDocumentLink(link: IgorproDocumentLink, token: vscode.CancellationToken): Promise<IgorproDocumentLink | undefined> {
         if (token.isCancellationRequested) { return; }
 
-        return uriFromIgorInclude(link.includeArgument, this.igorVersion.major, link.baseUri).then(
-            uri => { link.target = uri; return link; }
-        );
+        link.target = await uriFromIgorInclude(link.path, link.systemInclude, this.igorVersion.major, link.baseUri);;
+        return link;
     }
 
     // Required implementation of `vscode.DocumentDropEditProvider`.

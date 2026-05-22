@@ -300,7 +300,7 @@ DirectiveStmt 'directive' =
     '<' str:$('\\' . / [^>])* '>' { return [true, str, location()]; }
   ) trailingComment:EolWWOComment {
     const strId = { type: 'Identifier', name: arg[1], kind: 'string', loc: arg[2] };
-    return { type: 'DirectiveStatement', directive: 'include', kind: 'include', builtin: arg[0], argument: strId, loc: location(), trailingComment };
+    return { type: 'DirectiveStatement', directive: 'include', kind: 'include', system: arg[0], argument: strId, loc: location(), trailingComment };
   }
   /
   '#' directive:_StdName _0 expression:$(!EolWWOComment .)* trailingComment:EolWWOComment {

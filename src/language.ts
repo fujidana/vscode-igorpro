@@ -37,11 +37,11 @@ export interface DictParserResult extends ParserResult {
     description?: string;
 }
 
-export type IncludeArgument = {
-    range: vscode.Range,
-    raw: string,
-    builtin: boolean,
-};
+export interface IncludeArgument {
+    range: vscode.Range;
+    path: string;
+    system: boolean;
+}
 
 export type UpdateSession<T extends ParserResult = ParserResult> = { promise: Promise<T | undefined> };
 export type FileUpdateSession = { promise: Promise<FileParserResult | undefined>, tokenSource?: vscode.CancellationTokenSource | undefined };

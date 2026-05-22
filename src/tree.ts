@@ -188,7 +188,7 @@ interface BaseDirectiveStatement extends BaseStatement {
 export interface IncludeDirectiveStatement extends BaseDirectiveStatement {
     directive: 'include';
     kind: 'include';
-    builtin: boolean;
+    system: boolean;
     argument: StringIdentifier;
 }
 
