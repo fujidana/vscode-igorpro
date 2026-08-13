@@ -269,19 +269,19 @@
     "@types/assert": "^1.5.11",
     "@types/mocha": "^10.0.10",
     "@types/node": "24.x",
-    "@types/semver": "^7.7.1",
+    "@types/semver": "^7.8.0",
     "@types/vscode": "^1.125.0",
     "@vscode/test-cli": "^0.0.15",
-    "@vscode/test-electron": "^3.0.0",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/test-web": "^0.0.81",
     "assert": "^2.1.0",
-    "esbuild": "^0.28.1",
-    "eslint": "^10.5.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.8.1",
     "glob": "^13.0.6",
-    "js-yaml": "^5.2.2",
-    "mocha": "^11.7.6",
+    "js-yaml": "^5.2.3",
+    "mocha": "^11.8.0",
     "peggy": "^5.1.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.62.0"
+    "typescript-eslint": "^8.67.0"
   }
 }
