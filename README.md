@@ -1,5 +1,7 @@
 # Igor Pro Extension for Visual Studio Code
 
+<!-- markdownlint-disable line-length fenced-code-language -->
+
 The extension helps you editing Igor procedure files (`*.ipf`).
 
 The author of this extension is just a Igor Pro user and has no more relation with Wavemetrics, Inc., which develops Igor Pro itself.

@@ -1,5 +1,7 @@
 # Change Log
 
+<!-- markdownlint-disable line-length no-duplicate-heading -->
+
 All notable changes to the `vscode-igorpro` extension will be documented in this file.
 
 ## [Unreleased]

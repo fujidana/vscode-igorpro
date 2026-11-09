@@ -10,7 +10,8 @@
     },
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
     "js/ts.tsc.autoDetect": "off",
-    "markdownlint.config": {
-        "no-duplicate-heading": false,
+    // Allow downloading JSON schemas from the following domains
+    "json.schemaDownload.trustedDomains": {
+        "https://raw.githubusercontent.com/martinring/tmlanguage/": true
     }
 }
