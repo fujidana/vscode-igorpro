@@ -240,6 +240,9 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
             }
         };
 
+        /**
+         * Command handler for registering a dictionary from the text content of the active editor.
+         */
         const registerDictionaryCommandHandler = async (..._args: any[]) => {
             // Check if text content of active editor is a valid JSON.
             const editor = vscode.window.activeTextEditor;
@@ -297,13 +300,14 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
                 storageLabel = vscode.l10n.t('User');
                 uriString = GLOBAL_DICT_BASEURI + '/' + obj.identifier;
                 memento = context.globalState;
-            } else {
-                // if (obj.scope === 'workspace')
+            } else { // if (obj.scope === 'workspace') {
                 storageLabel = vscode.l10n.t('Workspace');
                 uriString = WORKSPACE_DICT_BASEURI + '/' + obj.identifier;
                 memento = context.workspaceState;
             }
 
+            // Show confirmation if a dictionary with the same identifier already exists in the target storage,
+            // Else proceed to register the dictionary without confirmation.
             const isNew = !(memento.keys().includes(obj.identifier));
             const flag = isNew ?
                 vscode.l10n.t('OK') :
@@ -311,7 +315,6 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
                     vscode.l10n.t('Are you sure you want to update the dictionary "{0}" in {1} storage with the current editor content?', obj.identifier, storageLabel),
                     { modal: true, detail: vscode.l10n.t('This action cannot be undone.') },
                     vscode.l10n.t('OK'));
-
             if (flag === vscode.l10n.t('OK')) {
                 try {
                     const dictParserResult = lang.convertFromCategorizedDictionary(obj);
@@ -324,16 +327,15 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
                     } else {
                         this.externalOperationMap.set(uriString, []);
                     }
-
-                    if (isNew) {
-                        vscode.window.showInformationMessage(vscode.l10n.t('Dictionary "{0}" has been created in {1} storage.', obj.identifier, storageLabel));
-                    } else {
-                        vscode.window.showInformationMessage(vscode.l10n.t('Dictionary "{0}" in {1} storage has been updated.', obj.identifier, storageLabel));
-                    }
                 } catch (error) {
                     const errorMessage = error instanceof Error ? error.message : String(error);
                     vscode.window.showErrorMessage(vscode.l10n.t('Failed to convert dictionary. {0}', errorMessage));
                     return;
+                }
+                if (isNew) {
+                    vscode.window.showInformationMessage(vscode.l10n.t('Dictionary "{0}" has been created in {1} storage.', obj.identifier, storageLabel));
+                } else {
+                    vscode.window.showInformationMessage(vscode.l10n.t('Dictionary "{0}" in {1} storage has been updated.', obj.identifier, storageLabel));
                 }
                 memento.update(obj.identifier, obj);
                 // if (obj.scope === 'global') {
@@ -342,6 +344,9 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
             }
         };
 
+        /**
+         * Command handler for deleting a dictionary from the global/workspace state.
+         */
         const deleteDictionaryCommandHandler = async (_args: any[]) => {
             const quickPickItems: QuickPickItemForDict[] = [];
             const globalStateKeys = context.globalState.keys();
@@ -369,6 +374,7 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
             const selectedItem = await vscode.window.showQuickPick(quickPickItems, quickPickOptions);
             if (!selectedItem) { return; } // Exit if the user cancels.
 
+            // Show additional confirmation and continue if the user confirms the deletion.
             const flag = await vscode.window.showWarningMessage(
                 vscode.l10n.t('Are you sure you want to delete the dictionary "{0}"?', selectedItem.label),
                 { modal: true, detail: vscode.l10n.t('This action cannot be undone.') },
@@ -380,12 +386,9 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
                 if (selectedItem.scope === 'global') {
                     uriString = GLOBAL_DICT_BASEURI + '/' + selectedItem.label;
                     memento = context.globalState;
-                } else if (selectedItem.scope === 'workspace') {
+                } else { // if (selectedItem.scope === 'workspace') {
                     uriString = WORKSPACE_DICT_BASEURI + '/' + selectedItem.label;
                     memento = context.workspaceState;
-                } else {
-                    vscode.window.showErrorMessage(vscode.l10n.t('Invalid scope.'));
-                    return;
                 }
                 memento.update(selectedItem.label, undefined);
                 this.updateSessionMap.delete(uriString);
