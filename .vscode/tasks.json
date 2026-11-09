@@ -5,24 +5,25 @@
     "tasks": [
         {
             "label": "compile",
-            "detail": "Run peggy, tsc, eslint, and esbuild",
+            "detail": "Run peggy, eslint, tsc (noEmit), and esbuild",
             "icon": {
-                "id": "tools"
+                "id": "build"
             },
             "type": "npm",
             "script": "compile",
+            "group": "build",
             "problemMatcher": [
                 "$peggy",
-                "$tsc",
                 "$eslint-stylish",
+                "$tsc",
                 "$esbuild"
             ]
         },
         {
             "label": "watch",
-            "detail": "Watch peggy, tsc, and esbuild",
+            "detail": "Watch peggy, tsc (noEmit), and esbuild",
             "icon": {
-                "id": "tools"
+                "id": "build"
             },
             "dependsOn": [
                 "npm: watch:peggy",
@@ -39,6 +40,9 @@
         },
         {
             "label": "npm: watch:peggy",
+            "icon": {
+                "id": "build"
+            },
             "type": "npm",
             "script": "watch:peggy",
             "group": "build",
@@ -51,6 +55,9 @@
         },
         {
             "label": "npm: watch:esbuild",
+            "icon": {
+                "id": "build"
+            },
             "type": "npm",
             "script": "watch:esbuild",
             "group": "build",
@@ -63,6 +70,9 @@
         },
         {
             "label": "npm: watch:tsc",
+            "icon": {
+                "id": "build"
+            },
             "type": "npm",
             "script": "watch:tsc",
             "group": "build",
@@ -74,22 +84,54 @@
             }
         },
         {
+            "label": "npm: watch-tests",
+            "icon": {
+                "id": "build"
+            },
             "type": "npm",
             "script": "watch-tests",
+            "group": "build",
             "problemMatcher": "$tsc-watch",
             "isBackground": true,
             "presentation": {
-                "reveal": "never",
-                "group": "watchers"
-            },
-            "group": "build"
+                "group": "watchers",
+                "reveal": "never"
+            }
         },
         {
-            "label": "tasks: watch-tests",
+            "label": "test",
+            "detail": "watch peggy, tsc (noEmit), and esbuild, then run vscode-test",
+            "icon": {
+                "id": "beaker"
+            },
+            "type": "npm",
+            "script": "test",
             "dependsOn": [
-                "npm: watch",
-                "npm: watch-tests"
+                "npm: watch:peggy",
+                "npm: watch-tests",
+                "npm: watch:esbuild"
             ],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "test-web",
+            "detail": "Watch peggy, tsc (noEmit), and esbuild, then run vscode-test-web",
+            "icon": {
+                "id": "beaker"
+            },
+            "type": "npm",
+            "script": "test-web",
+            "dependsOn": [
+                "npm: watch:peggy",
+                "npm: watch:tsc",
+                "npm: watch:esbuild"
+            ],
+            "group": "test",
             "problemMatcher": []
         }
     ]
