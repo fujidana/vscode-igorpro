@@ -2,6 +2,6 @@ allowBuilds:
   '@playwright/browser-chromium': true
   esbuild: true
 overrides:
-  mocha>diff@>=6.0.0 <8.0.3: '^8.0.3'
-  mocha>serialize-javascript@<=7.0.2: '^7.0.3'
-  mocha>serialize-javascript@>=5.0.0 <7.0.5: '^7.0.5'
+  '@vscode/test-cli>mocha@<12.0.0': '^12.0.3'
+  '@vscode/test-cli>c8@<12.0.0': '^12.0.0'
+  minimatch@>= 7.0.0 <11.0.1: '^11.0.1'

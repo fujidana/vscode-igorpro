@@ -2,13 +2,14 @@
 
 <!-- markdownlint-disable line-length no-duplicate-heading -->
 
-All notable changes to the `vscode-igorpro` extension will be documented in this file.
+All notable changes to the `vscode-igorpro` VS Code extension will be documented in this file.
 
 ## [Unreleased]
 
 ### Changed
 
-- Raise the minimum VS Code version to 1.120.0.
+- Raise the minimum VS Code version to 1.140.0.
+- Bump `semver` dependency to 7.8.6.
 
 ### [2.2.0] -- 2026-05-12
 
@@ -95,9 +96,9 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Changed
 
-- Update Node.js packages.
-  - Eliminate the dependency on `ts-pegjs` and bump the version of `peggy` from 3 to 5.
 - Raise the minimum VS Code version to 1.100.0.
+- Update npm packages.
+  - Eliminate the dependency on `ts-pegjs` and bump the version of `peggy` from 3 to 5.
 
 ## [1.4.3] -- 2024-09-06
 
@@ -126,8 +127,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Changed
 
-- Update Node.js packages, including a vulnerable dependency.
 - Raise the minimum VS Code version to 1.91.0.
+- Update npm packages, including a vulnerable dependency.
 
 ### Fixed
 
@@ -149,8 +150,8 @@ All notable changes to the `vscode-igorpro` extension will be documented in this
 
 ### Changed
 
-- Update Node.js packages, including peggy (ver. 2 -> 3) and ts-pegjs (ver. 3 -> 4).
 - Raise the minimum VS Code version to 1.76.0.
+- Update npm packages, including peggy (ver. 2 -> 3) and ts-pegjs (ver. 3 -> 4).
 
 ## [1.2.0] -- 2022-09-15
 
