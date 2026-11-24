@@ -31,14 +31,11 @@ const extensionDictionaryEntries: [string, lang.ReferenceCategory[]][] = [
  * Provider subclass that manages built-in and user-defined symbols.
  */
 export class DictionaryController extends Controller<lang.UpdateSession<lang.DictParserResult>> implements vscode.TextDocumentContentProvider {
-    private readonly extensionSchemaUriString: string;
     public externalOperationMap: Map<string, string[]> = new Map();
     public fileController: Controller | undefined;
 
     constructor(context: vscode.ExtensionContext) {
         super(context);
-
-        this.extensionSchemaUriString = vscode.Uri.joinPath(context.extensionUri, 'schema', 'ipdict.schema.json').toString();
 
         // Load built-in symbol database from a JSON file bundled in the extension.
         const builtInRefUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.ipdict.json');
@@ -80,6 +77,7 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
                 }
             }
         }
+
         /** Event listener for configuration changes. */
         // const configurationDidChangeListener = (event: vscode.ConfigurationChangeEvent) => {
         // };
@@ -222,7 +220,6 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
                 // `isStatic` property from the reference items.
                 const categoryFilter = ['constant', 'picture', 'structure', 'macro', 'function'] as const;
                 obj = lang.convertToCategorizedDictionary({
-                    $schema: this.extensionSchemaUriString, // this.externalSchemaUriString,
                     identifier: selectedItem.scope === 'global' ? 'globalDict' : 'workspaceDict',
                     scope: selectedItem.scope,
                     refBook: newRefBook,
@@ -234,8 +231,25 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
                 vscode.window.showErrorMessage(vscode.l10n.t('Failed to load the dictionary content.'));
             } else {
                 const content = JSON.stringify(obj, ((key, value) => key === 'location' ? undefined : value), 2);
-                const document = await vscode.workspace.openTextDocument({ language: 'json', content: content });
-                await vscode.window.showTextDocument(document);
+                const name = (obj.identifier ?? 'untitled')
+                    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
+                    .replace(/\s+/g, ' ')
+                    .slice(0, 100);
+                const uri = vscode.Uri.from({ scheme: 'untitled', path: `/${name}.ipdict.json` });
+                if (vscode.workspace.textDocuments.some(document => document.uri.toString() === uri.toString())) {
+                    await vscode.window.showWarningMessage(
+                        vscode.l10n.t('The dictionary "{0}" is already open.', name),
+                        { modal: true, detail: vscode.l10n.t('Close the existing untitled editor before opening it again.') });
+                    return;
+                }
+                const document = await vscode.workspace.openTextDocument(uri);
+                await vscode.languages.setTextDocumentLanguage(document, 'json');
+                const editor = await vscode.window.showTextDocument(document, { preview: false });
+                editor.options.insertSpaces = true;
+                editor.options.tabSize = 2;
+                await editor.edit(editBuilder => {
+                    editBuilder.insert(new vscode.Position(0, 0), content);
+                });
                 return;
             }
         };

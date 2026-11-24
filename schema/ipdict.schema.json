@@ -13,7 +13,7 @@
   "properties": {
     "$schema": {
       "type": "string",
-      "description": "URI of the JSON schema. If the file name is *.ipdict.json, this property is optional and defaults to the URI of the schema in the extension. Otherwise, the value of this property should be the URI of the schema in the extension or that in the remote repository (GitHub)."
+      "description": "URI of the JSON schema for validating user-defined vscode-igorpro dictionaries. This property is optional and defaults to the URI of the schema in the extension when the filename ends with \".ipdict.json\"."
     },
     "kind": {
       "const": "igorpro.dictionary",

@@ -8,7 +8,7 @@ export const SELECTOR = { language: 'igorpro' };
 export const AST_URI = 'igorpro://file/ast.json';
 export const ACTIVE_FILE_URI = 'igorpro://file/active-document.md';
 
-export const DICT_SCHEMA_URI = 'https://raw.githubusercontent.com/fujidana/vscode-igorpro/refs/heads/main/schema/ipdict.schema.json';
+// export const DICT_SCHEMA_URI = 'https://raw.githubusercontent.com/fujidana/vscode-igorpro/refs/heads/main/schema/ipdict.schema.json';
 
 export function convertPosition(location: Location): vscode.Position {
     return new vscode.Position(location.line - 1, location.column - 1);
