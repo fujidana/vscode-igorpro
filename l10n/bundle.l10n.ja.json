@@ -55,6 +55,8 @@
   "new dictionary with symbols defined in procedure files": "プロシージャファイルで定義されたシンボルで構成された新しい辞書",
   "Select a dictionary to view or edit": "表示または編集する辞書を選択",
   "Failed to load the dictionary content.": "辞書の内容の読み込みに失敗しました。",
+  "The dictionary \"{0}\" is already open.": "辞書\"{0}\"は既に開いています。",
+  "Close the existing untitled editor before opening it again.": "再度開く前に、既存の無題のエディターを閉じてください。",
   "No active editor found.": "アクティブなエディターが見つかりません。",
   "Document content is not in JSON format.": "ドキュメントの内容はJSON形式ではありません。",
   "Document has validation errors.": "ドキュメントに検証エラーがあります。",
@@ -67,12 +69,11 @@
   "OK": "OK",
   "Are you sure you want to update the dictionary \"{0}\" in {1} storage with the current editor content?": " {1} ストレージ内の辞書 \"{0}\" を現在のエディターの内容で更新してもよろしいですか？",
   "This action cannot be undone.": "この操作は元に戻すことができません。",
+  "Failed to convert dictionary. {0}": "辞書の変換に失敗しました。{0}",
   "Dictionary \"{0}\" has been created in {1} storage.": "辞書\"{0}\"が{1}ストレージに作成されました。",
   "Dictionary \"{0}\" in {1} storage has been updated.": "{1}ストレージ内の辞書\"{0}\"が更新されました。",
-  "Failed to convert dictionary. {0}": "辞書の変換に失敗しました。{0}",
   "Select a dictionary to delete": "削除する辞書を選択",
   "{0} No dictionaries to delete.": "{0} 削除する辞書がありません。",
   "Are you sure you want to delete the dictionary \"{0}\"?": "辞書\"{0}\"を削除してもよろしいですか？",
-  "Invalid scope.": "無効なスコープです。",
   "Failed to load dictionary for built-in symbols. {0}": "ビルトインシンボルの辞書の読み込みに失敗しました。{0}"
 }
