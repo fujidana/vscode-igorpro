@@ -38,7 +38,7 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
         super(context);
 
         // Load built-in symbol database from a JSON file bundled in the extension.
-        const builtInRefUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.ipdict.json');
+        const builtInRefUri = vscode.Uri.joinPath(context.extensionUri, 'syntaxes', 'igorpro.ipfdict.json');
         this.loadExtensionDictionary(builtInRefUri);
 
         // Load user-defined symbol database from the global (user) and workspace state.
@@ -235,7 +235,7 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
                     .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
                     .replace(/\s+/g, ' ')
                     .slice(0, 100);
-                const uri = vscode.Uri.from({ scheme: 'untitled', path: `/${name}.ipdict.json` });
+                const uri = vscode.Uri.from({ scheme: 'untitled', path: `/${name}.ipfdict.json` });
                 if (vscode.workspace.textDocuments.some(document => document.uri.toString() === uri.toString())) {
                     await vscode.window.showWarningMessage(
                         vscode.l10n.t('The dictionary "{0}" is already open.', name),
@@ -284,9 +284,9 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
             if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
                 vscode.window.showErrorMessage(vscode.l10n.t('Document content must be a JSON object (not array or null).'));
                 return;
-            } else if ((/\/(.+\.)?ipdict\.json$/.test(editor.document.uri.path)) === false && (!('$schema' in obj) || typeof obj.$schema !== 'string')) {
+            } else if (/\/(.+\.)?ipfdict\.json$/.test(editor.document.uri.path) === false && ('$schema' in obj === false || typeof obj.$schema !== 'string')) {
                 // The JSON file must be validated by the JSON schema.
-                // If the filename of the JSON file ends with 'ipdict.json', the JSON schema validation is automatically applied by VS Code.
+                // If the filename of the JSON file ends with 'ipfdict.json', the JSON schema validation is automatically applied by VS Code.
                 // Otherwise, the extension requires the user to explicitly include the $schema property in the JSON content.
                 vscode.window.showErrorMessage(vscode.l10n.t('JSON object is not validated by the JSON schema.'));
                 return;
