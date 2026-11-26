@@ -5,7 +5,7 @@
 
 # Syntax Description #
 
-$schema: ../schema/ipdict.schema.json
+$schema: ../schema/ipfdict.schema.json
 kind: igorpro.dictionary
 identifier: builtins
 name: Igor Pro Built-in Symbols
