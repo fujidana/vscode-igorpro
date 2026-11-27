@@ -6,8 +6,16 @@ All notable changes to the `vscode-igorpro` VS Code extension will be documented
 
 ## [Unreleased]
 
+### [2.3.0] -- 2026-11-27
+
 ### Changed
 
+- Redesign the _user-defined dictionaries_ feature. R [#86](https://github.com/fujidana/vscode-igorpro/pull/86), Issue [#87](https://github.com/fujidana/vscode-igorpro/issues/87).
+  - Setting Sync is now supported for dictionaries in the _Global State. 
+  - File pattern for dictionary is changed from `*.ipdict.json` to `*.ipfdict.json`.
+  - `$schema` properties becomes unnecessary in the JSON representation of the dictionary.
+  - Add `vscode-igorpro.reloadDictionaries` command.
+  - Add `vscode-igorpro.suggest.dictionariesInclude` setting to narrow down global dictionaries to be used for IntelliSense features.
 - Raise the minimum VS Code version to 1.140.0.
 - Bump `semver` dependency to 7.8.6.
 
@@ -202,7 +210,8 @@ All notable changes to the `vscode-igorpro` VS Code extension will be documented
   - bracket definition, auto closing, Autosurrounding (`{}`, `[]`, `()`, `''`, `""`)
   - indentation rules
 
-[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/fujidana/vscode-igorpro/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/fujidana/vscode-igorpro/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/fujidana/vscode-igorpro/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/fujidana/vscode-igorpro/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/fujidana/vscode-igorpro/compare/v1.5.0...v2.0.0

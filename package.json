@@ -3,7 +3,7 @@
   "name": "vscode-igorpro",
   "displayName": "Igor Pro",
   "description": "Igor Pro support for VS Code",
-  "version": "2.2.1-alpha.0",
+  "version": "2.3.0",
   "engines": {
     "vscode": "^1.140.0"
   },
@@ -276,7 +276,7 @@
     "js-yaml:snippets": "js-yaml syntaxes/igorpro.snippets.yaml > syntaxes/igorpro.snippets.json",
     "js-yaml:tmLanguage": "js-yaml syntaxes/igorpro.tmLanguage.yaml > syntaxes/igorpro.tmLanguage.json",
     "js-yaml:ipfdict": "js-yaml syntaxes/igorpro.ipfdict.yaml > syntaxes/igorpro.ipfdict.json",
-    "l10n-export": "pnpm dlx @vscode/l10n-dev export -o ./l10n ./src"
+    "l10n-export": "pnpm dlx @vscode/l10n-dev export --outDir ./l10n ./src"
   },
   "dependencies": {
     "estraverse": "^5.3.0",
