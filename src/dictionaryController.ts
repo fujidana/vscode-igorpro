@@ -379,7 +379,7 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
             // Register providers.
             vscode.workspace.registerTextDocumentContentProvider('igorpro', this),
             // Register event handlers.
-            // vscode.workspace.onDidChangeConfiguration(configurationDidChangeListener),
+            vscode.workspace.onDidChangeConfiguration(configurationDidChangeListener),
         );
 
         // Ask the user to re-register old dictionaries whose key is not 'dictionaries'.
