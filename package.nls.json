@@ -3,6 +3,7 @@
 	"command.vscode-igorpro.showDictionarySource.title": "Show User-Defined Dictionary in Editor",
 	"command.vscode-igorpro.registerDictionary.title": "Register Editor Content as User-Defined Dictionary",
 	"command.vscode-igorpro.deleteDictionary.title": "Delete User-Defined Dictionary",
+	"command.vscode-igorpro.reloadDictionaries.title": "Reload User-Defined Dictionaries",
 	"command.vscode-igorpro.inspectSyntaxTree.title": "Inspect Syntax Tree (Dev)",
 	"configuration.vscode-igorpro.igorVersion.description": "Specifies the target version of Igor Pro. This affects code suggestion.",
 	"configuration.vscode-igorpro.igorVersion.patternErrorMessage": "The value must start with a number with two decimal places, such as `7.38` and `9.01`.",
@@ -15,10 +16,10 @@
 	"configuration.vscode-igorpro.suggest.suppressMessages.completionItem.documentation.description": "Truncates explanatory text of a resolved completion item to a sentence.",
 	"configuration.vscode-igorpro.suggest.suppressMessages.hover.contents.description": "Truncates explanatory text in a hover, which is shown when the mouse cursor is on a symbol, to a paragraph.",
 	"configuration.vscode-igorpro.suggest.suppressMessages.signatureHelp.signatures.documentation.description": "Truncates explanatory text in a signature help, which is shown when the user edits function arguments, to a paragraph.",
-    "configuration.vscode-igorpro.suggest.scope.description": "Limits the scope of global symbols considered in code hinting.",
-    "configuration.vscode-igorpro.suggest.scope.workspace.enumDescription": "Global symbols in workspaces are suggested without being filtered.",
-    "configuration.vscode-igorpro.suggest.scope.openDocuments.enumDescription": "Global symbols defined in open documents and files included by them are suggested.",
-    "configuration.vscode-igorpro.suggest.scope.activeEditor.enumDescription": "Global symbols defined in current document and files included by it are suggested.",
+	"configuration.vscode-igorpro.suggest.scope.description": "Limits the scope of global symbols considered in code hinting.",
+	"configuration.vscode-igorpro.suggest.scope.workspace.enumDescription": "Global symbols in workspaces are suggested without being filtered.",
+	"configuration.vscode-igorpro.suggest.scope.openDocuments.enumDescription": "Global symbols defined in open documents and files included by them are suggested.",
+	"configuration.vscode-igorpro.suggest.scope.activeEditor.enumDescription": "Global symbols defined in current document and files included by it are suggested.",
 	"configuration.vscode-igorpro.suggest.symbolFile.description": "Specifies the absolute path to a JSON file in which symbols are defined. The following predefined variables are supported for the path: `${userHome}`, `${workspaceFolder}`. See a JSON file created by [Show User Defined Symbols (JSON)](command:vscode-igorpro.showUserDefinedSymbolsJson) command for the file format.",
 	"capabilities.untrustedWorkspaces.description": "By security reasons, Several configuration properties are disabled in untrusted workspaces."
 }

@@ -3,6 +3,7 @@
 	"command.vscode-igorpro.showDictionarySource.title": "ユーザー定義辞書をエディターで表示",
 	"command.vscode-igorpro.registerDictionary.title": "エディターの内容をユーザー定義辞書として登録",
 	"command.vscode-igorpro.deleteDictionary.title": "ユーザー定義辞書を削除",
+	"command.vscode-igorpro.reloadDictionaries.title": "ユーザー定義辞書を再読み込み",
 	"command.vscode-igorpro.inspectSyntaxTree.title": "構文ツリーを検査 (開発)",
 	"configuration.vscode-igorpro.igorVersion.description": "対象とするIgor Proのバージョンを指定します。これはコード補完に影響します。",
 	"configuration.vscode-igorpro.specVersion.patternErrorMessage": "値は `7.38` や `9.01` のように、小数点2桁の数字で始まらなければなりません。",

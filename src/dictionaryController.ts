@@ -369,6 +369,13 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
             }
         };
 
+        /**
+         * Command handler for reloading dictionaries from the global/workspace state.
+         */
+        const reloadDictionariesCommandHandler = async (_args: any[]) => {
+            this.loadUserDefinedDictionaries(true);
+        };
+
         // Register command and event handlers.
         context.subscriptions.push(
             // Register command handlers.
@@ -376,6 +383,7 @@ export class DictionaryController extends Controller<lang.UpdateSession<lang.Dic
             vscode.commands.registerCommand('vscode-igorpro.showDictionarySource', showDictionarySourceCommandHandler),
             vscode.commands.registerCommand('vscode-igorpro.registerDictionary', registerDictionaryCommandHandler),
             vscode.commands.registerCommand('vscode-igorpro.deleteDictionary', deleteDictionaryCommandHandler),
+            vscode.commands.registerCommand('vscode-igorpro.reloadDictionaries', reloadDictionariesCommandHandler),
             // Register providers.
             vscode.workspace.registerTextDocumentContentProvider('igorpro', this),
             // Register event handlers.
