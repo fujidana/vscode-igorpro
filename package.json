@@ -155,6 +155,18 @@
             "default": "preview",
             "markdownDescription": "%configuration.vscode-igorpro.dictionaryPreview.description%"
           },
+          "vscode-igorpro.suggest.dictionariesInclude": {
+            "type": "array",
+            "scope": "window",
+            "tags": [
+              "experimental"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "markdownDescription": "%configuration.vscode-igorpro.suggest.dictionariesInclude.description%"
+          },
           "vscode-igorpro.suggest.suppressMessages": {
             "type": "object",
             "markdownDescription": "%configuration.vscode-igorpro.suggest.suppressMessages.description%",

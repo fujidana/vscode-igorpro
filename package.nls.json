@@ -8,6 +8,7 @@
 	"configuration.vscode-igorpro.igorVersion.patternErrorMessage": "The value must start with a number with two decimal places, such as `7.38` and `9.01`.",
 	"configuration.vscode-igorpro.showSymbolsInPreview.description": "Shows a markdown preview in addition to the source text when [Show User-defined Symbols](command:vscode-igorpro.showUserDefinedSymbolsJson) command is invoked.",
 	"configuration.vscode-igorpro.dictionaryPreview.description": "Controls the format of the editor tab shown by the [Show Dictionary Preview](command:vscode-igorpro.showDictionaryPreview) command.",
+	"configuration.vscode-igorpro.suggest.dictionariesInclude.description": "Lists the identifiers of global dictionaries to be used for code suggestion. If not specified (i.e., empty array), all global dictionaries are used.",
 	"configuration.vscode-igorpro.suggest.suppressMessages.description": "Suppresses the amount of messages for code suggestion.",
 	"configuration.vscode-igorpro.suggest.suppressMessages.completionItem.label.detail.description": "Hides the detail of unresolved completion items, where function parameters are shown in case the item is a function.",
 	"configuration.vscode-igorpro.suggest.suppressMessages.completionItem.label.description.description": "Hides the description of unresolved completion item labels, where file paths are typically shown.",
