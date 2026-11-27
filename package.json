@@ -76,7 +76,7 @@
       {
         "command": "vscode-igorpro.registerDictionary",
         "title": "%command.vscode-igorpro.registerDictionary.title%",
-        "enablement": "editorLangId == json",
+        "enablement": "editorLangId == json && resourceFilename =~ /^(.+\\.)?ipfdict\\.json$/",
         "category": "Igor Pro",
         "icon": "$(repo-push)"
       },
@@ -109,7 +109,7 @@
         },
         {
           "command": "vscode-igorpro.registerDictionary",
-          "when": "editorLangId == json"
+          "when": "editorLangId == json && resourceFilename =~ /^(.+\\.)?ipfdict\\.json$/"
         },
         {
           "command": "vscode-igorpro.deleteDictionary"
