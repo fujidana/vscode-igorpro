@@ -8,6 +8,7 @@
 	"configuration.vscode-igorpro.specVersion.patternErrorMessage": "値は `7.38` や `9.01` のように、小数点2桁の数字で始まらなければなりません。",
 	"configuration.vscode-igorpro.showSymbolsInPreview.description": "[ビルトインのシンボルを表示](command:vscode-igorpro.showBuiltInSymbols) コマンドが呼び出された時に、マークダウンのソーステキストに加えてプレビューを表示します。",
 	"configuration.vscode-igorpro.dictionaryPreview.description": "[辞書のプレビューを開く](command:vscode-igorpro.showDictionaryPreview) コマンドで表示されるエディタータブの形式を制御します。",
+	"configuration.vscode-igorpro.suggest.dictionariesInclude.description": "コード補完に使用するグローバル辞書の識別子を列挙します。指定されていない場合 (つまり、空の配列の場合) は、すべてのグローバル辞書が使われます。",
 	"configuration.vscode-igorpro.suggest.suppressMessages.description": "コード補完のメッセージ量を抑制します。",
 	"configuration.vscode-igorpro.suggest.suppressMessages.completionItem.label.detail.description": "未選択の補完項目の詳細 (項目が関数の場合にパラメータが表示される) を隠します。",
 	"configuration.vscode-igorpro.suggest.suppressMessages.completionItem.label.description.description": "未選択の補完項目の説明 (項目を定義しているファイル名などが表示される) を隠します。",
