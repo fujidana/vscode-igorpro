@@ -87,6 +87,12 @@
         "icon": "$(trash)"
       },
       {
+        "command": "vscode-igorpro.reloadDictionaries",
+        "title": "%command.vscode-igorpro.reloadDictionaries.title%",
+        "category": "Igor Pro",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "vscode-igorpro.inspectSyntaxTree",
         "title": "%command.vscode-igorpro.inspectSyntaxTree.title%",
         "category": "Igor Pro",
@@ -107,6 +113,9 @@
         },
         {
           "command": "vscode-igorpro.deleteDictionary"
+        },
+        {
+          "command": "vscode-igorpro.reloadDictionaries"
         },
         {
           "command": "vscode-igorpro.inspectSyntaxTree",
